@@ -1,0 +1,78 @@
+name: "Defecto"
+description: "Comportamiento incorrecto detectado en el producto. Se identifica como DEF-NNN."
+title: "[DEF-NNN] "
+labels: ["tipo:defecto"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Los campos de este formulario son **los mismos que exige el requerimiento 6 de la guía**
+        (descripción, severidad, estado, historia relacionada, sprint de detección y de resolución).
+        Los usamos acá a propósito: es el modelo de datos de la app validado contra el uso real.
+
+  - type: input
+    id: identificador
+    attributes:
+      label: Identificador
+      placeholder: "DEF-007"
+    validations:
+      required: true
+
+  - type: textarea
+    id: descripcion
+    attributes:
+      label: Descripción
+      description: "Qué se esperaba, qué pasó realmente y cómo reproducirlo."
+      value: |
+        **Esperado:**
+        **Observado:**
+
+        **Pasos para reproducir:**
+        1.
+        2.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severidad
+    attributes:
+      label: Severidad
+      description: |
+        Crítica: impide usar el sistema o corrompe datos.
+        Alta: una funcionalidad principal no funciona y no hay forma de evitarlo.
+        Media: funciona mal pero hay manera de sortearlo.
+        Baja: cosmético o poco frecuente.
+      options: ["Crítica", "Alta", "Media", "Baja"]
+    validations:
+      required: true
+
+  - type: input
+    id: historia
+    attributes:
+      label: Historia relacionada
+      description: "El identificador de la historia donde se introdujo el defecto."
+      placeholder: "US-019"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: sprint-deteccion
+    attributes:
+      label: Sprint de detección
+      options: ["Sprint 0", "Sprint 1", "Sprint 2", "Sprint 3", "Sprint 4"]
+    validations:
+      required: true
+
+  - type: dropdown
+    id: sprint-resolucion
+    attributes:
+      label: Sprint de resolución
+      description: "Se completa cuando el defecto se resuelve."
+      options: ["sin resolver", "Sprint 1", "Sprint 2", "Sprint 3", "Sprint 4"]
+
+  - type: checkboxes
+    id: test
+    attributes:
+      label: Antes de cerrarlo
+      options:
+        - label: "Hay un test que falla con el bug presente y pasa con el fix (commit `test(...): RED` antes del `fix`)"

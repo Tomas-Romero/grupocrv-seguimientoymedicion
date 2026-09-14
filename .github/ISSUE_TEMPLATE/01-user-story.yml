@@ -1,0 +1,102 @@
+name: "Historia de usuario"
+description: "Funcionalidad con valor para el usuario. Se identifica como US-NNN."
+title: "[US-NNN] "
+labels: ["tipo:historia", "sdd:pendiente", "bdd:pendiente"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Antes de que esta historia entre a un Sprint tiene que cumplir el **Definition of Ready**:
+        redactada, con criterios de aceptación numerados, con spec SDD si toca reglas de negocio,
+        estimada y con las dependencias resueltas.
+
+  - type: input
+    id: identificador
+    attributes:
+      label: Identificador
+      description: "Formato US-NNN. Una vez asignado no cambia nunca: va en la rama, la spec, el .feature, los tests y los commits."
+      placeholder: "US-026"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: epica
+    attributes:
+      label: Épica
+      options:
+        - "E1 Gestión de proyectos"
+        - "E2 Product Backlog"
+        - "E3 Gestión de Sprints"
+        - "E4 Estimación y Planning Poker"
+        - "E5 Registro de esfuerzo"
+        - "E6 Gestión de defectos"
+        - "E7 Métricas"
+        - "E8 Dashboard"
+        - "E9 Reportes"
+        - "E10 Plataforma y calidad"
+    validations:
+      required: true
+
+  - type: textarea
+    id: historia
+    attributes:
+      label: Historia
+      description: "En formato Como / quiero / para."
+      value: |
+        **Como**
+        **quiero**
+        **para**
+    validations:
+      required: true
+
+  - type: textarea
+    id: criterios
+    attributes:
+      label: Criterios de aceptación
+      description: "Numerados CA-NNN-k. Cada uno tiene que ser verificable y va a convertirse en al menos un escenario BDD."
+      value: |
+        - [ ] **CA-NNN-1**
+        - [ ] **CA-NNN-2**
+        - [ ] **CA-NNN-3**
+    validations:
+      required: true
+
+  - type: textarea
+    id: limite
+    attributes:
+      label: Casos límite y condiciones de error conocidos
+      description: "Lo que ya sabemos que puede salir mal. Se amplía al escribir la spec SDD."
+      placeholder: |
+        - Qué pasa si no hay sprints cerrados todavía
+        - Qué pasa con horas negativas o cero
+
+  - type: input
+    id: spec
+    attributes:
+      label: Especificación SDD
+      description: "Ruta del archivo en specs/. Se completa cuando la spec está mergeada."
+      placeholder: "specs/US-026-velocidad-equipo.md"
+
+  - type: dropdown
+    id: prioridad
+    attributes:
+      label: Prioridad (MoSCoW)
+      options: ["Must", "Should", "Could", "Won't"]
+    validations:
+      required: true
+
+  - type: dropdown
+    id: puntos
+    attributes:
+      label: Story Points
+      description: "Escala Fibonacci. Si sale 13, la historia se parte. Se define en Refinement o con Planning Poker."
+      options: ["1", "2", "3", "5", "8", "13 (partir)", "sin estimar"]
+    validations:
+      required: true
+
+  - type: textarea
+    id: dependencias
+    attributes:
+      label: Dependencias
+      description: "Otras historias que tienen que estar terminadas antes."
+      placeholder: "Depende de #12 (crear sprint) y #15 (cerrar sprint)"

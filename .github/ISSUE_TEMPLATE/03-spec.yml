@@ -1,0 +1,42 @@
+name: "Especificación SDD"
+description: "Escribir la especificación de una funcionalidad ANTES de implementarla."
+title: "[SPEC US-NNN] "
+labels: ["tipo:spec", "area:docs"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Specification-Driven Development: la especificación se escribe y se mergea **antes** de abrir
+        la rama de implementación. Eso es verificable en el historial por la fecha de los commits, así
+        que no sirve escribirla después.
+
+        Este issue produce un archivo en `specs/US-NNN-slug.md` usando `specs/_TEMPLATE.md`.
+        Los ocho apartados son los que exige la guía de cátedra y ninguno es opcional.
+
+  - type: input
+    id: historia
+    attributes:
+      label: Historia que especifica
+      placeholder: "US-026 — Calcular la velocidad del equipo"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: apartados
+    attributes:
+      label: Apartados obligatorios
+      options:
+        - label: "**Objetivo** — qué resuelve y para quién"
+        - label: "**Entradas** — datos, tipos y rangos válidos"
+        - label: "**Salidas esperadas** — qué devuelve y en qué formato"
+        - label: "**Reglas de negocio** — numeradas RN-NNN-k, cada una verificable"
+        - label: "**Restricciones** — límites técnicos o de negocio"
+        - label: "**Casos límite** — cero elementos, valores extremos, empates, divisiones por cero"
+        - label: "**Condiciones de error** — qué error se devuelve en cada caso inválido"
+        - label: "**Criterios de aceptación** — numerados CA-NNN-k, enganchan con los escenarios BDD"
+
+  - type: textarea
+    id: dudas
+    attributes:
+      label: Dudas para el Product Architect
+      description: "Lo que haya que preguntarle a la cátedra antes de poder cerrar la spec."

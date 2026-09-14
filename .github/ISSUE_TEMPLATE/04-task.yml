@@ -1,0 +1,59 @@
+name: "Tarea técnica o spike"
+description: "Trabajo necesario sin valor directo para el usuario: infraestructura, CI, refactors, investigación."
+title: "[T-NNN] "
+labels: ["tipo:tecnica"]
+body:
+  - type: input
+    id: identificador
+    attributes:
+      label: Identificador
+      placeholder: "T-002"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: clase
+    attributes:
+      label: Clase de trabajo
+      options:
+        - "Infraestructura o configuración"
+        - "CI / automatización"
+        - "Refactor"
+        - "Spike (investigación acotada en tiempo)"
+        - "Documentación"
+    validations:
+      required: true
+
+  - type: textarea
+    id: objetivo
+    attributes:
+      label: Objetivo
+      description: "Qué desbloquea o qué problema elimina."
+    validations:
+      required: true
+
+  - type: textarea
+    id: hecho
+    attributes:
+      label: Cómo sabemos que está terminada
+      description: "Criterio verificable, no una sensación. Si es un spike, cuál es la decisión que tiene que quedar tomada."
+      placeholder: |
+        - `make check` corre en verde en una máquina limpia
+        - El workflow falla si la cobertura del dominio baja de 85%
+    validations:
+      required: true
+
+  - type: input
+    id: timebox
+    attributes:
+      label: Timebox (solo para spikes)
+      description: "Si se pasa de este tiempo, se corta y se toma la decisión con lo que se sepa."
+      placeholder: "4 horas"
+
+  - type: dropdown
+    id: puntos
+    attributes:
+      label: Story Points
+      options: ["1", "2", "3", "5", "8", "sin estimar"]
+    validations:
+      required: true

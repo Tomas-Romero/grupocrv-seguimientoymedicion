@@ -1,0 +1,12 @@
+# El dominio son las reglas de negocio evaluadas: toda modificacion pasa por el Agile Enabler.
+/internal/domain/      @Tomas-Romero
+
+# La configuracion del proyecto tambien.
+/.github/              @Tomas-Romero
+/scripts/              @Tomas-Romero
+/Makefile              @Tomas-Romero
+/docker-compose.yml    @Tomas-Romero
+
+# Las specs y los escenarios los revisa quien no los escribio.
+/specs/                @Tomas-Romero
+/features/             @Tomas-Romero
