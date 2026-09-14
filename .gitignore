@@ -1,0 +1,24 @@
+# binarios
+/bin/
+/tmp/
+metrics-estimation
+
+# generados por templ
+*_templ.go
+
+# tailwind compilado
+/web/static/css/app.css
+
+# cobertura
+coverage.out
+domain.out
+coverage.html
+
+# entorno
+.env
+.env.local
+
+# editores
+.idea/
+.vscode/
+.DS_Store
