@@ -1,0 +1,185 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  GO_VERSION: "1.23"
+  TEMPL_VERSION: v0.2.793
+
+jobs:
+  # ---------------------------------------------------------------
+  # 1. Analisis estatico: formato, vet y golangci-lint
+  # ---------------------------------------------------------------
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: Instalar templ
+        run: go install github.com/a-h/templ/cmd/templ@${{ env.TEMPL_VERSION }}
+
+      - name: Generar plantillas
+        run: templ generate
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: Verificar formato
+        run: |
+          UNFORMATTED=$(gofmt -l . | grep -v '_templ.go' || true)
+          if [ -n "$UNFORMATTED" ]; then
+            echo "Estos archivos no estan formateados. Corre 'make fmt':"
+            echo "$UNFORMATTED"
+            exit 1
+          fi
+
+      - uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.61.0
+          args: --timeout=5m
+
+  # ---------------------------------------------------------------
+  # 2. Tests unitarios + cobertura con umbrales
+  # ---------------------------------------------------------------
+  test:
+    name: Tests y cobertura
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: metrics
+          POSTGRES_PASSWORD: metrics
+          POSTGRES_DB: metrics_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U metrics -d metrics_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgres://metrics:metrics@localhost:5432/metrics_test?sslmode=disable
+      MIN_DOMAIN: "85"
+      MIN_TOTAL: "70"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: Instalar templ y goose
+        run: |
+          go install github.com/a-h/templ/cmd/templ@${{ env.TEMPL_VERSION }}
+          go install github.com/pressly/goose/v3/cmd/goose@latest
+
+      - name: Generar plantillas
+        run: templ generate
+
+      - name: Aplicar migraciones
+        run: goose -dir migrations postgres "$DATABASE_URL" up
+
+      - name: Tests y umbrales de cobertura
+        run: ./scripts/coverage.sh
+
+      - name: Publicar reporte de cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cobertura
+          path: |
+            coverage.out
+            coverage.html
+          retention-days: 30
+
+  # ---------------------------------------------------------------
+  # 3. Escenarios BDD (godog)
+  # ---------------------------------------------------------------
+  bdd:
+    name: BDD
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: metrics
+          POSTGRES_PASSWORD: metrics
+          POSTGRES_DB: metrics_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U metrics -d metrics_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgres://metrics:metrics@localhost:5432/metrics_test?sslmode=disable
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: Instalar templ y goose
+        run: |
+          go install github.com/a-h/templ/cmd/templ@${{ env.TEMPL_VERSION }}
+          go install github.com/pressly/goose/v3/cmd/goose@latest
+
+      - name: Generar plantillas
+        run: templ generate
+
+      - name: Aplicar migraciones
+        run: goose -dir migrations postgres "$DATABASE_URL" up
+
+      - name: Correr escenarios
+        run: |
+          if compgen -G "features/*.feature" > /dev/null; then
+            go test ./features/... -count=1 -v
+          else
+            echo "Todavia no hay escenarios BDD. El job pasa, pero desde el Sprint 1 tiene que haberlos."
+          fi
+
+  # ---------------------------------------------------------------
+  # 4. Trazabilidad: toda historia cerrada necesita spec y escenario
+  # ---------------------------------------------------------------
+  trazabilidad:
+    name: Trazabilidad
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verificar que cada spec tenga su feature
+        run: |
+          FALTAN=0
+          shopt -s nullglob
+          for spec in specs/US-*.md; do
+            base=$(basename "$spec" .md)
+            if [ ! -f "features/${base}.feature" ]; then
+              echo "::warning file=${spec}::${base} tiene spec SDD pero no tiene escenario BDD en features/${base}.feature"
+              FALTAN=$((FALTAN+1))
+            fi
+          done
+          echo "Specs sin escenario BDD: $FALTAN"

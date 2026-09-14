@@ -1,0 +1,28 @@
+run:
+  timeout: 5m
+  tests: true
+
+linters:
+  enable:
+    - errcheck      # errores sin chequear
+    - govet
+    - staticcheck
+    - ineffassign   # asignaciones que no se usan
+    - unused
+    - gosimple
+    - misspell
+    - revive        # estilo idiomatico de Go
+    - errorlint     # uso correcto de errors.Is / errors.As
+    - bodyclose
+    - gocritic
+
+issues:
+  exclude-rules:
+    # los archivos generados por templ no se lintean
+    - path: _templ\.go
+      linters: [ all ]
+    # en tests permitimos lineas largas y helpers repetidos
+    - path: _test\.go
+      linters: [ errcheck, gocritic ]
+  max-issues-per-linter: 0
+  max-same-issues: 0

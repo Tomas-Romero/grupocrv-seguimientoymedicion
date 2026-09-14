@@ -1,0 +1,65 @@
+name: Convenciones del PR
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  titulo:
+    name: Titulo y rama
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validar el titulo del PR
+        env:
+          TITULO: ${{ github.event.pull_request.title }}
+        run: |
+          # Formato esperado: tipo(alcance): descripcion [US-NNN]
+          # Ej: feat(metrics): calculo de velocidad del equipo [US-026]
+          PATRON='^(feat|fix|test|refactor|docs|chore|ci|perf)(\([a-z0-9-]+\))?!?: .{10,} \[(US|DEF|T)-[0-9]{3}\]$'
+          if [[ ! "$TITULO" =~ $PATRON ]]; then
+            echo "El titulo del PR no cumple la convencion del equipo."
+            echo ""
+            echo "  Recibido : $TITULO"
+            echo "  Esperado : tipo(alcance): descripcion [US-NNN]"
+            echo ""
+            echo "  Tipos validos: feat, fix, test, refactor, docs, chore, ci, perf"
+            echo "  Ejemplos:"
+            echo "    feat(metrics): calculo de velocidad del equipo [US-026]"
+            echo "    fix(effort): rechazar horas negativas [DEF-007]"
+            echo "    ci(workflows): agregar umbral de cobertura [T-002]"
+            exit 1
+          fi
+          echo "Titulo OK"
+
+      - name: Validar el nombre de la rama
+        env:
+          RAMA: ${{ github.head_ref }}
+        run: |
+          # Formato esperado: tipo/US-NNN-descripcion-corta
+          PATRON='^(feat|fix|test|refactor|docs|chore|ci)/(US|DEF|T)-[0-9]{3}-[a-z0-9-]+$'
+          if [[ ! "$RAMA" =~ $PATRON ]]; then
+            echo "El nombre de la rama no cumple la convencion del equipo."
+            echo ""
+            echo "  Recibido : $RAMA"
+            echo "  Esperado : tipo/US-NNN-descripcion-corta"
+            echo ""
+            echo "  Ejemplos:"
+            echo "    feat/US-026-velocidad-equipo"
+            echo "    fix/DEF-007-horas-negativas"
+            exit 1
+          fi
+          echo "Rama OK"
+
+      - name: Verificar que el PR cierre un issue
+        env:
+          CUERPO: ${{ github.event.pull_request.body }}
+        run: |
+          if [[ ! "$CUERPO" =~ (Closes|Close|Fixes|Fix|Resolves|Resolve)\ \#[0-9]+ ]]; then
+            echo "El cuerpo del PR tiene que incluir 'Closes #N' con el numero del issue."
+            echo "Sin eso el issue no se cierra solo y el tablero queda desactualizado."
+            exit 1
+          fi
+          echo "Enlace al issue OK"
