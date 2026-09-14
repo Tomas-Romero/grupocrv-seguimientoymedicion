@@ -1,0 +1,44 @@
+id|titulo|epica|sp|prioridad|sprint|area|tipo
+T-001|Walking skeleton: Go + Postgres + templ + un test verde desplegable|E10 Plataforma|8|must|0|ci|tecnica
+T-002|Pipeline de CI con lint, tests, cobertura y umbrales|E10 Plataforma|5|must|0|ci|tecnica
+T-003|Migraciones goose y datos de ejemplo cargables|E10 Plataforma|3|must|0|db|tecnica
+US-001|Crear un proyecto con nombre, descripcion y fechas de inicio y fin|E1 Proyectos|3|must|1|domain|historia
+US-002|Modificar los datos de un proyecto existente|E1 Proyectos|2|must|1|domain|historia
+US-003|Registrar integrantes en un proyecto|E1 Proyectos|3|must|1|domain|historia
+US-005|Crear un item de Product Backlog con todos sus atributos y criterios de aceptacion|E2 Backlog|5|must|1|domain|historia
+US-006|Editar y repriorizar items del backlog|E2 Backlog|3|must|1|domain|historia
+US-008|Crear un Sprint con Sprint Goal y fechas|E3 Sprints|3|must|1|domain|historia
+US-009|Asignar historias del backlog a un Sprint|E3 Sprints|3|must|1|domain|historia
+US-025|Calcular Story Points planificados y completados de un Sprint|E7 Metricas|3|must|1|domain|historia
+US-026|Calcular la velocidad del equipo sobre los sprints cerrados|E7 Metricas|3|must|1|domain|historia
+T-006|Integrar godog y automatizar el primer escenario BDD de punta a punta|E10 Plataforma|5|must|1|ci|tecnica
+T-004|Layout base, navegacion y sistema visual con Tailwind|E10 Plataforma|5|must|2|ui|tecnica
+T-005|Validaciones de formulario y manejo uniforme de errores|E10 Plataforma|5|must|2|http|tecnica
+US-004|Consultar el estado general de un proyecto|E1 Proyectos|2|must|2|ui|historia
+US-007|Listar y filtrar el backlog por estado y prioridad|E2 Backlog|3|should|2|ui|historia
+US-010|Marcar historias como completadas dentro de un Sprint|E3 Sprints|2|must|2|domain|historia
+US-011|Cerrar un Sprint y devolver las historias no completadas al backlog|E3 Sprints|5|must|2|domain|historia
+US-012|Consultar Sprints anteriores y su resultado|E3 Sprints|2|must|2|ui|historia
+US-013|Estimar una historia asignandole Story Points en escala Fibonacci|E4 Estimacion|2|must|2|domain|historia
+US-019|Registrar esfuerzo con integrante, fecha, actividad y horas|E5 Esfuerzo|5|must|2|domain|historia
+US-020|Consultar el esfuerzo registrado por historia, integrante y sprint|E5 Esfuerzo|3|must|2|ui|historia
+US-021|Comparar el esfuerzo estimado contra el esfuerzo real|E5 Esfuerzo|3|must|2|domain|historia
+US-014|Iniciar una sesion de Planning Poker sobre una historia|E4 Estimacion|5|must|3|domain|historia
+US-015|Registrar el voto individual manteniendolo oculto hasta el cierre|E4 Estimacion|5|must|3|domain|historia
+US-016|Revelar las estimaciones y detectar divergencias entre integrantes|E4 Estimacion|5|must|3|domain|historia
+US-017|Abrir una nueva ronda de votacion cuando hay divergencia|E4 Estimacion|3|should|3|domain|historia
+US-018|Registrar la estimacion acordada como valor final de la historia|E4 Estimacion|3|must|3|domain|historia
+US-022|Registrar un defecto con severidad, historia relacionada y sprint de deteccion|E6 Defectos|5|must|3|domain|historia
+US-023|Cambiar el estado de un defecto y registrar su sprint de resolucion|E6 Defectos|3|must|3|domain|historia
+US-024|Listar defectos filtrando por sprint y severidad|E6 Defectos|3|should|3|ui|historia
+US-027|Calcular horas estimadas, horas reales y la desviacion entre ambas|E7 Metricas|5|must|3|domain|historia
+US-028|Calcular el porcentaje de historias completadas|E7 Metricas|2|must|3|domain|historia
+US-029|Calcular defectos detectados y resueltos por sprint|E7 Metricas|3|must|3|domain|historia
+US-030|Ver un Dashboard con el estado del proyecto y sus metricas principales|E8 Dashboard|5|must|3|ui|historia
+US-031|Ver el burndown de Story Points del sprint en curso|E8 Dashboard|5|must|4|ui|historia
+US-032|Ver graficos de velocidad historica y evolucion de defectos|E8 Dashboard|5|should|4|ui|historia
+US-033|Generar en pantalla el reporte completo de un proyecto o Sprint|E9 Reportes|5|must|4|ui|historia
+US-034|Exportar el reporte del proyecto a un archivo PDF|E9 Reportes|8|must|4|http|historia
+T-007|Generar automaticamente la matriz de trazabilidad|E10 Plataforma|5|could|4|ci|tecnica
+T-008|Documentacion tecnica, manual de usuario e informe de metricas y cobertura|E10 Plataforma|5|must|4|docs|tecnica
+T-009|Preparar la presentacion final y ensayar el recorrido de trazabilidad con datos reales|E10 Plataforma|5|must|4|docs|tecnica
