@@ -64,6 +64,7 @@ Interfaz web renderizada en el servidor con `templ` y HTMX. PostgreSQL.
 | Documento | Para qué |
 |---|---|
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | Cómo trabajamos: carpetas, nombres, ramas, commits, PRs |
+| [`docs/plan-de-trabajo.md`](docs/plan-de-trabajo.md) | Sprint Goals, responsables por historia y calendario hasta la entrega |
 | [`specs/`](specs/) | Especificaciones SDD, una por funcionalidad |
 | [`features/`](features/) | Escenarios BDD en Gherkin |
 | [`docs/adr/`](docs/adr/) | Decisiones de arquitectura y por qué se tomaron |
