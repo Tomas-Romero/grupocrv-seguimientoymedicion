@@ -15,6 +15,7 @@ tools: ## Instala las herramientas de desarrollo (correr una sola vez)
 	$(GO) install github.com/a-h/templ/cmd/templ@v0.2.793
 	$(GO) install github.com/pressly/goose/v3/cmd/goose@latest
 	$(GO) install github.com/air-verse/air@latest
+	$(GO) install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.8
 
 up: ## Levanta Postgres, aplica migraciones y carga datos de ejemplo
 	docker compose up -d db
@@ -51,10 +52,10 @@ test: gen ## Corre todos los tests unitarios
 	$(GO) test ./... -race -count=1
 
 cover: gen ## Corre tests con cobertura y verifica los umbrales
-	./scripts/coverage.sh
+	bash ./scripts/coverage.sh
 
 bdd: gen ## Corre los escenarios BDD (godog)
-	$(GO) test ./features/... -race -count=1
+	@if ls features/*.feature >/dev/null 2>&1; then $(GO) test ./features/... -race -count=1; else echo "Todavia no hay escenarios BDD (igual que en CI)."; fi
 
 lint: ## Analisis estatico
 	$(GO) vet ./...
