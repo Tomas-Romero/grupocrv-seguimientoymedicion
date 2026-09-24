@@ -10,7 +10,7 @@ linters:
     - ineffassign   # asignaciones que no se usan
     - unused
     - gosimple
-    - misspell
+    # misspell no se usa: toma las palabras en español como errores de ingles
     - revive        # estilo idiomatico de Go
     - errorlint     # uso correcto de errors.Is / errors.As
     - bodyclose
