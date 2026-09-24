@@ -12,8 +12,8 @@ silencio.
 ## 0. Puesta en marcha (una sola vez)
 
 ```bash
-git clone git@github.com:Tomas-Romero/metrics-estimation.git
-cd metrics-estimation
+git clone git@github.com:Tomas-Romero/grupocrv-seguimientoymedicion.git
+cd grupocrv-seguimientoymedicion
 
 cp .env.example .env         # y exportá DATABASE_URL en tu shell
 make tools                   # instala templ, goose y air

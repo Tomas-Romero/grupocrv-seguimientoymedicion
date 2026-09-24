@@ -22,12 +22,12 @@ set -euo pipefail
 
 # --- CONFIGURACION: ajustar estos valores antes de correr --------------------
 OWNER="Tomas-Romero"
-REPO="metrics-estimation"
+REPO="grupocrv-seguimientoymedicion"
 DESC="Software Metrics & Estimation — TP Integrador de Ingenieria y Calidad de Software, UTN FRSR 2026"
 BUILDER_1="ConfortiAngelo"
 BUILDER_2="JuanVergara-9"
-PROYECTO="Metrics & Estimation"
-VISIBILIDAD="--public"   # cambiar a --public si la catedra lo pide
+PROYECTO="seguimientoymedicion-grupocrv"
+VISIBILIDAD="--public"
 # -----------------------------------------------------------------------------
 
 azul()  { printf '\n\033[36m==> %s\033[0m\n' "$1"; }
@@ -129,9 +129,9 @@ cat <<'FINAL'
   Campos personalizados
     Status          (ya existe)  -> Backlog · Ready · Sprint Backlog ·
                                     In Progress · In Review · Done
-    Sprint          Iteration    -> duracion 2 semanas, inicio 21/09/2026
-                                    (el Sprint 0 se carga como iteracion de 1 semana
-                                     desde el 14/09, o se deja sin iteracion)
+    Sprint          Iteration    -> duracion 1 semana, inicio 14/09/2026
+                                    (Sprint 0 a Sprint 4, una iteracion por semana; las fechas son
+                                     estimativas y se ajustan en cada Planning)
     Story Points    Number
     Priority        Single select -> Must · Should · Could · Won't
     Epic            Single select -> E1 … E10

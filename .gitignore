@@ -1,7 +1,7 @@
 # binarios
 /bin/
 /tmp/
-metrics-estimation
+grupocrv-seguimientoymedicion
 
 # generados por templ
 *_templ.go

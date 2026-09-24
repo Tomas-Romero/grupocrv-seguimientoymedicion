@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/Tomas-Romero/metrics-estimation/internal/platform/config"
+	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/platform/config"
 )
 
 // entorno simula las variables de entorno sin tocar el proceso real.

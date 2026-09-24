@@ -16,7 +16,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Tomas-Romero/metrics-estimation/internal/platform/config"
+	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/platform/config"
 )
 
 func main() {

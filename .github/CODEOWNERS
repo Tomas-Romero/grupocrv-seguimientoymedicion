@@ -8,5 +8,5 @@
 /docker-compose.yml    @Tomas-Romero
 
 # Las specs y los escenarios los revisa quien no los escribio.
-/specs/                @Tomas-Romero
-/features/             @Tomas-Romero
+/specs/               @JuanVergara-9 @ConfortiAngelo
+/features/            @JuanVergara-9 @ConfortiAngelo

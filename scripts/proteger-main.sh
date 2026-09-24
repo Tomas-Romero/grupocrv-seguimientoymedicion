@@ -13,7 +13,7 @@
 set -euo pipefail
 
 OWNER="Tomas-Romero"
-REPO="metrics-estimation"
+REPO="grupocrv-seguimientoymedicion"
 
 command -v gh >/dev/null || { echo "Falta gh CLI"; exit 1; }
 

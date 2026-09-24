@@ -2,33 +2,75 @@
 # =============================================================================
 #  Carga el Product Backlog inicial como issues de GitHub.
 #
-#  Lee scripts/backlog.csv (separado por |) y crea un issue por fila con sus
-#  etiquetas de tipo, prioridad, area, story points y sprint.
+#  Lee scripts/backlog.csv (separado por |) y por cada fila:
+#    1. crea el issue con sus etiquetas de tipo, prioridad, area, SP y sprint
+#    2. lo agrega al Project
+#    3. completa los campos del Project: Story Points, Sprint, Priority, Epic,
+#       Tipo y Status
+#
+#  Es idempotente: si ya existe un issue con el mismo ID en el titulo, lo omite.
+#
+#  Precondicion: el Project tiene los campos Status, Sprint (iteration),
+#  Story Points, Priority, Epic y Tipo, con las opciones que usa el CSV.
 #
 #  Uso:
 #    ./scripts/crear-issues.sh            # crea los issues
 #    ./scripts/crear-issues.sh --dry-run  # solo muestra lo que haria
-#
-#  Despues de correrlo: abri el Project y asigna el campo Sprint (iteration)
-#  y Story Points a cada item. La etiqueta sprint:N te dice cual va en cada uno.
 # =============================================================================
 set -euo pipefail
 
 OWNER="Tomas-Romero"
-REPO="metrics-estimation"
+REPO="grupocrv-seguimientoymedicion"
+PROYECTO_NUM=3
 CSV="$(dirname "$0")/backlog.csv"
-PROYECTO="Metrics & Estimation"
+HECHOS=" T-001 T-002 T-003 "   # tareas ya terminadas al momento de la carga
 DRY_RUN=0
 [[ "${1:-}" == "--dry-run" ]] && DRY_RUN=1
 
 command -v gh >/dev/null || { echo "Falta gh CLI"; exit 1; }
 [[ -f "$CSV" ]] || { echo "No encuentro $CSV"; exit 1; }
 
-# etiquetas de sprint
-for n in 0 1 2 3 4; do
-  gh label create "sprint:$n" --color "EDEDED" --description "Asignada tentativamente al Sprint $n" \
-    --repo "$OWNER/$REPO" --force >/dev/null 2>&1 || true
-done
+declare -A CAMPO OPCION ITER
+PROYECTO_ID=""
+
+# Lee una sola vez los IDs del Project: campos, opciones e iteraciones.
+cargar_ids() {
+  local linea tipo clave valor
+  while IFS=$'\t' read -r tipo clave valor; do
+    case "$tipo" in
+      P) PROYECTO_ID="$clave" ;;
+      F) CAMPO["$clave"]="$valor" ;;
+      O) OPCION["$clave"]="$valor" ;;
+      I) ITER["$clave"]="$valor" ;;
+    esac
+  done < <(gh api graphql \
+    -f query='query($o:String!,$n:Int!){user(login:$o){projectV2(number:$n){id fields(first:30){nodes{
+      ... on ProjectV2Field{id name}
+      ... on ProjectV2SingleSelectField{id name options{id name}}
+      ... on ProjectV2IterationField{id name configuration{iterations{id title}}}}}}}}' \
+    -f o="$OWNER" -F n="$PROYECTO_NUM" \
+    --jq '.data.user.projectV2 | "P\t\(.id)\t", (.fields.nodes[] | select(.name) | .name as $f
+      | "F\t\($f)\t\(.id)",
+        ((.options // [])[] | "O\t\($f)/\(.name)\t\(.id)"),
+        ((.configuration.iterations // [])[] | "I\t\($f)/\(.title)\t\(.id)"))')
+  [[ -n "$PROYECTO_ID" ]] || { echo "No pude leer el Project #$PROYECTO_NUM"; exit 1; }
+}
+
+fijar_opcion() { # item campo opcion
+  local opcion="${OPCION["$2/$3"]:-}"
+  [[ -n "$opcion" ]] || { echo "    (falta la opcion '$3' en el campo '$2')"; return 0; }
+  gh project item-edit --id "$1" --project-id "$PROYECTO_ID" \
+    --field-id "${CAMPO[$2]}" --single-select-option-id "$opcion" >/dev/null
+}
+
+if [[ "$DRY_RUN" -eq 0 ]]; then
+  cargar_ids
+  # etiquetas de sprint
+  for n in 0 1 2 3 4; do
+    gh label create "sprint:$n" --color "EDEDED" --description "Asignada tentativamente al Sprint $n" \
+      --repo "$OWNER/$REPO" --force >/dev/null
+  done
+fi
 
 CREADOS=0
 while IFS='|' read -r id titulo epica sp prioridad sprint area tipo; do
@@ -36,6 +78,18 @@ while IFS='|' read -r id titulo epica sp prioridad sprint area tipo; do
   [[ -z "${id// }" ]] && continue      # linea vacia
 
   LABELS="tipo:${tipo},prio:${prioridad},area:${area},sp:${sp},sprint:${sprint}"
+
+  if [[ "$DRY_RUN" -eq 1 ]]; then
+    printf '  [dry-run] %-8s %-70.70s  %s\n' "$id" "$titulo" "$LABELS"
+    continue
+  fi
+
+  EXISTE=$(gh issue list --repo "$OWNER/$REPO" --state all --search "\"[$id]\" in:title" \
+    --json number --jq 'length')
+  if [[ "$EXISTE" != "0" ]]; then
+    printf '  %-8s ya existe, se omite\n' "$id"
+    continue
+  fi
 
   CUERPO=$(cat <<BODY
 **Epica:** ${epica}
@@ -57,28 +111,39 @@ while IFS='|' read -r id titulo epica sp prioridad sprint area tipo; do
 | Escenarios BDD | \`features/${id}-slug.feature\` |
 | Rama | \`feat/${id}-slug\` |
 
-> Issue creado automaticamente desde \`scripts/backlog.csv\` en el Sprint 0.
 > Antes de entrar a un Sprint tiene que cumplir el Definition of Ready (ver CONTRIBUTING.md).
 BODY
 )
 
-  if [[ "$DRY_RUN" -eq 1 ]]; then
-    printf '  [dry-run] %-8s %-70.70s  %s\n' "$id" "$titulo" "$LABELS"
+  URL=$(gh issue create --repo "$OWNER/$REPO" --title "[$id] $titulo" --body "$CUERPO" --label "$LABELS")
+  ITEM=$(gh project item-add "$PROYECTO_NUM" --owner "$OWNER" --url "$URL" --format json --jq '.id')
+
+  # campos del Project
+  gh project item-edit --id "$ITEM" --project-id "$PROYECTO_ID" \
+    --field-id "${CAMPO[Story Points]}" --number "$sp" >/dev/null
+  gh project item-edit --id "$ITEM" --project-id "$PROYECTO_ID" \
+    --field-id "${CAMPO[Sprint]}" --iteration-id "${ITER["Sprint/Sprint $sprint"]}" >/dev/null
+  fijar_opcion "$ITEM" "Epic" "$epica"
+  case "$prioridad" in
+    must) p="Must" ;; should) p="Should" ;; could) p="Could" ;; *) p="Won't" ;;
+  esac
+  fijar_opcion "$ITEM" "Priority" "$p"
+  case "$tipo" in
+    historia) t="Historia" ;; defecto) t="Defecto" ;; tecnica) t="Tecnica" ;; *) t="Spike" ;;
+  esac
+  fijar_opcion "$ITEM" "Tipo" "$t"
+
+  if [[ "$HECHOS" == *" $id "* ]]; then
+    fijar_opcion "$ITEM" "Status" "Done"
+    gh issue close "$URL" --reason completed >/dev/null
   else
-    URL=$(gh issue create \
-      --repo "$OWNER/$REPO" \
-      --title "[$id] $titulo" \
-      --body "$CUERPO" \
-      --label "$LABELS")
-    printf '  %-8s %s\n' "$id" "$URL"
-    gh project item-add --owner "$OWNER" --url "$URL" \
-      "$(gh project list --owner "$OWNER" --format json | python3 -c "import sys,json;print(next(p['number'] for p in json.load(sys.stdin)['projects'] if p['title']=='$PROYECTO'))" 2>/dev/null)" \
-      >/dev/null 2>&1 || true
-    CREADOS=$((CREADOS+1))
-    sleep 1   # no pasarse del rate limit
+    fijar_opcion "$ITEM" "Status" "Backlog"
   fi
+
+  printf '  %-8s %s\n' "$id" "$URL"
+  CREADOS=$((CREADOS+1))
+  sleep 1   # no pasarse del rate limit
 done < "$CSV"
 
 echo ""
 echo "  Listo. Issues creados: $CREADOS"
-echo "  Ahora entra al Project y carga los campos Sprint y Story Points."

@@ -20,8 +20,8 @@ Sistemas, UTN Facultad Regional San Rafael, 2026.
 Requisitos: Docker y Docker Compose.
 
 ```bash
-git clone https://github.com/Tomas-Romero/metrics-estimation.git
-cd metrics-estimation
+git clone https://github.com/Tomas-Romero/grupocrv-seguimientoymedicion.git
+cd grupocrv-seguimientoymedicion
 docker compose --profile full up
 ```
 
