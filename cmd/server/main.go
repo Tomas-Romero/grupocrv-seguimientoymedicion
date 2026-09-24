@@ -16,7 +16,9 @@ import (
 	"syscall"
 	"time"
 
+	httpadapter "github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/adapters/http"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/platform/config"
+	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/platform/db"
 )
 
 func main() {
@@ -32,12 +34,21 @@ func run() error {
 		return fmt.Errorf("cargar configuracion: %w", err)
 	}
 
+	// Apagado ordenado: al recibir Ctrl+C se dejan terminar las peticiones en curso.
+	ctx, detener := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer detener()
+
+	// Si la base no responde al arrancar, el servidor no arranca.
+	conexion, cancelarConexion := context.WithTimeout(ctx, 10*time.Second)
+	pool, err := db.Conectar(conexion, cfg.DatabaseURL)
+	cancelarConexion()
+	if err != nil {
+		return fmt.Errorf("conectar a la base de datos: %w", err)
+	}
+	defer pool.Close()
+
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /health", func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(`{"estado":"ok"}`))
-	})
+	mux.HandleFunc("GET /health", httpadapter.Health(pool, 2*time.Second))
 	mux.HandleFunc("GET /", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		_, _ = w.Write([]byte("<h1>Software Metrics &amp; Estimation</h1><p>Sprint 0 — walking skeleton.</p>"))
@@ -48,10 +59,6 @@ func run() error {
 		Handler:           mux,
 		ReadHeaderTimeout: 10 * time.Second,
 	}
-
-	// Apagado ordenado: al recibir Ctrl+C se dejan terminar las peticiones en curso.
-	ctx, detener := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer detener()
 
 	errc := make(chan error, 1)
 	go func() {
