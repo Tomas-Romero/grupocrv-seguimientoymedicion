@@ -118,8 +118,14 @@ BODY
     CREADOS=$((CREADOS+1))
   fi
 
-  # item-add es idempotente: si el issue ya esta en el Project devuelve el mismo item
-  ITEM=$(gh project item-add "$PROYECTO_NUM" --owner "$OWNER" --url "$URL" --format json --jq '.id')
+  # Si el issue ya esta en el Project (por corrida previa o por el auto-add del
+  # Project), item-add falla con "already exists": en ese caso se busca su item.
+  ITEM=$(gh project item-add "$PROYECTO_NUM" --owner "$OWNER" --url "$URL" --format json --jq '.id' 2>/dev/null || true)
+  if [[ -z "$ITEM" ]]; then
+    ITEM=$(gh project item-list "$PROYECTO_NUM" --owner "$OWNER" --limit 200 --format json \
+      --jq ".items[] | select(.content.url == \"$URL\") | .id")
+  fi
+  [[ -n "$ITEM" ]] || { echo "No pude agregar ni encontrar $URL en el Project"; exit 1; }
 
   # campos del Project
   gh project item-edit --id "$ITEM" --project-id "$PROYECTO_ID" \
