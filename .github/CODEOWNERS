@@ -1,12 +1,17 @@
-# El dominio son las reglas de negocio evaluadas: toda modificacion pasa por el Agile Enabler.
-/internal/domain/      @Tomas-Romero
+# Cada area tiene dos duenos para que siempre haya alguien distinto del autor que
+# pueda aprobar el PR. Sin esto, quien escribe el cambio en su propia area no
+# tendria a nadie que lo apruebe como code owner.
+
+# El dominio son las reglas de negocio evaluadas: toda modificacion la revisan
+# el Agile Enabler o Vergara.
+/internal/domain/      @Tomas-Romero @JuanVergara-9
 
 # La configuracion del proyecto tambien.
-/.github/              @Tomas-Romero
-/scripts/              @Tomas-Romero
-/Makefile              @Tomas-Romero
-/docker-compose.yml    @Tomas-Romero
+/.github/              @Tomas-Romero @JuanVergara-9
+/scripts/              @Tomas-Romero @JuanVergara-9
+/Makefile              @Tomas-Romero @JuanVergara-9
+/docker-compose.yml    @Tomas-Romero @JuanVergara-9
 
 # Las specs y los escenarios los revisa quien no los escribio.
-/specs/               @JuanVergara-9 @ConfortiAngelo
-/features/            @JuanVergara-9 @ConfortiAngelo
+/specs/                @JuanVergara-9 @ConfortiAngelo
+/features/             @JuanVergara-9 @ConfortiAngelo
