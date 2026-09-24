@@ -143,7 +143,7 @@ BODY
   printf '  %-8s %s\n' "$id" "$URL"
   CREADOS=$((CREADOS+1))
   sleep 1   # no pasarse del rate limit
-done < "$CSV"
+done < <(tr -d '\015' < "$CSV")   # el CSV puede venir con finales de linea de Windows
 
 echo ""
 echo "  Listo. Issues creados: $CREADOS"
