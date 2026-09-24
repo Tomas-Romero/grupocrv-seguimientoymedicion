@@ -8,7 +8,8 @@
 #    3. completa los campos del Project: Story Points, Sprint, Priority, Epic,
 #       Tipo y Status
 #
-#  Es idempotente: si ya existe un issue con el mismo ID en el titulo, lo omite.
+#  Es idempotente: si ya existe un issue con el mismo ID en el titulo no lo
+#  duplica, pero vuelve a completar sus campos en el Project.
 #
 #  Precondicion: el Project tiene los campos Status, Sprint (iteration),
 #  Story Points, Priority, Epic y Tipo, con las opciones que usa el CSV.
@@ -34,9 +35,10 @@ declare -A CAMPO OPCION ITER
 PROYECTO_ID=""
 
 # Lee una sola vez los IDs del Project: campos, opciones e iteraciones.
+# Las iteraciones cuya fecha ya paso figuran como "completadas": se leen igual.
 cargar_ids() {
-  local linea tipo clave valor
-  while IFS=$'\t' read -r tipo clave valor; do
+  local tipo clave valor
+  while IFS='|' read -r tipo clave valor; do
     case "$tipo" in
       P) PROYECTO_ID="$clave" ;;
       F) CAMPO["$clave"]="$valor" ;;
@@ -47,12 +49,13 @@ cargar_ids() {
     -f query='query($o:String!,$n:Int!){user(login:$o){projectV2(number:$n){id fields(first:30){nodes{
       ... on ProjectV2Field{id name}
       ... on ProjectV2SingleSelectField{id name options{id name}}
-      ... on ProjectV2IterationField{id name configuration{iterations{id title}}}}}}}}' \
+      ... on ProjectV2IterationField{id name configuration{iterations{id title} completedIterations{id title}}}}}}}}' \
     -f o="$OWNER" -F n="$PROYECTO_NUM" \
-    --jq '.data.user.projectV2 | "P\t\(.id)\t", (.fields.nodes[] | select(.name) | .name as $f
-      | "F\t\($f)\t\(.id)",
-        ((.options // [])[] | "O\t\($f)/\(.name)\t\(.id)"),
-        ((.configuration.iterations // [])[] | "I\t\($f)/\(.title)\t\(.id)"))')
+    --jq '.data.user.projectV2 | "P|\(.id)|", (.fields.nodes[] | select(.name) | .name as $f
+      | "F|\($f)|\(.id)",
+        ((.options // [])[] | "O|\($f)/\(.name)|\(.id)"),
+        (((.configuration.iterations // []) + (.configuration.completedIterations // []))[]
+          | "I|\($f)/\(.title)|\(.id)"))')
   [[ -n "$PROYECTO_ID" ]] || { echo "No pude leer el Project #$PROYECTO_NUM"; exit 1; }
 }
 
@@ -84,14 +87,11 @@ while IFS='|' read -r id titulo epica sp prioridad sprint area tipo; do
     continue
   fi
 
-  EXISTE=$(gh issue list --repo "$OWNER/$REPO" --state all --search "\"[$id]\" in:title" \
-    --json number --jq 'length')
-  if [[ "$EXISTE" != "0" ]]; then
-    printf '  %-8s ya existe, se omite\n' "$id"
-    continue
-  fi
+  URL=$(gh issue list --repo "$OWNER/$REPO" --state all --search "\"[$id]\" in:title" \
+    --json url --jq '.[0].url // empty')
 
-  CUERPO=$(cat <<BODY
+  if [[ -z "$URL" ]]; then
+    CUERPO=$(cat <<BODY
 **Epica:** ${epica}
 **Story Points (estimacion inicial):** ${sp}
 **Sprint tentativo:** ${sprint}
@@ -114,8 +114,11 @@ while IFS='|' read -r id titulo epica sp prioridad sprint area tipo; do
 > Antes de entrar a un Sprint tiene que cumplir el Definition of Ready (ver CONTRIBUTING.md).
 BODY
 )
+    URL=$(gh issue create --repo "$OWNER/$REPO" --title "[$id] $titulo" --body "$CUERPO" --label "$LABELS")
+    CREADOS=$((CREADOS+1))
+  fi
 
-  URL=$(gh issue create --repo "$OWNER/$REPO" --title "[$id] $titulo" --body "$CUERPO" --label "$LABELS")
+  # item-add es idempotente: si el issue ya esta en el Project devuelve el mismo item
   ITEM=$(gh project item-add "$PROYECTO_NUM" --owner "$OWNER" --url "$URL" --format json --jq '.id')
 
   # campos del Project
@@ -135,15 +138,14 @@ BODY
 
   if [[ "$HECHOS" == *" $id "* ]]; then
     fijar_opcion "$ITEM" "Status" "Done"
-    gh issue close "$URL" --reason completed >/dev/null
+    gh issue close "$URL" --reason completed >/dev/null 2>&1 || true
   else
     fijar_opcion "$ITEM" "Status" "Backlog"
   fi
 
   printf '  %-8s %s\n' "$id" "$URL"
-  CREADOS=$((CREADOS+1))
   sleep 1   # no pasarse del rate limit
 done < <(tr -d '\015' < "$CSV")   # el CSV puede venir con finales de linea de Windows
 
 echo ""
-echo "  Listo. Issues creados: $CREADOS"
+echo "  Listo. Issues creados en esta corrida: $CREADOS"
