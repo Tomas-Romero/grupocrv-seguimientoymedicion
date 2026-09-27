@@ -29,7 +29,7 @@ func TestConectar_Errores(t *testing.T) {
 		},
 		{
 			nombre: "servidor inalcanzable",
-			url:    "postgres://metrics:metrics@127.0.0.1:1/metrics?sslmode=disable&connect_timeout=1",
+			url:    "postgres://metrics:metrics@127.0.0.1:0/metrics?sslmode=disable&connect_timeout=1",
 		},
 	}
 
