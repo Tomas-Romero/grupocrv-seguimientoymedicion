@@ -1,0 +1,3 @@
+# Todos los archivos de texto se guardan y se descargan con finales de linea LF.
+# Sin esto, en Windows los scripts .sh quedan con CRLF y dejan de ejecutarse.
+* text=auto eol=lf

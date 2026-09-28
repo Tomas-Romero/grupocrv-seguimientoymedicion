@@ -42,6 +42,14 @@ make check     # lint + tests + cobertura + BDD (lo mismo que corre CI)
 make help      # todos los targets disponibles
 ```
 
+### En Windows
+
+- Corré **todos los `make` desde Git Bash**, no desde PowerShell: el `Makefile` usa `bash`.
+- `git config core.autocrlf input` antes de clonar o trabajar, para que los scripts no queden con finales de línea de Windows.
+- Después de `make tools`, agregá `~/go/bin` al `PATH` de Git Bash: `export PATH="$PATH:$HOME/go/bin"`.
+- El linter no soporta versiones de Go mucho más nuevas que la del CI. Si `make check` falla en lint con un error de "export data", corré `export GOTOOLCHAIN=go1.23.12`.
+- Si ya tenés un PostgreSQL local usando el puerto 5432, o lo frenás o ponés `DB_PORT=5433` en `.env` y cambiás el puerto en `DATABASE_URL`.
+
 ---
 
 ## Qué hace
