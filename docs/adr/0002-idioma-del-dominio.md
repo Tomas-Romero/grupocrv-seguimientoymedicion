@@ -16,24 +16,32 @@ los dos idiomas:
 - El código Go que ya existe usa `config.Cargar`, `LectorEntorno`,
   `db.Conectar` y `ErrFaltaDatabaseURL`.
 - En cambio, el plan de trabajo y `CONTRIBUTING.md` tienen ejemplos en inglés:
-  `BacklogItem`, `SprintSummary`, `PokerSession`.
+  tipos como `BacklogItem`, `SprintSummary` y `PokerSession`, y paquetes y
+  archivos como `metrics`, `defect` y `velocity.go`.
 
 Sin una regla, cada historia elige por su cuenta y el mismo concepto termina
 con dos nombres.
 
 ## Decisión
 
-**El dominio, las tablas y las especificaciones se escriben en español.**
+**El dominio, las tablas, las especificaciones y los nombres de paquetes y
+archivos Go se escriben en español.**
 
 | Qué | Idioma | Ejemplo |
 |---|---|---|
 | Tipos, campos, funciones y errores del dominio | Español | `ItemBacklog`, `ResumenSprint` |
+| Paquetes y archivos Go | Español | `metricas`, `velocidad.go` |
 | Tablas y columnas de las migraciones | Español | `proyectos`, `fecha_inicio` |
 | Especificaciones SDD | Español | `specs/US-026-velocidad-equipo.md` |
-| Términos de Scrum | Inglés | Sprint, Story Points, Backlog |
+| Términos de Scrum | Inglés | Sprint, Sprint Goal, Backlog, Story Points, Planning Poker, Daily, Review, Retrospective, Definition of Ready, Definition of Done |
 
-Los identificadores Go van **sin acentos ni ñ**: `Descripcion`, no
-`Descripción`.
+- Los términos de Scrum de la lista quedan en inglés dentro de cualquier
+  nombre, y el resto del nombre va en español: `SesionPlanningPoker`,
+  `SprintGoal`, `ItemBacklog`.
+- Solo son términos de Scrum los de la lista. *Velocidad*, por ejemplo, va en
+  español: `velocidad.go`.
+- Los identificadores Go van **sin acentos ni ñ**: `Descripcion`, no
+  `Descripción`.
 
 ## Alternativas consideradas
 
@@ -49,20 +57,29 @@ que se busca en el código.
 
 - La trazabilidad spec → código es literal: lo que nombra la spec (por
   ejemplo, `ItemBacklog`) es lo que aparece en el código.
-- No hay que renombrar la migración `00001_init.sql` ni la spec de US-026.
+- No hay que renombrar la migración `00001_init.sql` ni los tipos de la spec de
+  US-026; de esa spec solo cambia el paquete (ver abajo).
 
 **En contra**
 
 - Los nombres mezclan idiomas cuando incluyen un término de Scrum
-  (`ItemBacklog`).
-- El plan de trabajo y `CONTRIBUTING.md` tienen ejemplos en inglés que no
-  siguen esta decisión. **No se editan en este ADR**; quedan listados para
-  corregirlos aparte:
+  (`ItemBacklog`, `SesionPlanningPoker`).
+- El plan de trabajo, `CONTRIBUTING.md` y la spec de US-026 tienen nombres en
+  inglés que no siguen esta decisión. **No se editan en este ADR**; quedan
+  listados para corregirlos aparte:
 
-  | Archivo | Línea | Dónde | Texto actual |
+  | Archivo | Línea | Dónde | Nombres que no siguen la decisión |
   |---|---|---|---|
-  | `docs/plan-de-trabajo.md` | 64 | Fila de US-005 | Define `BacklogItem` |
-  | `docs/plan-de-trabajo.md` | 69 | Fila de US-026 | Depende de US-025 (`SprintSummary`) |
-  | `docs/plan-de-trabajo.md` | 109 | Fila de US-014 | Define `PokerSession` |
-  | `CONTRIBUTING.md` | 158 | §2, Paso 5 (ejemplo del ciclo TDD) | `refactor(metrics): extraer SprintSummary y eliminar duplicacion [US-026]` |
-  | `CONTRIBUTING.md` | 266 | §3, ejemplos de commits buenos | `refactor(metrics): extraer SprintSummary [US-026]` |
+  | `docs/plan-de-trabajo.md` | 64 | Fila de US-005 | `BacklogItem` |
+  | `docs/plan-de-trabajo.md` | 69 | Fila de US-026 | `SprintSummary` |
+  | `docs/plan-de-trabajo.md` | 109 | Fila de US-014 | `PokerSession` |
+  | `CONTRIBUTING.md` | 80 | §1, tabla de nombres: paquete Go | `metrics`, `defect` |
+  | `CONTRIBUTING.md` | 81 | §1, tabla de nombres: archivo Go | `velocity.go` |
+  | `CONTRIBUTING.md` | 148-154 | §2, Paso 5 (ejemplo del ciclo TDD) | `internal/domain/metrics/`, `velocity_test.go`, `velocity.go`, alcance `metrics` |
+  | `CONTRIBUTING.md` | 158 | §2, Paso 5 (ejemplo del ciclo TDD) | `SprintSummary` |
+  | `CONTRIBUTING.md` | 254 | §3, convención de commits: alcance | `metrics` |
+  | `CONTRIBUTING.md` | 266 | §3, ejemplos de commits buenos | `SprintSummary` |
+  | `specs/US-026-velocidad-equipo.md` (PR #52) | 9 | Encabezado, campo Código | `internal/domain/metrics/` |
+
+  El PR #52 todavía no está mergeado: el ajuste de
+  `specs/US-026-velocidad-equipo.md` lo hace su autor en ese PR.
