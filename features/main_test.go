@@ -9,6 +9,7 @@
 package features_test
 
 import (
+	"flag"
 	"os"
 	"testing"
 
@@ -32,7 +33,9 @@ var opciones = godog.Options{
 }
 
 func init() {
-	godog.BindCommandLineFlags("godog.", &opciones)
+	// BindFlags con el paquete flag estandar, que es el que parsea `go test`.
+	// BindCommandLineFlags los registraria en pflag y -godog.tags no funcionaria.
+	godog.BindFlags("godog.", flag.CommandLine, &opciones)
 }
 
 func TestEscenarios(t *testing.T) {
