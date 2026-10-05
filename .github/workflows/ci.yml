@@ -183,3 +183,16 @@ jobs:
             fi
           done
           echo "Specs sin escenario BDD: $FALTAN"
+
+  # ---------------------------------------------------------------
+  # 5. Perfil full: el camino del evaluador sobre un volumen vacio
+  #    (DEF-002). Los runners de GitHub ya traen Docker y Compose.
+  # ---------------------------------------------------------------
+  perfil-full:
+    name: Perfil full
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Levantar el perfil full y revisar la base
+        run: ./scripts/verificar-perfil-full.sh
