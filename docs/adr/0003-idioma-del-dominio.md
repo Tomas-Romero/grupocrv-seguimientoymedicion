@@ -1,4 +1,4 @@
-# ADR 0002 — Idioma del dominio
+# ADR 0003 — Idioma del dominio
 
 - **Estado:** aceptada
 - **Fecha:** 2026-09-29
@@ -71,9 +71,9 @@ que se busca en el código.
 
   | Archivo | Línea | Dónde | Nombres que no siguen la decisión |
   |---|---|---|---|
-  | `docs/plan-de-trabajo.md` | 64 | Fila de US-005 | `BacklogItem` |
-  | `docs/plan-de-trabajo.md` | 69 | Fila de US-026 | `SprintSummary` |
-  | `docs/plan-de-trabajo.md` | 109 | Fila de US-014 | `PokerSession` |
+  | `docs/plan-de-trabajo.md` | — | Tabla del Sprint 1, fila de US-005 | `BacklogItem` |
+  | `docs/plan-de-trabajo.md` | — | Tabla del Sprint 1, fila de US-026 | `SprintSummary` |
+  | `docs/plan-de-trabajo.md` | — | Tabla del Sprint 3, fila de US-014 | `PokerSession` |
   | `CONTRIBUTING.md` | 80 | §1, tabla de nombres: paquete Go | `metrics`, `defect` |
   | `CONTRIBUTING.md` | 81 | §1, tabla de nombres: archivo Go | `velocity.go` |
   | `CONTRIBUTING.md` | 82 | §1, tabla de nombres: test | `velocity_test.go` |
