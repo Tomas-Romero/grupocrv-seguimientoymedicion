@@ -6,8 +6,8 @@
 | **Autor** | Tomás |
 | **Issue** | #11 |
 | **Escenarios BDD** | `features/US-025-story-points-sprint.feature` |
-| **Código** | `internal/domain/metrics/` |
-| **Última actualización** | 2026-09-28 |
+| **Código** | `internal/domain/metricas/` |
+| **Última actualización** | 2026-10-05 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
 > implementación. Si durante la implementación descubrís que algo de acá está
@@ -55,8 +55,11 @@ Fibonacci que usa el proyecto (US-013).
 - **RN-025-2** — `Completados` es la suma de los Story Points únicamente de
   los ítems con `Completado = true`.
 - **RN-025-3** — Un ítem con `StoryPoints = 0` participa del cálculo sin
-  alterar ninguna de las dos sumas (no es un error: puede ser un ítem técnico
-  sin estimar todavía en un sprint en curso).
+  alterar ninguna de las dos sumas y no es un error: esta función no impone
+  la escala de estimación (eso es de US-013). Un ítem *sin estimar* no se
+  representa como `0`: en US-005 es un valor ausente, y la capa de aplicación
+  lo trata como error al adaptarlo a `ItemDelSprint`. La Definition of Ready,
+  que valida US-009, ya impide que un ítem sin estimar entre a un sprint.
 - **RN-025-4** — Por construcción, `Completados` nunca puede superar a
   `Planificados`, porque todo ítem completado forma parte del mismo conjunto
   que se suma en `Planificados`. No hace falta una validación aparte para esto.
@@ -79,12 +82,14 @@ Fibonacci que usa el proyecto (US-013).
 - **CL-025-3** — Todos los ítems completados: `Planificados = Completados`.
 - **CL-025-4** — Ningún ítem completado: `Completados = 0` y `Planificados`
   es la suma total.
+- **CL-025-5** — Un ítem con `StoryPoints = 0`, completado o no: no altera
+  ninguna de las dos sumas (RN-025-3).
 
 ## 7. Condiciones de error
 
 | Situación | Error devuelto | Mensaje al usuario |
 |---|---|---|
-| Algún ítem tiene `StoryPoints < 0` | `ErrStoryPointsNegativos`, envuelto con `fmt.Errorf` indicando la posición del ítem en la lista | "los story points de un item del sprint no pueden ser negativos" |
+| Algún ítem tiene `StoryPoints < 0` | `ErrStoryPointsNegativos`, envuelto con `fmt.Errorf` indicando la posición del ítem en la lista, contada desde 1 (igual que en US-005, RN-005-14) | "los story points de un item del sprint no pueden ser negativos" |
 
 ## 8. Criterios de aceptación
 
@@ -103,13 +108,13 @@ Fibonacci que usa el proyecto (US-013).
 
 ## Decisiones tomadas y descartadas
 
-- **Se definió `ItemDelSprint` como tipo propio de `metrics`, en vez de
+- **Se definió `ItemDelSprint` como tipo propio de `metricas`, en vez de
   esperar a los dominios de `backlog` y `sprint` (US-005, US-008).** Esas
   historias todavía no están implementadas y esta métrica no necesita nada
   de ellas salvo dos datos (Story Points y si está completado). Definir un
   tipo mínimo acá evita bloquear el Sprint Goal de "primeras métricas" por
   una dependencia que no le hace falta, y es fácil de adaptar después desde
-  `internal/app/` cuando exista `backlog.Item`.
+  `internal/app/` cuando exista `backlog.ItemBacklog`.
 - **Se descartó devolver un `ResumenSprint` parcial junto con el error** de
   Story Points negativos (por ejemplo, sumando lo válido e ignorando lo
   inválido). Un dato negativo indica una inconsistencia previa (un bug en
