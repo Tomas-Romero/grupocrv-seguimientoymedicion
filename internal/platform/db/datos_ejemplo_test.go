@@ -51,3 +51,24 @@ func TestCargarDatosEjemplo(t *testing.T) {
 		t.Errorf("integrantes = %d, se esperaba 3", n)
 	}
 }
+
+// DEF-002: el perfil full carga los datos en cada arranque, asi que cargarlos dos
+// veces no puede fallar ni duplicar filas.
+func TestCargarDatosEjemplo_DosVeces(t *testing.T) {
+	ctx, cancelar := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancelar()
+	pool := baseMigrada(ctx, t)
+
+	for vez := 1; vez <= 2; vez++ {
+		if err := db.CargarDatosEjemplo(ctx, pool, migraciones.DatosEjemplo); err != nil {
+			t.Fatalf("CargarDatosEjemplo (vez %d): %v", vez, err)
+		}
+	}
+
+	if n := contarFilas(ctx, t, pool, "proyectos"); n != 1 {
+		t.Errorf("proyectos = %d, se esperaba 1", n)
+	}
+	if n := contarFilas(ctx, t, pool, "integrantes"); n != 3 {
+		t.Errorf("integrantes = %d, se esperaba 3", n)
+	}
+}
