@@ -7,7 +7,7 @@ VALUES (
     'Software Metrics & Estimation',
     'TP Integrador de Ingenieria y Calidad de Software — UTN FRSR 2026. Este es nuestro propio proyecto cargado en la aplicacion.',
     '2026-09-14',
-    '2026-11-16'
+    '2026-11-02'
 )
 ON CONFLICT (id) DO NOTHING;
 
