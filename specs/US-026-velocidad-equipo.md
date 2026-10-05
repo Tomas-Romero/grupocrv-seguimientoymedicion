@@ -82,7 +82,7 @@ complica la lectura.
 | Situación | Error devuelto | Mensaje al usuario |
 |---|---|---|
 | Algún `SprintCerrado` tiene `Resumen.Completados > Resumen.Planificados` | `ErrResumenInconsistente`, envuelto indicando el nombre del sprint | "el sprint «Nombre» tiene mas Story Points completados que planificados: revisa sus datos" |
-| Algún `SprintCerrado.Nombre` está vacío | `ErrNombreVacio`, envuelto indicando la posición en la lista | "todo sprint cerrado necesita un nombre para poder mostrarlo" |
+| Algún `SprintCerrado.Nombre` está vacío | `ErrNombreVacio`, envuelto indicando la posición en la lista, contada desde 1 (igual que en US-005, RN-005-14) | "todo sprint cerrado necesita un nombre para poder mostrarlo" |
 
 ## 8. Criterios de aceptación
 
