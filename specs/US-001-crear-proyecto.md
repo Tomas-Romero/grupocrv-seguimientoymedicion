@@ -6,7 +6,7 @@
 | **Autor** | Angelo Conforti |
 | **Issue** | #4 |
 | **Escenarios BDD** | `features/US-001-crear-proyecto.feature` |
-| **Código** | `internal/domain/project/` |
+| **Código** | `internal/domain/proyecto/`, caso de uso en `internal/app/`, migración nueva en `migraciones/` |
 | **Última actualización** | 2026-10-05 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
@@ -21,20 +21,24 @@ los sprints, el esfuerzo y las métricas cuelgan de un proyecto, así que ningun
 otra historia se puede usar hasta que esta exista.
 
 Esta historia define el tipo `Proyecto` y sus validaciones. Las historias US-002
-(modificar) y US-003 (integrantes) las reutilizan.
+(modificar) y US-003 (integrantes) las reutilizan. También alinea con US-005 la
+forma de asignar el identificador y de informar los errores de validación.
 
 ## 2. Entradas
 
 Función de dominio que valida los datos y arma el `Proyecto`. No accede a la base
-de datos ni genera el identificador: ambas cosas las hace la capa de aplicación.
+de datos.
 
 | Nombre | Tipo | Obligatorio | Rango / formato válido |
 |---|---|---|---|
-| `id` | `string` | Sí | Lo genera la capa de aplicación (UUID); el dominio lo recibe como dato y no lo valida |
 | `nombre` | `string` | Sí | Entre 1 y 100 caracteres, contados después de quitar los espacios de los extremos |
 | `descripcion` | `string` | No | Cualquier texto, incluida la cadena vacía; sin límite de largo |
 | `fechaInicio` | `time.Time` | Sí | Fecha distinta del valor cero |
 | `fechaFin` | `time.Time` | Sí | Fecha distinta del valor cero y no anterior a `fechaInicio` |
+
+El identificador no es una entrada: lo genera la base de datos
+(`DEFAULT gen_random_uuid()`) y la persistencia lo devuelve con `RETURNING`,
+igual que en US-005.
 
 Las fechas llegan normalizadas a medianoche UTC (formato `AAAA-MM-DD` en la
 interfaz); el dominio solo las compara.
@@ -43,7 +47,7 @@ interfaz); el dominio solo las compara.
 
 ```
 Proyecto {
-    ID          string    // el recibido, sin modificar
+    ID          string    // vacío hasta que la persistencia lo asigna
     Nombre      string    // sin espacios en los extremos
     Descripcion string    // tal como se recibió; "" si no se informó
     FechaInicio time.Time
@@ -51,8 +55,11 @@ Proyecto {
 }
 ```
 
-Si algún dato es inválido no se devuelve ningún `Proyecto`, solo el error
-correspondiente (sección 7). Las marcas de creación y actualización
+El dominio devuelve el `Proyecto` sin ID; el caso de uso devuelve el proyecto ya
+registrado, con ID.
+
+Si algún dato es inválido no se devuelve ningún `Proyecto`, solo los errores
+correspondientes (sección 7). Las marcas de creación y actualización
 (`creado_en`, `actualizado_en`) no forman parte del dominio: las completa la
 persistencia.
 
@@ -67,15 +74,20 @@ persistencia.
   iguales es válido (proyecto de un solo día).
 - **RN-001-5** — La descripción es opcional: si no se informa, queda vacía. Se
   guarda tal cual se recibe, sin recortar.
-- **RN-001-6** — El identificador del proyecto lo asigna quien llama; el dominio
-  no lo genera ni lo modifica.
+- **RN-001-6** — El identificador lo genera la base de datos al guardar. El
+  dominio no lo recibe, no lo genera ni lo modifica.
+- **RN-001-7** — El dominio valida todos los datos y devuelve todos los errores
+  unidos con `errors.Join`, en este orden fijo: nombre (vacío o largo), falta
+  fecha de inicio, falta fecha de fin, fechas incoherentes.
+  `ErrFechasIncoherentes` solo se evalúa si las dos fechas están. Cada error
+  unido se reconoce con `errors.Is`.
 
 ## 5. Restricciones
 
 - No usa `time.Now()`, números aleatorios ni variables de entorno, y no importa
-  nada fuera de la biblioteca estándar. Por eso el `id` llega como parámetro: si
-  se generara adentro, el resultado no sería determinista y el test dependería
-  del azar.
+  nada fuera de la biblioteca estándar.
+- Persistencia: una migración nueva en `migraciones/` agrega
+  `DEFAULT gen_random_uuid()` a `proyectos.id`. Nunca se edita `00001_init.sql`.
 - El largo del nombre se mide en **caracteres**, no en bytes: `ñ` o `é` cuentan
   como uno.
 - No se exige que el nombre sea único entre proyectos: la base de datos no
@@ -85,9 +97,8 @@ persistencia.
   (`fechas_coherentes` y `nombre_no_vacio`). El dominio es la primera defensa y
   la base de datos la última; el máximo de 100 caracteres solo lo impone el
   dominio.
-- Si hay más de un dato inválido, se devuelve el **primer** error en este orden:
-  nombre vacío, nombre largo, falta fecha de inicio, falta fecha de fin, fechas
-  incoherentes. Así el resultado es predecible y testeable.
+- Si hay más de un dato inválido se devuelven todos, unidos, en el orden de
+  RN-001-7 (igual que US-005).
 
 ## 6. Casos límite
 
@@ -104,7 +115,11 @@ persistencia.
 - **CL-001-6** — Descripción vacía u omitida: es válido y queda como cadena
   vacía.
 - **CL-001-7** — Varios datos inválidos a la vez (nombre vacío y fechas
-  invertidas): se devuelve solo el primer error según el orden de la sección 5.
+  invertidas): se devuelven los dos errores unidos, en el orden de RN-001-7.
+  `errors.Is` reconoce cada uno.
+- **CL-001-8** — Falta una de las dos fechas y la otra está informada: se
+  devuelve solo el error de la fecha faltante; `ErrFechasIncoherentes` no se
+  evalúa porque no hay con qué comparar.
 
 ## 7. Condiciones de error
 
@@ -116,10 +131,11 @@ persistencia.
 | Falta la fecha de fin | `ErrFechaFinFaltante` | "falta la fecha de fin" |
 | La fecha de fin es anterior a la de inicio | `ErrFechasIncoherentes` | "fecha de fin anterior a la de inicio" |
 
-Los errores son valores del paquete (`errors.New`) para compararlos con
-`errors.Is`. La capa de aplicación los envuelve con contexto (`%w`) indicando el
-nombre del proyecto; el mensaje original queda dentro del error envuelto, por lo
-que el escenario BDD puede comprobarlo con `el mensaje de error indica "..."`.
+Los errores son valores del paquete (`errors.New`) y se devuelven unidos con
+`errors.Join` (RN-001-7), así que se comparan con `errors.Is`. La capa de
+aplicación los envuelve con contexto (`%w`) indicando el nombre del proyecto; el
+mensaje de cada error queda dentro del error resultante, por lo que el escenario
+BDD puede comprobarlo con `el mensaje de error indica "..."`.
 
 ## 8. Criterios de aceptación
 
@@ -150,13 +166,12 @@ que el escenario BDD puede comprobarlo con `el mensaje de error indica "..."`.
 - **No se exige nombre único.** Dos proyectos pueden llamarse igual. Se descartó
   la unicidad porque agrega un error y un caso de borde que ningún criterio de
   la guía pide.
-- **El identificador se genera fuera del dominio.** Se evita así depender de
-  `crypto/rand` o de una librería de UUID dentro de la capa más pura y se
-  mantiene la función determinista. Se descartó generarlo adentro porque
-  habría exigido un ADR para una dependencia nueva o un test no determinista.
-- **Se devuelve un solo error, el primero.** Se descartó acumular todos los
-  errores en una lista: complica el contrato de la función y los escenarios, y
-  para el formulario alcanza con corregir de a uno.
+- **El identificador lo genera la base de datos** (`DEFAULT gen_random_uuid()`).
+  Alinea con US-005, evita una dependencia de UUID en la app y mantiene el
+  dominio puro.
+- **Se devuelven todos los errores juntos:** así quien carga el formulario ve
+  todo lo que tiene que corregir, y alinea con US-005 y con la traducción
+  uniforme de errores de T-005.
 - **La descripción no se prueba en el escenario BDD.** La frase del diccionario
   de steps `se crea un proyecto "X" con fechas del "..." al "..."` no recibe
   descripción. Su regla (RN-001-5) y su caso límite (CL-001-6) se cubren con
