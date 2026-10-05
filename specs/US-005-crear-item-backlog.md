@@ -6,7 +6,7 @@
 | **Autor** | Juan Ignacio Vergara |
 | **Issue** | #7 |
 | **Escenarios BDD** | `features/US-005-crear-item-backlog.feature` |
-| **Código** | `internal/domain/backlog/`, caso de uso en `internal/app/`, repositorio en `internal/adapters/postgres/`, migración nueva en `migrations/` |
+| **Código** | `internal/domain/backlog/`, caso de uso en `internal/app/`, repositorio en `internal/adapters/postgres/`, migración nueva en `migraciones/` |
 | **Última actualización** | 2026-10-05 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
@@ -170,7 +170,7 @@ Entre paréntesis, la capa que la hace cumplir.
   de dominio a respuestas para el usuario; el dominio no lo conoce. Esa
   traducción tiene que ser compatible con errores unidos con `errors.Join`,
   porque el dominio de esta historia puede devolver varios errores a la vez.
-- **Persistencia.** Una migración nueva en `migrations/` (nunca se edita
+- **Persistencia.** Una migración nueva en `migraciones/` (nunca se edita
   `00001_init.sql`), con la restricción `UNIQUE (proyecto_id, numero)` y los
   Story Points sin estimar guardados como valor nulo, no como `0`. Las tablas
   nuevas generan sus IDs en la base con `DEFAULT gen_random_uuid()`. La tabla
