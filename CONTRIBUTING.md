@@ -138,6 +138,11 @@ Copiá `docs/plantillas/escenario-bdd.feature` a `features/US-NNN-slug.feature`.
 por criterio de aceptación, etiquetado con `@CA-NNN-k`. Tienen que estar los
 cuatro tipos que exige la guía: **normal, alternativo, límite y error.**
 
+Usá solo las frases de `docs/diccionario-steps.md` (sin "que" después de `Dado`). Si te
+falta una, no la inventes: proponela en el grupo. El `.feature`, sus steps y el dominio
+entran en el mismo PR, porque godog corre en modo estricto y un paso sin implementar
+deja el CI en rojo.
+
 ### Paso 5 — TDD, de verdad
 
 Este es el paso que más nota vale y el único que no se puede simular después.
