@@ -7,7 +7,7 @@
 | **Issue** | #7 |
 | **Escenarios BDD** | `features/US-005-crear-item-backlog.feature` |
 | **Código** | `internal/domain/backlog/`, caso de uso en `internal/app/`, repositorio en `internal/adapters/postgres/`, migración nueva en `migrations/` |
-| **Última actualización** | 2026-09-29 |
+| **Última actualización** | 2026-10-05 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
 > implementación. Si durante la implementación descubrís que algo de acá está
