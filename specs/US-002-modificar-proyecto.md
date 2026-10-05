@@ -6,7 +6,7 @@
 | **Autor** | Angelo Conforti |
 | **Issue** | #5 |
 | **Escenarios BDD** | `features/US-002-modificar-proyecto.feature` |
-| **Código** | `internal/domain/project/` |
+| **Código** | `internal/domain/proyecto/` |
 | **Última actualización** | 2026-10-05 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
@@ -52,17 +52,17 @@ Proyecto {
 ```
 
 Si algún dato es inválido, o el proyecto no existe, no se modifica nada y se
-devuelve solo el error correspondiente (sección 7). La función devuelve un
+devuelven solo los errores correspondientes (sección 7). La función devuelve un
 `Proyecto` nuevo; no altera el recibido.
 
 ## 4. Reglas de negocio
 
 - **RN-002-1** — Solo se puede modificar un proyecto que existe. Si no existe, la
-  operación se rechaza. Lo detecta la capa de aplicación al buscarlo, antes de
-  llamar al dominio.
+  operación se rechaza con `ErrProyectoInexistente`. Lo detecta la capa de
+  aplicación al buscarlo, antes de llamar al dominio.
 - **RN-002-2** — Los datos nuevos cumplen exactamente las mismas reglas que al
-  crear un proyecto (RN-001-1 a RN-001-5). Se reutiliza la misma validación de
-  US-001 y no se escribe una segunda.
+  crear un proyecto (RN-001-1 a RN-001-5 y RN-001-7). Se reutiliza la misma
+  validación de US-001 y no se escribe una segunda.
 - **RN-002-3** — La modificación reemplaza los cuatro datos a la vez. No existe
   la modificación parcial.
 - **RN-002-4** — El identificador del proyecto no cambia.
@@ -81,9 +81,8 @@ devuelve solo el error correspondiente (sección 7). La función devuelve un
   proyecto (igual que en US-001) y también con el del propio proyecto.
 - No se valida el rango de fechas contra los sprints del proyecto (ver
   "Decisiones").
-- Si hay más de un dato inválido, se devuelve el primer error, en el mismo orden
-  que en US-001: nombre vacío, nombre largo, falta fecha de inicio, falta fecha
-  de fin, fechas incoherentes.
+- Si hay más de un dato inválido se devuelven todos, unidos, como en US-001
+  (RN-001-7).
 
 ## 6. Casos límite
 
@@ -106,16 +105,18 @@ devuelve solo el error correspondiente (sección 7). La función devuelve un
 
 | Situación | Error devuelto | Mensaje al usuario |
 |---|---|---|
-| El proyecto a modificar no existe | `ErrProyectoNoEncontrado` (capa de aplicación) | "el proyecto no existe" |
+| El proyecto a modificar no existe | `ErrProyectoInexistente` (capa de aplicación, `internal/app`) | "el proyecto no existe" |
 | El nombre nuevo está vacío o tiene solo espacios | `ErrNombreVacio` (US-001) | "el nombre es obligatorio" |
 | El nombre nuevo supera los 100 caracteres | `ErrNombreLargo` (US-001) | "el nombre supera el largo maximo (100 caracteres)" |
 | Falta la fecha de inicio | `ErrFechaInicioFaltante` (US-001) | "falta la fecha de inicio" |
 | Falta la fecha de fin | `ErrFechaFinFaltante` (US-001) | "falta la fecha de fin" |
 | La fecha de fin es anterior a la de inicio | `ErrFechasIncoherentes` (US-001) | "fecha de fin anterior a la de inicio" |
 
-Los errores de dominio son los mismos valores de US-001: no se definen otros
-para decir lo mismo. La capa de aplicación los envuelve con contexto (`%w`)
-indicando el proyecto afectado.
+Los errores de dominio son los mismos valores de US-001 y se devuelven unidos
+como allá (RN-001-7): no se definen otros para decir lo mismo.
+`ErrProyectoInexistente` es el que ya define la spec de US-005 para el mismo
+caso. La capa de aplicación los envuelve con contexto (`%w`) indicando el
+proyecto afectado.
 
 ## 8. Criterios de aceptación
 
