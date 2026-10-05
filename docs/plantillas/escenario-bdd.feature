@@ -1,4 +1,5 @@
 # language: es
+# Usa SOLO frases de docs/diccionario-steps.md. Despues de "Dado" no va "que".
 @US-NNN
 Característica: Titulo de la historia
   Como <rol>
@@ -13,29 +14,29 @@ Característica: Titulo de la historia
   # ---------------------------------------------------------------- caso normal
   @CA-NNN-1
   Escenario: El camino feliz, descrito por lo que ve el usuario
-    Dado que ...
+    Dado ...
     Cuando ...
     Entonces ...
 
   # ------------------------------------------------------------ caso alternativo
   @CA-NNN-2
   Escenario: Una variante valida del camino principal
-    Dado que ...
+    Dado ...
     Cuando ...
     Entonces ...
 
   # ----------------------------------------------------------------- caso limite
   @CA-NNN-3 @limite
   Escenario: El borde que siempre rompe
-    Dado que no hay ningun sprint cerrado
+    Dado ningún sprint cerrado
     Cuando se consulta la velocidad del equipo
-    Entonces la velocidad es 0
-    Y no se produce ningun error
+    Entonces la operación es exitosa
+    Y la velocidad del equipo es 0
 
   # ----------------------------------------------------------------------- error
   @CA-NNN-4 @error
   Escenario: Entrada invalida
-    Dado que ...
+    Dado ...
     Cuando se intenta ...
     Entonces se rechaza la operacion
     Y el mensaje indica "..."
