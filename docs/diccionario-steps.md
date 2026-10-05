@@ -59,10 +59,14 @@ Cuando se crea un proyecto "Demo" con fechas del "2026-09-14" al "2026-11-18"
 ### 5. Los valores variables van entre comillas dobles; los números, sin comillas
 
 ```gherkin
-Dado una historia "Crear proyecto" con prioridad "Must" y 5 story points
+Dado una historia "Crear proyecto" con prioridad "must" y 5 story points
 ```
 
 Las fechas siempre en formato `AAAA-MM-DD` y entre comillas.
+
+Los valores de prioridad van en **minúscula** y son los que acepta el dominio:
+`must`, `should`, `could` y `wont`. Así el escenario usa el mismo valor que el
+dominio y los steps no convierten nada.
 
 ### 6. El `.feature`, los steps y el dominio entran en el mismo PR
 
@@ -100,13 +104,17 @@ conectada, falla con `area sin conectar a los steps: <área>`: es a propósito.
 | `Dado un proyecto "Demo"` | `^un proyecto "([^"]*)"$` |
 | `Dado un proyecto "Demo" con fechas del "2026-09-14" al "2026-11-18"` | `^un proyecto "([^"]*)" con fechas del "([^"]*)" al "([^"]*)"$` |
 | `Y el integrante "Conforti" con rol "product_builder"` | `^el integrante "([^"]*)" con rol "([^"]*)"$` |
-| `Y una historia "Crear proyecto" con prioridad "Must"` | `^una historia "([^"]*)" con prioridad "([^"]*)"$` |
-| `Y una historia "Crear proyecto" con prioridad "Must" y 5 story points` | `^una historia "([^"]*)" con prioridad "([^"]*)" y (\d+) story points$` |
+| `Y una historia "Crear proyecto" con prioridad "must"` | `^una historia "([^"]*)" con prioridad "([^"]*)"$` |
+| `Y una historia "Crear proyecto" con prioridad "must" y 5 story points` | `^una historia "([^"]*)" con prioridad "([^"]*)" y (\d+) story points$` |
 | `Y un sprint "Sprint 1" con el objetivo "MVP navegable"` | `^un sprint "([^"]*)" con el objetivo "([^"]*)"$` |
 | `Y la historia "Crear proyecto" asignada al sprint "Sprint 1"` | `^la historia "([^"]*)" asignada al sprint "([^"]*)"$` |
 | `Y la historia "Crear proyecto" completada` | `^la historia "([^"]*)" completada$` |
 | `Y el sprint "Sprint 1" cerrado` | `^el sprint "([^"]*)" cerrado$` |
 | `Dado ningún sprint cerrado` | `^ningún sprint cerrado$` |
+
+Un escenario **no repite títulos de historias**: el área Backlog las identifica
+por título, y la spec de US-005 permite repetirlos entre sí, así que dos historias
+con el mismo título en un mismo escenario serían ambiguas.
 
 El primer `Dado un proyecto "X"` usa fechas por defecto (del 2026-01-01 al
 2026-12-31) y queda como **proyecto actual**: los steps que siguen y no nombran
@@ -122,8 +130,8 @@ línea.
 | `Cuando se crea un proyecto "Demo" con fechas del "2026-09-14" al "2026-11-18"` | `^se crea un proyecto "([^"]*)" con fechas del "([^"]*)" al "([^"]*)"$` |
 | `Cuando se modifica el nombre del proyecto "Demo" a "Demo v2"` | `^se modifica el nombre del proyecto "([^"]*)" a "([^"]*)"$` |
 | `Cuando se registra al integrante "Vergara" con rol "product_builder"` | `^se registra al integrante "([^"]*)" con rol "([^"]*)"$` |
-| `Cuando se crea la historia "Crear proyecto" con prioridad "Must"` | `^se crea la historia "([^"]*)" con prioridad "([^"]*)"$` |
-| `Cuando se cambia la prioridad de la historia "Crear proyecto" a "Should"` | `^se cambia la prioridad de la historia "([^"]*)" a "([^"]*)"$` |
+| `Cuando se crea la historia "Crear proyecto" con prioridad "must"` | `^se crea la historia "([^"]*)" con prioridad "([^"]*)"$` |
+| `Cuando se cambia la prioridad de la historia "Crear proyecto" a "should"` | `^se cambia la prioridad de la historia "([^"]*)" a "([^"]*)"$` |
 | `Cuando se estima la historia "Crear proyecto" en 5 story points` | `^se estima la historia "([^"]*)" en (\d+) story points$` |
 | `Cuando se crea el sprint "Sprint 1" con el objetivo "MVP navegable"` | `^se crea el sprint "([^"]*)" con el objetivo "([^"]*)"$` |
 | `Cuando se asigna la historia "Crear proyecto" al sprint "Sprint 1"` | `^se asigna la historia "([^"]*)" al sprint "([^"]*)"$` |
@@ -149,7 +157,7 @@ probando dos cosas y conviene partirlo.
 | `Y el proyecto "Demo" existe con fechas del "2026-09-14" al "2026-11-18"` | `^el proyecto "([^"]*)" existe con fechas del "([^"]*)" al "([^"]*)"$` |
 | `Y el proyecto "Demo" tiene 3 integrantes` | `^el proyecto "([^"]*)" tiene (\d+) integrantes?$` |
 | `Y el backlog del proyecto "Demo" tiene 2 historias` | `^el backlog del proyecto "([^"]*)" tiene (\d+) historias?$` |
-| `Y la historia "Crear proyecto" tiene prioridad "Should"` | `^la historia "([^"]*)" tiene prioridad "([^"]*)"$` |
+| `Y la historia "Crear proyecto" tiene prioridad "should"` | `^la historia "([^"]*)" tiene prioridad "([^"]*)"$` |
 | `Y la historia "Crear proyecto" tiene 5 story points` | `^la historia "([^"]*)" tiene (\d+) story points$` |
 | `Y la historia "Crear proyecto" está en el sprint "Sprint 1"` | `^la historia "([^"]*)" está en el sprint "([^"]*)"$` |
 | `Y la historia "Crear proyecto" está en el backlog` | `^la historia "([^"]*)" está en el backlog$` |
@@ -185,12 +193,12 @@ Característica: Velocidad del equipo
   @CA-026-1
   Escenario: La velocidad es el promedio de los sprints cerrados
     Dado un sprint "Sprint 1" con el objetivo "MVP"
-    Y una historia "H1" con prioridad "Must" y 20 story points
+    Y una historia "H1" con prioridad "must" y 20 story points
     Y la historia "H1" asignada al sprint "Sprint 1"
     Y la historia "H1" completada
     Y el sprint "Sprint 1" cerrado
     Y un sprint "Sprint 2" con el objetivo "Interfaz"
-    Y una historia "H2" con prioridad "Must" y 30 story points
+    Y una historia "H2" con prioridad "must" y 30 story points
     Y la historia "H2" asignada al sprint "Sprint 2"
     Y la historia "H2" completada
     Y el sprint "Sprint 2" cerrado
@@ -207,7 +215,7 @@ Característica: Velocidad del equipo
   @CA-026-3 @limite
   Escenario: Los sprints abiertos no cuentan
     Dado un sprint "Sprint 1" con el objetivo "MVP"
-    Y una historia "H1" con prioridad "Must" y 20 story points
+    Y una historia "H1" con prioridad "must" y 20 story points
     Y la historia "H1" asignada al sprint "Sprint 1"
     Y la historia "H1" completada
     Cuando se consulta la velocidad del equipo
