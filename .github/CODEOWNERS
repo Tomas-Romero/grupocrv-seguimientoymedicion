@@ -12,6 +12,7 @@
 /Makefile              @Tomas-Romero @JuanVergara-9
 /docker-compose.yml    @Tomas-Romero @JuanVergara-9
 
-# Las specs y los escenarios los revisa quien no los escribio.
-/specs/                @JuanVergara-9 @ConfortiAngelo
-/features/             @JuanVergara-9 @ConfortiAngelo
+# Las specs y los escenarios los revisa quien no los escribio: los tres son duenos,
+# y como nadie aprueba su propio PR, siempre quedan dos personas que pueden hacerlo.
+/specs/                @Tomas-Romero @JuanVergara-9 @ConfortiAngelo
+/features/             @Tomas-Romero @JuanVergara-9 @ConfortiAngelo

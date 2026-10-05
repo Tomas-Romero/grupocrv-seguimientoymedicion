@@ -129,8 +129,8 @@ cat <<'FINAL'
   Campos personalizados
     Status          (ya existe)  -> Backlog · Ready · Sprint Backlog ·
                                     In Progress · In Review · Done
-    Sprint          Iteration    -> duracion 1 semana, inicio 14/09/2026
-                                    (Sprint 0 a Sprint 4, una iteracion por semana; las fechas son
+    Sprint          Iteration    -> duracion 1 semana (el Sprint 1 dura 2), inicio 14/09/2026
+                                    (Sprint 0 a Sprint 5, cierran los lunes; las fechas son
                                      estimativas y se ajustan en cada Planning)
     Story Points    Number
     Priority        Single select -> Must · Should · Could · Won't

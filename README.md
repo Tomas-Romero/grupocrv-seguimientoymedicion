@@ -83,7 +83,7 @@ Interfaz web renderizada en el servidor con `templ` y HTMX. PostgreSQL.
 
 ## Metodología
 
-Scrum con sprints de una semana (Sprint 0 más cuatro sprints de desarrollo), Specification-Driven
+Scrum con sprints semanales que cierran los lunes (Sprint 0 más cinco sprints hasta la presentación del 02/11), Specification-Driven
 Development para las funcionalidades principales, Behavior-Driven Development
 para los escenarios de aceptación y Test-Driven Development para las reglas de
 negocio y los cálculos.

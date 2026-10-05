@@ -1,4 +1,4 @@
-# Plan de trabajo — Sprint 1 al Sprint 4
+# Plan de trabajo — Sprint 1 al Sprint 5
 
 Este documento dice **quién hace qué y cuándo** hasta la entrega. Complementa a
 `CONTRIBUTING.md`, que dice **cómo** se trabaja. Si los dos se contradicen,
@@ -9,14 +9,41 @@ verificable todas las semanas**: un incremento demostrable, un acta de
 retrospectiva y el tablero al día. El reparto y los objetivos se revisan en cada
 Sprint Planning y cualquier cambio se anota en el acta del sprint.
 
-| Sprint | Semana | Sprint Goal (resumen) | SP |
+| Sprint | Fechas | Sprint Goal (resumen) | Estado |
 |---|---|---|---|
-| 0 | 14/09 – 20/09 | Repo, CI, tablero y walking skeleton | 16 (cerrado) |
-| 1 | 21/09 – 27/09 | El MVP: proyectos, backlog, sprints y primeras métricas | 33 |
-| 2 | 28/09 – 04/10 | La interfaz: recorrido completo desde el navegador | 37 |
-| 3 | 05/10 – 11/10 | Planning Poker, defectos y métricas completas | 47 |
-| 4 | 12/10 – 18/10 | Gráficos, reporte PDF, documentación y demo | 38 |
-| — | 19/10 | Review final y entrega | — |
+| 0 | 14/09 – 20/09 | Repo, CI, tablero y walking skeleton | cerrado (16 SP) |
+| 1 | 21/09 – 05/10 | El MVP: proyectos, backlog, sprints y primeras métricas | cierra el 05/10 |
+| 2 | 06/10 – 12/10 | A definir en el Planning del 06/10 | — |
+| 3 | 13/10 – 19/10 | A definir en el Planning del 06/10 | — |
+| 4 | 20/10 – 26/10 | A definir en el Planning del 06/10 | — |
+| 5 | 27/10 – 02/11 | Cierre: documentación, reporte PDF, demo y ensayo | — |
+| — | 02/11 | **Presentación final** | — |
+
+Los sprints cierran los **lunes a la noche** con Review y Retrospective, y el
+siguiente arranca el martes. El Sprint 1 duró dos semanas (21/09 – 05/10).
+
+## Estado al 05/10 y replanteo
+
+Cambió la fecha de presentación (ahora **lunes 02/11**) y el Sprint 1 cierra
+sin historias de negocio mergeadas: lo hecho fue infraestructura (conexión a la
+base, health check, portabilidad en Windows), cuatro defectos de puesta en
+marcha detectados en la prueba en máquina limpia y las primeras specs.
+
+Quedan **155 SP** en cuatro sprints (2 al 5), unos 39 SP por sprint, que es
+parecido a la carga que se había planificado y bastante más de lo que se
+entregó. El Planning del 06/10 decide el alcance real. Punto de partida
+propuesto, en el orden de dependencias del plan original:
+
+| Bloque | Contenido (tablas de abajo) | SP | Sprint propuesto |
+|---|---|---|---|
+| A | El MVP (original «Sprint 1») | 33 | 2 |
+| B | La interfaz (original «Sprint 2») | 37 | 3 |
+| C | Funcionalidad y calidad (original «Sprint 3») | 47 | 4 |
+| D | Cierre y entrega (original «Sprint 4») | 38 | 5 |
+
+Las secciones de abajo conservan el contenido y el reparto originales; se
+renumeran cuando el Planning confirme el alcance. Si no entra todo, se aplica la
+lista de recorte antes de empezar el sprint, no a mitad de semana.
 
 ## Cómo se reparte y por qué
 
@@ -37,19 +64,21 @@ migración nueva (nunca se edita una migración ya mergeada) y su handler y vist
 
 ## Semana tipo
 
+Los sprints van de martes a lunes.
+
 | Día | Qué pasa |
 |---|---|
-| Lunes | Sprint Planning (45 min). Sprint Goal escrito, issues del sprint a *Sprint Backlog* con responsable. **Se escriben las specs** de las historias del sprint |
-| Martes | Specs mergeadas (PR aparte por historia). Empieza el ciclo RED → GREEN → REFACTOR |
-| Miércoles | Refinement (30 min): las historias del **próximo** sprint quedan con criterios `CA-NNN-k` y Story Points |
-| Jueves | Implementación. Los PRs se abren en cuanto haya algo revisable, no el último día |
-| Viernes | Todo lo del sprint mergeado o replanificado. Sábado queda de colchón |
-| Domingo | Review (30 min, demo con `docker compose up`) y Retro (30 min). El acta `docs/retros/sprint-N.md` se commitea el mismo domingo |
+| Martes | Sprint Planning (45 min). Sprint Goal escrito, issues del sprint a *Sprint Backlog* con responsable. **Se escriben las specs** de las historias del sprint |
+| Miércoles | Specs mergeadas (PR aparte por historia). Empieza el ciclo RED → GREEN → REFACTOR |
+| Jueves | Refinement (30 min): las historias del **próximo** sprint quedan con criterios `CA-NNN-k` y Story Points. Los PRs se abren en cuanto haya algo revisable, no el último día |
+| Viernes | Revisión cruzada de todo lo abierto |
+| Sábado y domingo | Colchón: todo mergeado o replanificado |
+| Lunes | Review (30 min, demo con `docker compose up`) y Retro (30 min) a la noche. El acta `docs/retros/sprint-N.md` se commitea el mismo lunes |
 
 Daily asíncrono todos los días antes de las 22:00 con el formato *hecho / hoy /
 bloqueos*.
 
-## Sprint 1 — El MVP (21/09 – 27/09, 33 SP)
+## Sprint 1 — El MVP (plan original, 33 SP)
 
 **Sprint Goal:** se puede crear un proyecto con sus integrantes, cargar ítems de
 backlog con criterios de aceptación, crear un sprint y asignarle historias, y el
@@ -71,7 +100,7 @@ escenario BDD corre automatizado de punta a punta.
 
 Carga: Tomás 11 · Vergara 11 · Conforti 11.
 
-## Sprint 2 — La interfaz (28/09 – 04/10, 37 SP)
+## Sprint 2 — La interfaz (plan original, 37 SP)
 
 **Sprint Goal:** un usuario recorre desde el navegador el ciclo completo:
 proyecto → backlog filtrable → sprint → marcar historias completadas → cerrar el
@@ -94,7 +123,7 @@ contra real, con validaciones y errores manejados de forma uniforme.
 
 Carga: Tomás 13 · Vergara 12 · Conforti 12.
 
-## Sprint 3 — Funcionalidad y calidad (05/10 – 11/10, 47 SP)
+## Sprint 3 — Funcionalidad y calidad (plan original, 47 SP)
 
 Es el sprint más cargado. **Antes de empezar, cada uno confirma su calendario
 académico** (riesgo R7): si hay parciales esta semana, se mueve alcance al
@@ -121,15 +150,15 @@ su ciclo de vida y el Dashboard muestra las métricas principales del proyecto.
 
 Carga: Tomás 15 · Vergara 16 · Conforti 16.
 
-## Sprint 4 — Cierre y entrega (12/10 – 18/10, 38 SP)
+## Sprint 4 — Cierre y entrega (plan original, 38 SP)
 
 **Sprint Goal:** el proyecto se puede mostrar completo: gráficos, reporte del
 proyecto o sprint en pantalla y exportable a PDF, documentación y manual
 terminados, matriz de trazabilidad generada y una demo ensayada con nuestros
 propios datos cargados en la app.
 
-**Congelamiento de funcionalidades: jueves 15/10.** Viernes a domingo es solo
-documentación, corrección de defectos y ensayo.
+**Congelamiento de funcionalidades: jueves 29/10.** De ahí al lunes 02/11 es
+solo documentación, corrección de defectos y ensayo de la presentación.
 
 | ID | Historia | SP | Responsable | Notas |
 |---|---|---|---|---|
