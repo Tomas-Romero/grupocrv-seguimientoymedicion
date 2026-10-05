@@ -27,6 +27,8 @@ services:
     environment:
       DATABASE_URL: postgres://metrics:metrics@db:5432/metrics?sslmode=disable
       HTTP_ADDR: ":8080"
+      # DEF-002: solo el perfil full carga los datos de ejemplo al arrancar.
+      CARGAR_DATOS_EJEMPLO: "true"
     ports:
       - "8080:8080"
     depends_on:

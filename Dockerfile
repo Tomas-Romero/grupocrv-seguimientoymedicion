@@ -17,7 +17,6 @@ FROM alpine:3.20
 RUN adduser -D -u 10001 app
 WORKDIR /app
 COPY --from=build /out/server /app/server
-COPY --from=build /src/migraciones /app/migraciones
 COPY --from=build /src/web/static /app/web/static
 USER app
 EXPOSE 8080

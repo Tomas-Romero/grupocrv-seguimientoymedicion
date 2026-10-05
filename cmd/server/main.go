@@ -16,9 +16,12 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
+
 	httpadapter "github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/adapters/http"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/platform/config"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/platform/db"
+	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/migraciones"
 )
 
 func main() {
@@ -46,6 +49,16 @@ func run() error {
 		return fmt.Errorf("conectar a la base de datos: %w", err)
 	}
 	defer pool.Close()
+
+	// DEF-002: la base queda migrada, y con los datos de ejemplo si se pidieron,
+	// antes de servir. Si algo falla el servidor no arranca: es mejor un error
+	// visible que servir sobre un esquema viejo o vacio.
+	preparacion, cancelarPreparacion := context.WithTimeout(ctx, time.Minute)
+	err = prepararBase(preparacion, pool, cfg.CargarDatosEjemplo)
+	cancelarPreparacion()
+	if err != nil {
+		return err
+	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", httpadapter.Health(pool, 2*time.Second))
@@ -80,4 +93,23 @@ func run() error {
 		}
 		return nil
 	}
+}
+
+// prepararBase aplica las migraciones pendientes y, si cargarDatos es verdadero,
+// carga los datos de ejemplo. Los dos pasos son idempotentes: corren en cada
+// arranque sin repetir nada.
+func prepararBase(ctx context.Context, pool *pgxpool.Pool, cargarDatos bool) error {
+	if err := db.Migrar(ctx, pool, migraciones.Archivos); err != nil {
+		return fmt.Errorf("aplicar migraciones: %w", err)
+	}
+	slog.Info("migraciones al dia")
+
+	if !cargarDatos {
+		return nil
+	}
+	if err := db.CargarDatosEjemplo(ctx, pool, migraciones.DatosEjemplo); err != nil {
+		return fmt.Errorf("cargar datos de ejemplo: %w", err)
+	}
+	slog.Info("datos de ejemplo cargados")
+	return nil
 }
