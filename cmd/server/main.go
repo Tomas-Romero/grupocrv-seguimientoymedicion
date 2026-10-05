@@ -110,6 +110,9 @@ func prepararBase(ctx context.Context, pool *pgxpool.Pool, cargarDatos bool) err
 	if err := db.CargarDatosEjemplo(ctx, pool, migraciones.DatosEjemplo); err != nil {
 		return fmt.Errorf("cargar datos de ejemplo: %w", err)
 	}
-	slog.Info("datos de ejemplo cargados")
+	// Mensaje neutro a proposito: con ON CONFLICT DO NOTHING puede no haber
+	// insertado nada, y el Exec de varias sentencias solo informa las filas de la
+	// ultima, asi que no hay un numero confiable para mostrar.
+	slog.Info("datos de ejemplo aplicados")
 	return nil
 }
