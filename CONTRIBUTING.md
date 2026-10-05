@@ -66,7 +66,7 @@ web/static/                 CSS compilado y JS (Chart.js).
 
 specs/                      Especificaciones SDD. Un archivo por historia.
 features/                   Escenarios BDD en Gherkin + sus step definitions.
-migrations/                 SQL versionado con goose. Nunca se edita una ya mergeada.
+migraciones/                SQL versionado con goose. Nunca se edita una ya mergeada.
 docs/adr/                   Decisiones de arquitectura.
 docs/retros/                Actas de retrospectiva.
 docs/plantillas/            Plantillas de spec, escenario y acta. Se copian, no se editan.

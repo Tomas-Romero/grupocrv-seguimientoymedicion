@@ -95,7 +95,7 @@ jobs:
         run: templ generate
 
       - name: Aplicar migraciones
-        run: goose -dir migrations postgres "$DATABASE_URL" up
+        run: goose -dir migraciones postgres "$DATABASE_URL" up
 
       - name: Tests y umbrales de cobertura
         run: ./scripts/coverage.sh
@@ -152,7 +152,7 @@ jobs:
         run: templ generate
 
       - name: Aplicar migraciones
-        run: goose -dir migrations postgres "$DATABASE_URL" up
+        run: goose -dir migraciones postgres "$DATABASE_URL" up
 
       - name: Correr escenarios
         run: |

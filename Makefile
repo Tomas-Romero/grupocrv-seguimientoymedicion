@@ -43,7 +43,7 @@ run: build ## Compila y ejecuta
 	./bin/server
 
 migrate: ## Aplica las migraciones pendientes
-	goose -dir migrations postgres "$${DATABASE_URL}" up
+	goose -dir migraciones postgres "$${DATABASE_URL}" up
 
 seed: ## Carga datos de ejemplo
 	psql "$${DATABASE_URL}" -f scripts/seed.sql
