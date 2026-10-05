@@ -46,7 +46,7 @@ migrate: ## Aplica las migraciones pendientes
 	goose -dir migraciones postgres "$${DATABASE_URL}" up
 
 seed: ## Carga datos de ejemplo
-	psql "$${DATABASE_URL}" -f scripts/seed.sql
+	psql "$${DATABASE_URL}" -f migraciones/datos/ejemplo.sql
 
 test: gen ## Corre todos los tests unitarios
 	$(GO) test ./... -race -count=1
