@@ -11,8 +11,8 @@ los dos idiomas:
 
 - La migración `00001_init.sql` crea `proyectos` e `integrantes`, con columnas
   como `fecha_inicio` y `creado_en`.
-- La spec de US-026 (PR #52, en revisión) usa `SprintCerrado`, `ResumenSprint`
-  y `ErrResumenInconsistente`.
+- La spec de US-026, mergeada con el PR #52 el 2026-10-05, usa
+  `SprintCerrado`, `ResumenSprint` y `ErrResumenInconsistente`.
 - El código Go que ya existe usa `config.Cargar`, `LectorEntorno`,
   `db.Conectar` y `ErrFaltaDatabaseURL`.
 - En cambio, el plan de trabajo y `CONTRIBUTING.md` tienen ejemplos en inglés:
@@ -65,8 +65,9 @@ que se busca en el código.
 - Los nombres mezclan idiomas cuando incluyen un término de Scrum
   (`ItemBacklog`, `SesionPlanningPoker`).
 - El plan de trabajo, `CONTRIBUTING.md` y la spec de US-026 tienen nombres en
-  inglés que no siguen esta decisión. **No se editan en este ADR**; quedan
-  listados para corregirlos aparte:
+  inglés que no siguen esta decisión. Salvo la spec de US-026, que se corrige
+  en este mismo PR, **no se editan en este ADR**; quedan listados para
+  corregirlos aparte:
 
   | Archivo | Línea | Dónde | Nombres que no siguen la decisión |
   |---|---|---|---|
@@ -81,7 +82,4 @@ que se busca en el código.
   | `CONTRIBUTING.md` | 158 | §2, Paso 5 (ejemplo del ciclo TDD) | `SprintSummary` |
   | `CONTRIBUTING.md` | 254 | §3, convención de commits: alcance | `metrics` |
   | `CONTRIBUTING.md` | 266 | §3, ejemplos de commits buenos | `SprintSummary` |
-  | `specs/US-026-velocidad-equipo.md` (PR #52) | 9 | Encabezado, campo Código | `internal/domain/metrics/` |
-
-  El PR #52 todavía no está mergeado: el ajuste de
-  `specs/US-026-velocidad-equipo.md` lo hace su autor en ese PR.
+  | `specs/US-026-velocidad-equipo.md` (PR #52) | 9 | Encabezado, campo Código | `internal/domain/metrics/`: corregida en este PR |

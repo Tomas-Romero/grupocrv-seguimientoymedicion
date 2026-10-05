@@ -6,7 +6,7 @@
 | **Autor** | Tomás |
 | **Issue** | #12 |
 | **Escenarios BDD** | `features/US-026-velocidad-equipo.feature` |
-| **Código** | `internal/domain/metrics/` |
+| **Código** | `internal/domain/metricas/` |
 | **Última actualización** | 2026-09-29 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
