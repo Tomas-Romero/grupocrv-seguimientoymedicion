@@ -15,5 +15,9 @@ import "github.com/Tomas-Romero/grupocrv-seguimientoymedicion/features/steps"
 // Un area sin conectar hace fallar con ErrAreaSinConectar a cualquier escenario
 // que la use: preferimos rojo explicito a verde falso.
 func nuevosServicios() (steps.Servicios, error) {
-	return steps.Servicios{}, nil
+	return steps.Servicios{
+		// TEMPORAL (T-006): doble en memoria para el escenario de cableado.
+		// US-001 lo reemplaza por el adaptador real sobre internal/app.
+		Proyectos: nuevosProyectosEnMemoria(),
+	}, nil
 }
