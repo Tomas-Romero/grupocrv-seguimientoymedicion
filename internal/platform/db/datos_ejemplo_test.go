@@ -72,3 +72,28 @@ func TestCargarDatosEjemplo_DosVeces(t *testing.T) {
 		t.Errorf("integrantes = %d, se esperaba 3", n)
 	}
 }
+
+// DEF-002: si ya existe un integrante del proyecto de ejemplo con el mismo email
+// pero otro id, cargar los datos no falla por la restriccion UNIQUE
+// (proyecto_id, email) de integrantes: el ON CONFLICT de los datos va sin columna.
+func TestCargarDatosEjemplo_EmailYaUsado(t *testing.T) {
+	ctx, cancelar := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancelar()
+	pool := baseMigrada(ctx, t)
+
+	// Mismo proyecto y mismo email que "Tomas Romero" en los datos de ejemplo,
+	// pero con otro id.
+	const previo = `
+INSERT INTO proyectos (id, nombre, fecha_inicio, fecha_fin)
+VALUES ('00000000-0000-0000-0000-000000000001', 'Proyecto cargado antes', '2026-09-14', '2026-11-16');
+INSERT INTO integrantes (id, proyecto_id, nombre, email, rol)
+VALUES ('00000000-0000-0000-0000-0000000000ff', '00000000-0000-0000-0000-000000000001',
+        'Tomas (cargado a mano)', 'tomas@ejemplo.test', 'agile_enabler');`
+	if _, err := pool.Exec(ctx, previo); err != nil {
+		t.Fatalf("cargar el integrante previo: %v", err)
+	}
+
+	if err := db.CargarDatosEjemplo(ctx, pool, migraciones.DatosEjemplo); err != nil {
+		t.Fatalf("CargarDatosEjemplo con un email ya usado: %v", err)
+	}
+}
