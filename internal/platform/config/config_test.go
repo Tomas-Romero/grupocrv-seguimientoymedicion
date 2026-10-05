@@ -74,3 +74,42 @@ func TestCargar(t *testing.T) {
 		})
 	}
 }
+
+// DEF-002: CARGAR_DATOS_EJEMPLO decide si la app carga los datos de ejemplo al
+// arrancar. Es falsa salvo que se active (solo en el perfil full del compose).
+func TestCargar_DatosEjemplo(t *testing.T) {
+	casos := []struct {
+		nombre      string
+		valor       string
+		esperaError error
+		esperaDatos bool
+	}{
+		{nombre: "caso normal: sin definir es falsa", valor: "", esperaDatos: false},
+		{nombre: "caso alternativo: true la activa", valor: "true", esperaDatos: true},
+		{nombre: "caso alternativo: false la deja apagada", valor: "false", esperaDatos: false},
+		{nombre: "caso limite: solo espacios cuenta como sin definir", valor: "   ", esperaDatos: false},
+		{nombre: "error: un valor que no es booleano", valor: "quizas", esperaError: config.ErrCargarDatosEjemploInvalido},
+	}
+
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			cfg, err := config.Cargar(entorno(map[string]string{
+				"DATABASE_URL":         "postgres://x",
+				"CARGAR_DATOS_EJEMPLO": c.valor,
+			}))
+
+			if c.esperaError != nil {
+				if !errors.Is(err, c.esperaError) {
+					t.Fatalf("se esperaba el error %v, se obtuvo %v", c.esperaError, err)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("no se esperaba error, se obtuvo %v", err)
+			}
+			if cfg.CargarDatosEjemplo != c.esperaDatos {
+				t.Errorf("CargarDatosEjemplo: se esperaba %v, se obtuvo %v", c.esperaDatos, cfg.CargarDatosEjemplo)
+			}
+		})
+	}
+}
