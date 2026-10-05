@@ -75,7 +75,9 @@ que se busca en el código.
   | `docs/plan-de-trabajo.md` | 109 | Fila de US-014 | `PokerSession` |
   | `CONTRIBUTING.md` | 80 | §1, tabla de nombres: paquete Go | `metrics`, `defect` |
   | `CONTRIBUTING.md` | 81 | §1, tabla de nombres: archivo Go | `velocity.go` |
+  | `CONTRIBUTING.md` | 82 | §1, tabla de nombres: test | `velocity_test.go` |
   | `CONTRIBUTING.md` | 148-154 | §2, Paso 5 (ejemplo del ciclo TDD) | `internal/domain/metrics/`, `velocity_test.go`, `velocity.go`, alcance `metrics` |
+  | `CONTRIBUTING.md` | 155 | §2, Paso 5 (ejemplo del ciclo TDD) | alcance `metrics` |
   | `CONTRIBUTING.md` | 158 | §2, Paso 5 (ejemplo del ciclo TDD) | `SprintSummary` |
   | `CONTRIBUTING.md` | 254 | §3, convención de commits: alcance | `metrics` |
   | `CONTRIBUTING.md` | 266 | §3, ejemplos de commits buenos | `SprintSummary` |
