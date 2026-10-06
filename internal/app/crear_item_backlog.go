@@ -33,8 +33,19 @@ func NuevoCrearItemBacklog(repo RepositorioBacklog, ahora func() time.Time) *Cre
 	return &CrearItemBacklog{repo: repo, ahora: ahora}
 }
 
-// Ejecutar valida los datos con el dominio y registra el item.
+// Ejecutar sigue el orden de la spec (seccion 2): primero verifica que el
+// proyecto exista, despues valida los datos con el dominio y al final registra
+// el item. Si el proyecto no existe responde ErrProyectoInexistente sin mirar
+// los datos (RN-005-9).
 func (c *CrearItemBacklog) Ejecutar(ctx context.Context, proyectoID string, datos backlog.DatosItem) (backlog.ItemBacklog, error) {
+	existe, err := c.repo.ExisteProyecto(ctx, proyectoID)
+	if err != nil {
+		return backlog.ItemBacklog{}, fmt.Errorf("consultar el proyecto %s: %w", proyectoID, err)
+	}
+	if !existe {
+		return backlog.ItemBacklog{}, fmt.Errorf("%w (id %s)", ErrProyectoInexistente, proyectoID)
+	}
+
 	item, err := backlog.NuevoItem(datos, c.ahora())
 	if err != nil {
 		// Los errores de validacion se devuelven tal cual: su mensaje es el que
