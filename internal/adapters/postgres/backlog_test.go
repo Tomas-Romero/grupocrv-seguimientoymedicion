@@ -229,3 +229,79 @@ func TestRegistrarItem_Correlativo(t *testing.T) {
 		}
 	}
 }
+
+// US-005 / RN-005-11, CL-005-9: dos altas simultaneas en el mismo proyecto esperan
+// el candado sobre la fila del proyecto y terminan las dos bien, con los numeros
+// 1 y 2. Para que compitan de verdad, el test retiene el candado con una
+// transaccion propia, espera a ver las dos altas bloqueadas en pg_stat_activity
+// y recien entonces lo suelta.
+func TestRegistrarItem_Concurrente(t *testing.T) {
+	ctx := contexto(t)
+	pool := dbprueba.BaseMigrada(ctx, t)
+	proyecto := crearProyecto(ctx, t, pool, "Demo")
+	repo := postgres.NuevoRepositorioBacklog(pool)
+
+	candado, err := pool.Begin(ctx)
+	if err != nil {
+		t.Fatalf("abrir la transaccion del candado: %v", err)
+	}
+	defer func() { _ = candado.Rollback(ctx) }()
+	if _, err := candado.Exec(ctx, `SELECT 1 FROM proyectos WHERE id = $1 FOR NO KEY UPDATE`, proyecto); err != nil {
+		t.Fatalf("tomar el candado del proyecto: %v", err)
+	}
+
+	type resultado struct {
+		numero int
+		err    error
+	}
+	resultados := make(chan resultado, 2)
+	for _, titulo := range []string{"Alta de proyectos", "Listar proyectos"} {
+		item := itemConTitulo(t, titulo)
+		go func() {
+			registrado, err := repo.RegistrarItem(ctx, proyecto, item)
+			resultados <- resultado{numero: registrado.Numero, err: err}
+		}()
+	}
+
+	if bloqueadas := esperarBloqueadas(ctx, t, pool, 2); bloqueadas < 2 {
+		t.Fatalf("solo %d de 2 altas esperaron el candado del proyecto: el repositorio no lo toma", bloqueadas)
+	}
+	if err := candado.Rollback(ctx); err != nil {
+		t.Fatalf("soltar el candado: %v", err)
+	}
+
+	var numeros []int
+	for range 2 {
+		r := <-resultados
+		if r.err != nil {
+			t.Errorf("RegistrarItem: %v", r.err)
+			continue
+		}
+		numeros = append(numeros, r.numero)
+	}
+	slices.Sort(numeros)
+	if !slices.Equal(numeros, []int{1, 2}) {
+		t.Errorf("numeros = %v, se esperaban 1 y 2", numeros)
+	}
+}
+
+// esperarBloqueadas espera hasta 5 segundos a que haya al menos cuantas
+// conexiones de la base esperando un candado, y devuelve cuantas vio la ultima
+// vez.
+func esperarBloqueadas(ctx context.Context, t *testing.T, pool *pgxpool.Pool, cuantas int) int {
+	t.Helper()
+	const consulta = `
+SELECT count(*) FROM pg_stat_activity
+WHERE datname = current_database() AND wait_event_type = 'Lock'`
+	limite := time.Now().Add(5 * time.Second)
+	for {
+		var bloqueadas int
+		if err := pool.QueryRow(ctx, consulta).Scan(&bloqueadas); err != nil {
+			t.Fatalf("consultar pg_stat_activity: %v", err)
+		}
+		if bloqueadas >= cuantas || time.Now().After(limite) {
+			return bloqueadas
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+}
