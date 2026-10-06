@@ -55,8 +55,9 @@ func NuevoItem(datos DatosItem, creadoEn time.Time) (ItemBacklog, error) {
 	}
 
 	return ItemBacklog{
-		Titulo:      titulo,
-		Descripcion: datos.Descripcion,
+		Titulo: titulo,
+		// RN-005-4: opcional y sin largo maximo; si queda vacia, es valida.
+		Descripcion: strings.TrimSpace(datos.Descripcion),
 		Prioridad:   datos.Prioridad,
 		Estado:      EstadoPendiente,
 		StoryPoints: SinEstimar(),
