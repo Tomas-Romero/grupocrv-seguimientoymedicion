@@ -70,10 +70,11 @@ func (m *mundo) dadoSprintCerrado(nombre string) error {
 
 // dadoNingunSprintCerrado no hace nada: los servicios arrancan vacios antes de
 // cada escenario. Existe para que el escenario del caso limite diga
-// explicitamente cual es la precondicion, en vez de dejarla implicita.
+// explicitamente cual es la precondicion, en vez de dejarla implicita. No exige
+// ninguna area conectada: lo usan tambien los escenarios de metricas, que no
+// pasan por el area Sprints (el paso que sigue es el que exige la suya).
 func (m *mundo) dadoNingunSprintCerrado() error {
-	_, err := m.sprints()
-	return err
+	return nil
 }
 
 func (m *mundo) cuandoSeCreaSprint(nombre, objetivo string) error {

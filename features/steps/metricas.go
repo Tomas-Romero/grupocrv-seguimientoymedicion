@@ -14,6 +14,7 @@ import (
 func registrarMetricas(sc *godog.ScenarioContext, m *mundo) {
 	sc.Step(`^el sprint "([^"]*)" con una historia de (-?\d+) story points completada$`, m.dadoHistoriaDeSprintCompletada)
 	sc.Step(`^el sprint "([^"]*)" con una historia de (-?\d+) story points sin completar$`, m.dadoHistoriaDeSprintSinCompletar)
+	sc.Step(`^el sprint cerrado "([^"]*)" con (\d+) story points completados de (\d+) planificados$`, m.dadoSprintCerradoConPuntos)
 
 	sc.Step(`^se consultan los story points planificados del sprint "([^"]*)"$`, m.cuandoSeConsultanPlanificados)
 	sc.Step(`^se consultan los story points completados del sprint "([^"]*)"$`, m.cuandoSeConsultanCompletados)
@@ -42,6 +43,20 @@ func (m *mundo) agregarHistoriaDeSprint(sprint string, puntos int, completada bo
 	}
 	if err = metricas.AgregarItemAlSprint(sprint, puntos, completada); err != nil {
 		return fmt.Errorf("agregar una historia al sprint %q del contexto: %w", sprint, err)
+	}
+	return nil
+}
+
+// dadoSprintCerradoConPuntos arma un sprint cerrado para el escenario de la
+// velocidad. No valida nada: "8 completados de 5 planificados" es justo el dato
+// corrupto que tiene que rechazar el dominio (CA-026-4).
+func (m *mundo) dadoSprintCerradoConPuntos(nombre string, completados, planificados int) error {
+	metricas, err := m.metricas()
+	if err != nil {
+		return err
+	}
+	if err = metricas.RegistrarSprintCerrado(nombre, planificados, completados); err != nil {
+		return fmt.Errorf("registrar el sprint cerrado %q del contexto: %w", nombre, err)
 	}
 	return nil
 }
