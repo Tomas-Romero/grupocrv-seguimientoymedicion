@@ -573,4 +573,4 @@ unidos, y en ningún caso se registra nada.
 - [ ] No use IA
 - [x] Use IA para: redacción de la especificación con Claude Code a partir de
   la historia, decisiones y criterios definidos por el equipo
-- Revisado y entendido por:
+- Revisado y entendido por: Juan Ignacio Vergara
