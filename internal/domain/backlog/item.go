@@ -7,9 +7,14 @@
 package backlog
 
 import (
+	"fmt"
 	"strings"
 	"time"
+	"unicode/utf8"
 )
+
+// LargoMaximoTitulo es el maximo de caracteres del titulo recortado (RN-005-3).
+const LargoMaximoTitulo = 120
 
 // DatosItem son los datos que carga la persona al crear un item.
 type DatosItem struct {
@@ -43,6 +48,10 @@ func NuevoItem(datos DatosItem, creadoEn time.Time) (ItemBacklog, error) {
 	titulo := strings.TrimSpace(datos.Titulo)
 	if titulo == "" {
 		return ItemBacklog{}, ErrTituloVacio
+	}
+	// Se cuentan runas y no bytes: una tilde o una ñ es un caracter (CL-005-3).
+	if n := utf8.RuneCountInString(titulo); n > LargoMaximoTitulo {
+		return ItemBacklog{}, fmt.Errorf("%w (tiene %d)", ErrTituloMuyLargo, n)
 	}
 
 	return ItemBacklog{
