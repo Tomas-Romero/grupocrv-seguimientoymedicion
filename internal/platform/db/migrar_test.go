@@ -6,12 +6,13 @@ import (
 	"time"
 
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/platform/db"
+	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/platform/db/dbprueba"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/migraciones"
 )
 
 // DEF-002: migrar una base vacia deja creado el esquema, con la tabla proyectos.
 func TestMigrar_BaseVacia(t *testing.T) {
-	pool := baseTemporal(t)
+	pool := dbprueba.BaseTemporal(t)
 	ctx, cancelar := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancelar()
 
@@ -19,7 +20,7 @@ func TestMigrar_BaseVacia(t *testing.T) {
 		t.Fatalf("Migrar: %v", err)
 	}
 
-	if !existeTabla(ctx, t, pool, "proyectos") {
+	if !dbprueba.ExisteTabla(ctx, t, pool, "proyectos") {
 		t.Fatal("despues de migrar no existe la tabla proyectos")
 	}
 }
@@ -27,7 +28,7 @@ func TestMigrar_BaseVacia(t *testing.T) {
 // DEF-002: la app migra en cada arranque, asi que migrar una base ya migrada no
 // puede fallar ni volver a aplicar nada.
 func TestMigrar_DosVeces(t *testing.T) {
-	pool := baseTemporal(t)
+	pool := dbprueba.BaseTemporal(t)
 	ctx, cancelar := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancelar()
 
