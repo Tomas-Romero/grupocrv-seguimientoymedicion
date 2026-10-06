@@ -117,5 +117,11 @@ func conOtraBase(t *testing.T, direccion, base string) string {
 		t.Fatalf("leer DATABASE_URL: %v", err)
 	}
 	u.Path = "/" + base
+	// Hasta 10 conexiones: el test de concurrencia del repositorio usa cuatro a la
+	// vez (el candado, dos altas y la consulta a pg_stat_activity), y el maximo
+	// por defecto de pgxpool puede ser justo 4.
+	consulta := u.Query()
+	consulta.Set("pool_max_conns", "10")
+	u.RawQuery = consulta.Encode()
 	return u.String()
 }
