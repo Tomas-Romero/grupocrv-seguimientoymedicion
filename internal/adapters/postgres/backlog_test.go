@@ -195,3 +195,37 @@ func TestExisteProyecto(t *testing.T) {
 		})
 	}
 }
+
+// US-005 / CA-005-3, RN-005-10, CL-005-8, CA-005-2: los items de un proyecto se
+// numeran 1, 2, ...; el primero de otro proyecto es el 1 aunque el primero ya
+// tenga items. Un item sin criterios se guarda con una lista vacia, no nula.
+func TestRegistrarItem_Correlativo(t *testing.T) {
+	ctx := contexto(t)
+	pool := dbprueba.BaseMigrada(ctx, t)
+	demo := crearProyecto(ctx, t, pool, "Demo")
+	otro := crearProyecto(ctx, t, pool, "Otro")
+	repo := postgres.NuevoRepositorioBacklog(pool)
+
+	altas := []struct {
+		proyecto string
+		titulo   string
+		numero   int
+	}{
+		{demo, "Alta de proyectos", 1},
+		{demo, "Listar proyectos", 2},
+		{otro, "Alta de sprints", 1},
+	}
+	for _, a := range altas {
+		registrado, err := repo.RegistrarItem(ctx, a.proyecto, itemConTitulo(t, a.titulo))
+		if err != nil {
+			t.Fatalf("RegistrarItem(%q): %v", a.titulo, err)
+		}
+		if registrado.Numero != a.numero {
+			t.Errorf("%q: numero = %d, se esperaba %d", a.titulo, registrado.Numero, a.numero)
+		}
+		guardado := leerFila(ctx, t, pool, registrado.ID)
+		if guardado.criterios == nil || len(guardado.criterios) != 0 {
+			t.Errorf("%q: criterios = %#v, se esperaba una lista vacia", a.titulo, guardado.criterios)
+		}
+	}
+}
