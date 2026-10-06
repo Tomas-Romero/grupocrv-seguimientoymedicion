@@ -2,6 +2,8 @@ package app_test
 
 import (
 	"context"
+	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -83,5 +85,32 @@ func TestCrearItemBacklog_Registra(t *testing.T) {
 	if item.ID != "id-del-repositorio" || item.Numero != 1 || item.ProyectoID != "proyecto-1" {
 		t.Errorf("ID, numero y proyecto = %q, %d, %q; se esperaban los del repositorio",
 			item.ID, item.Numero, item.ProyectoID)
+	}
+}
+
+// US-005 / CA-005-8, RN-005-9: si el proyecto no existe, el caso de uso responde
+// ErrProyectoInexistente antes de validar los datos: no lo une con los errores
+// de validacion (aunque los datos tambien sean invalidos) y no registra nada.
+func TestCrearItemBacklog_ProyectoInexistente(t *testing.T) {
+	repo := &repositorioFalso{existe: false}
+	crear := app.NuevoCrearItemBacklog(repo, relojFijo)
+	datos := backlog.DatosItem{Titulo: "   ", Prioridad: "urgente"}
+
+	_, err := crear.Ejecutar(context.Background(), "proyecto-inexistente", datos)
+	if !errors.Is(err, app.ErrProyectoInexistente) {
+		t.Fatalf("error = %v, se esperaba ErrProyectoInexistente", err)
+	}
+	if errors.Is(err, backlog.ErrTituloVacio) || errors.Is(err, backlog.ErrPrioridadInvalida) {
+		t.Errorf("el proyecto inexistente vino unido con errores de validacion: %v", err)
+	}
+	// Envuelto indicando el ID recibido.
+	if !strings.Contains(err.Error(), "proyecto-inexistente") {
+		t.Errorf("el mensaje %q no indica el ID del proyecto", err.Error())
+	}
+	if len(repo.consultas) != 1 || repo.consultas[0] != "proyecto-inexistente" {
+		t.Errorf("consultas al repositorio = %q, se esperaba una por %q", repo.consultas, "proyecto-inexistente")
+	}
+	if len(repo.altas) != 0 {
+		t.Errorf("se registraron %d items, se esperaba ninguno", len(repo.altas))
 	}
 }
