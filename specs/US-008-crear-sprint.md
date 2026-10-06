@@ -41,11 +41,11 @@ La creación pasa por dos capas, y cada una valida solo lo que puede saber:
   2. Valida los datos con el dominio, pasándole las fechas del proyecto. El
      dominio devuelve todos los errores unidos.
   3. Registra el sprint a través del repositorio, que dentro de una
-     transacción bloquea el proyecto con `FOR UPDATE`, vuelve a verificar que
-     exista (por si desapareció entre el paso 1 y este) y que las fechas del
-     sprint estén dentro de las suyas, lee el último sprint del proyecto,
-     verifica que esté cerrado y que el nuevo empiece después de que ese
-     termine, le asigna el número correlativo e inserta el sprint. El ID lo
+     transacción bloquea el proyecto con `FOR NO KEY UPDATE`, vuelve a
+     verificar que exista (por si desapareció entre el paso 1 y este) y que las
+     fechas del sprint estén dentro de las suyas, lee el último sprint del
+     proyecto, verifica que esté cerrado y que el nuevo empiece después de que
+     ese termine, le asigna el número correlativo e inserta el sprint. El ID lo
      genera la base.
 
 | Nombre | Tipo | Obligatorio | Rango / formato válido |
@@ -139,9 +139,10 @@ Entre paréntesis, la capa que la hace cumplir.
   proyectos no cuentan.
 - **RN-008-14** (persistencia) — El repositorio registra el sprint en una
   transacción, con estos pasos en orden, y se detiene en el primer error:
-  1. Bloquea la fila del proyecto y lee sus fechas
-     (`SELECT fecha_inicio, fecha_fin FROM proyectos WHERE id = $1 FOR UPDATE`).
-     Si no hay fila, el proyecto no existe (RN-008-9).
+  1. Bloquea la fila del proyecto y lee sus fechas:
+     `SELECT fecha_inicio, fecha_fin FROM proyectos`
+     `WHERE id = $1 FOR NO KEY UPDATE`. Si no hay fila, el proyecto no existe
+     (RN-008-9).
   2. Vuelve a verificar RN-008-7 con la función del dominio, pasándole las
      fechas del proyecto leídas en el paso 1 y no las de la lectura del caso
      de uso: si una modificación del proyecto (US-002) las cambió en el medio,
@@ -194,11 +195,11 @@ Entre paréntesis, la capa que la hace cumplir.
   Postgres y el que usen los escenarios BDD.
 - **Nivel de aislamiento.** La transacción usa el nivel por defecto de Postgres
   (`READ COMMITTED`), y el último sprint se lee en una sentencia posterior al
-  `FOR UPDATE`. Así, una alta que esperó el bloqueo ve el sprint que registró
-  la otra, y el `FOR UPDATE` devuelve las fechas del proyecto que haya guardado
-  una modificación concurrente. Con `REPEATABLE READ`, la foto de los datos
-  sería la de antes de esperar el bloqueo, y la segunda alta no vería el sprint
-  de la primera.
+  `FOR NO KEY UPDATE`. Así, una alta que esperó el bloqueo ve el sprint que
+  registró la otra, y el `FOR NO KEY UPDATE` devuelve las fechas del proyecto
+  que haya guardado una modificación concurrente. Con `REPEATABLE READ`, la
+  foto de los datos sería la de antes de esperar el bloqueo, y la segunda alta
+  no vería el sprint de la primera.
 - **Persistencia.** Una migración nueva en `migraciones/` (nunca se edita
   `00001_init.sql`) crea la tabla `sprints`, con el ID generado en la base
   (`DEFAULT gen_random_uuid()`), la referencia al proyecto, el número, el
@@ -509,8 +510,18 @@ unidos, y en ningún caso se registra nada.
   también pueden cambiar entre la lectura del caso de uso y el alta, si alguien
   modifica el proyecto (US-002) en el medio. Con la fila bloqueada, las fechas
   leídas en la transacción no cambian hasta que termine, así que verificarlas
-  ahí cierra esa ventana. Cuesta poco, porque el `FOR UPDATE` ya lee esa fila, y
-  se usa la misma función del dominio para no duplicar la regla.
+  ahí cierra esa ventana. Cuesta poco, porque el `FOR NO KEY UPDATE` ya lee esa
+  fila, y se usa la misma función del dominio para no duplicar la regla.
+- **El proyecto se bloquea con `FOR NO KEY UPDATE`.** Dos `FOR NO KEY UPDATE`
+  sobre la misma fila se excluyen, así que las altas de sprints de un proyecto
+  se serializan igual, y una modificación del proyecto (US-002) también espera,
+  porque su `UPDATE` toma ese mismo candado. A diferencia de `FOR UPDATE`, no
+  choca con el `FOR KEY SHARE` que toma Postgres al verificar una clave foránea:
+  mientras se registra un sprint, se pueden seguir insertando filas que solo
+  apuntan al proyecto, como un integrante nuevo. Las altas de ítems de US-005
+  usan el mismo candado, así que esas sí esperan. Se descartó `FOR UPDATE`:
+  además de serializar las altas, bloqueaba esas claves foráneas sin
+  necesidad.
 - **En la transacción, primero las fechas del proyecto.** El paso 2 de
   RN-008-14 va antes que RN-008-17 y RN-008-13 por dos razones. Usa solo la
   fila que se acaba de bloquear: si falla, la transacción termina sin leer los
