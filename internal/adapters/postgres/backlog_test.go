@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -303,5 +304,33 @@ WHERE datname = current_database() AND wait_event_type = 'Lock'`
 			return bloqueadas
 		}
 		time.Sleep(20 * time.Millisecond)
+	}
+}
+
+// US-005 / CL-005-16, RN-005-11: si la transaccion se revierte despues de calcular
+// el numero, no queda hueco: la siguiente alta toma ese mismo numero. Para forzar
+// el rollback, el item llega con un titulo de 121 caracteres (sin pasar por el
+// dominio) y el INSERT choca con el CHECK de la tabla, que es la ultima defensa.
+func TestRegistrarItem_RollbackSinHueco(t *testing.T) {
+	ctx := contexto(t)
+	pool := dbprueba.BaseMigrada(ctx, t)
+	proyecto := crearProyecto(ctx, t, pool, "Demo")
+	repo := postgres.NuevoRepositorioBacklog(pool)
+
+	invalido := itemConTitulo(t, "Alta de proyectos")
+	invalido.Titulo = strings.Repeat("a", 121)
+	if _, err := repo.RegistrarItem(ctx, proyecto, invalido); err == nil {
+		t.Fatal("se esperaba que el INSERT fallara por el CHECK del titulo")
+	}
+	if n := dbprueba.ContarFilas(ctx, t, pool, "items_backlog"); n != 0 {
+		t.Fatalf("items_backlog = %d despues del rollback, se esperaba ninguno", n)
+	}
+
+	registrado, err := repo.RegistrarItem(ctx, proyecto, itemConTitulo(t, "Alta de proyectos"))
+	if err != nil {
+		t.Fatalf("RegistrarItem: %v", err)
+	}
+	if registrado.Numero != 1 {
+		t.Errorf("numero = %d despues del rollback, se esperaba 1 (sin hueco)", registrado.Numero)
 	}
 }
