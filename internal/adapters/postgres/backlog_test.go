@@ -163,3 +163,35 @@ func TestRegistrarItem_ProyectoInexistente(t *testing.T) {
 		})
 	}
 }
+
+// US-005 / RN-005-9: ExisteProyecto es la lectura simple del caso de uso. Un ID
+// que no esta en la base o que no es un UUID valido es un proyecto inexistente,
+// no un error.
+func TestExisteProyecto(t *testing.T) {
+	ctx := contexto(t)
+	pool := dbprueba.BaseMigrada(ctx, t)
+	proyecto := crearProyecto(ctx, t, pool, "Demo")
+	repo := postgres.NuevoRepositorioBacklog(pool)
+
+	casos := []struct {
+		nombre string
+		id     string
+		existe bool
+	}{
+		{"proyecto de la base", proyecto, true},
+		{"UUID que no esta en la base", "00000000-0000-0000-0000-000000000000", false},
+		{"ID mal formado", "no-es-un-uuid", false},
+		{"ID vacio", "", false},
+	}
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			existe, err := repo.ExisteProyecto(ctx, c.id)
+			if err != nil {
+				t.Fatalf("ExisteProyecto: %v", err)
+			}
+			if existe != c.existe {
+				t.Errorf("ExisteProyecto(%q) = %t, se esperaba %t", c.id, existe, c.existe)
+			}
+		})
+	}
+}
