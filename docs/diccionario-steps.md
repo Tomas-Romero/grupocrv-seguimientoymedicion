@@ -111,6 +111,7 @@ conectada, falla con `area sin conectar a los steps: <área>`: es a propósito.
 | `Y la historia "Crear proyecto" completada` | `^la historia "([^"]*)" completada$` |
 | `Y el sprint "Sprint 1" cerrado` | `^el sprint "([^"]*)" cerrado$` |
 | `Dado ningún sprint cerrado` | `^ningún sprint cerrado$` |
+| `Dado ningún proyecto` | `^ningún proyecto$` |
 
 Un escenario **no repite títulos de historias**: el área Backlog las identifica
 por título, y la spec de US-005 permite repetirlos entre sí, así que dos historias
@@ -119,7 +120,13 @@ con el mismo título en un mismo escenario serían ambiguas.
 El primer `Dado un proyecto "X"` usa fechas por defecto (del 2026-01-01 al
 2026-12-31) y queda como **proyecto actual**: los steps que siguen y no nombran
 proyecto operan sobre ese. Eso evita repetir el nombre del proyecto en cada
-línea.
+línea. Cada `Dado un proyecto "X"` nuevo cambia el proyecto actual.
+
+`Dado ningún proyecto` deja como proyecto actual uno que no existe: las áreas no
+le encuentran ID y llaman a la aplicación con uno inexistente, así que el rechazo
+lo produce el caso de uso y no el step. Es para los escenarios de proyecto
+inexistente (CA-005-8, CA-008-10); con esa frase el escenario no lleva
+`Antecedentes` que creen un proyecto.
 
 ---
 
@@ -131,6 +138,8 @@ línea.
 | `Cuando se modifica el nombre del proyecto "Demo" a "Demo v2"` | `^se modifica el nombre del proyecto "([^"]*)" a "([^"]*)"$` |
 | `Cuando se registra al integrante "Vergara" con rol "product_builder"` | `^se registra al integrante "([^"]*)" con rol "([^"]*)"$` |
 | `Cuando se crea la historia "Crear proyecto" con prioridad "must"` | `^se crea la historia "([^"]*)" con prioridad "([^"]*)"$` |
+| `Cuando se crea la historia "Crear proyecto" con prioridad "must", la descripción "Alta" y los criterios:` + tabla de una columna | `^se crea la historia "([^"]*)" con prioridad "([^"]*)", la descripción "([^"]*)" y los criterios:$` |
+| `Cuando se crea una historia con un título de 121 caracteres y prioridad "must"` | `^se crea una historia con un título de (\d+) caracteres y prioridad "([^"]*)"$` |
 | `Cuando se cambia la prioridad de la historia "Crear proyecto" a "should"` | `^se cambia la prioridad de la historia "([^"]*)" a "([^"]*)"$` |
 | `Cuando se estima la historia "Crear proyecto" en 5 story points` | `^se estima la historia "([^"]*)" en (\d+) story points$` |
 | `Cuando se crea el sprint "Sprint 1" con el objetivo "MVP navegable"` | `^se crea el sprint "([^"]*)" con el objetivo "([^"]*)"$` |
@@ -144,6 +153,22 @@ línea.
 **Un solo `Cuando` por escenario.** Si necesitás dos acciones, la primera es
 contexto y va en un `Dado`. Un escenario con dos `Cuando` casi siempre está
 probando dos cosas y conviene partirlo.
+
+Los criterios de aceptación van en una tabla de una sola columna, un criterio por
+fila y en orden:
+
+```gherkin
+Cuando se crea la historia "Alta" con prioridad "must", la descripción "Alta de proyectos" y los criterios:
+  | Se guarda el proyecto |
+  |                       |
+```
+
+Gherkin recorta los espacios de cada celda, así que una celda con solo espacios
+llega vacía: un criterio "solo espacios" se prueba con tests unitarios, no acá.
+
+`se crea una historia con un título de N caracteres` arma el título con N letras
+`ñ`. Cada una ocupa dos bytes, así que el escenario también prueba que el límite
+cuenta caracteres y no bytes.
 
 ---
 
@@ -159,6 +184,10 @@ probando dos cosas y conviene partirlo.
 | `Y el backlog del proyecto "Demo" tiene 2 historias` | `^el backlog del proyecto "([^"]*)" tiene (\d+) historias?$` |
 | `Y la historia "Crear proyecto" tiene prioridad "should"` | `^la historia "([^"]*)" tiene prioridad "([^"]*)"$` |
 | `Y la historia "Crear proyecto" tiene 5 story points` | `^la historia "([^"]*)" tiene (\d+) story points$` |
+| `Y la historia "Crear proyecto" está sin estimar` | `^la historia "([^"]*)" está sin estimar$` |
+| `Y la historia "Crear proyecto" tiene el número 2` | `^la historia "([^"]*)" tiene el número (\d+)$` |
+| `Y la historia "Crear proyecto" tiene estado "pendiente"` | `^la historia "([^"]*)" tiene estado "([^"]*)"$` |
+| `Y la historia "Crear proyecto" tiene los criterios:` + tabla de una columna | `^la historia "([^"]*)" tiene los criterios:$` |
 | `Y la historia "Crear proyecto" está en el sprint "Sprint 1"` | `^la historia "([^"]*)" está en el sprint "([^"]*)"$` |
 | `Y la historia "Crear proyecto" está en el backlog` | `^la historia "([^"]*)" está en el backlog$` |
 | `Y el sprint "Sprint 1" está cerrado` | `^el sprint "([^"]*)" está cerrado$` |
@@ -168,7 +197,14 @@ probando dos cosas y conviene partirlo.
 
 `la operación es exitosa` y `la operación se rechaza` miran el error que dejó el
 último `Cuando`. Son los dos steps que más vas a usar: todo escenario de error
-termina con `se rechaza` más `el mensaje de error indica`.
+termina con `se rechaza` más `el mensaje de error indica`. Los mensajes de error
+del código van sin tildes, así que el escenario los escribe igual: "el titulo es
+obligatorio".
+
+`está sin estimar` y `tiene N story points` no son lo mismo: una historia recién
+creada está sin estimar, no tiene 0 story points (RN-005-7). Los estados se
+escriben como los define el dominio, en minúscula: `pendiente`, `en_progreso`,
+`completado`.
 
 ---
 
