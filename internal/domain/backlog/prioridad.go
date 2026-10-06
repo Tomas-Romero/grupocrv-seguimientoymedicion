@@ -10,3 +10,14 @@ const (
 	PrioridadCould  Prioridad = "could"
 	PrioridadWont   Prioridad = "wont"
 )
+
+// valida dice si p es uno de los cuatro valores exactos. No pasa a minuscula ni
+// recorta: convertir el texto de un formulario es tarea del adaptador, y "MUST"
+// o " must " se rechazan (CL-005-12).
+func (p Prioridad) valida() bool {
+	switch p {
+	case PrioridadMust, PrioridadShould, PrioridadCould, PrioridadWont:
+		return true
+	}
+	return false
+}
