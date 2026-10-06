@@ -153,3 +153,33 @@ func TestNuevoItem_LargoDelTitulo(t *testing.T) {
 		})
 	}
 }
+
+// US-005 / CA-005-2, RN-005-4, CL-005-5, CL-005-13: la descripcion es opcional,
+// se recorta y puede quedar vacia; los saltos de linea internos se conservan.
+func TestNuevoItem_Descripcion(t *testing.T) {
+	casos := []struct {
+		nombre      string
+		descripcion string
+		guardada    string
+	}{
+		{"se recortan los extremos", "  Alta de proyectos \n", "Alta de proyectos"},
+		{"omitida", "", ""},
+		{"solo espacios, tabulaciones y saltos de linea", " \t\n ", ""},
+		{"saltos de linea internos", "Linea 1\nLinea 2", "Linea 1\nLinea 2"},
+	}
+
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			datos := datosValidos()
+			datos.Descripcion = c.descripcion
+
+			item, err := backlog.NuevoItem(datos, creadoEn)
+			if err != nil {
+				t.Fatalf("NuevoItem: %v", err)
+			}
+			if item.Descripcion != c.guardada {
+				t.Errorf("descripcion guardada = %q, se esperaba %q", item.Descripcion, c.guardada)
+			}
+		})
+	}
+}
