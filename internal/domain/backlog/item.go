@@ -6,7 +6,10 @@
 // resuelven la aplicacion y la persistencia.
 package backlog
 
-import "time"
+import (
+	"strings"
+	"time"
+)
 
 // DatosItem son los datos que carga la persona al crear un item.
 type DatosItem struct {
@@ -34,10 +37,16 @@ type ItemBacklog struct {
 	CreadoEn    time.Time
 }
 
-// NuevoItem arma un item pendiente y sin estimar con los datos recibidos.
+// NuevoItem valida los datos y arma un item pendiente y sin estimar.
 func NuevoItem(datos DatosItem, creadoEn time.Time) (ItemBacklog, error) {
+	// RN-005-1: se recorta antes de validar, y se guarda recortado.
+	titulo := strings.TrimSpace(datos.Titulo)
+	if titulo == "" {
+		return ItemBacklog{}, ErrTituloVacio
+	}
+
 	return ItemBacklog{
-		Titulo:      datos.Titulo,
+		Titulo:      titulo,
 		Descripcion: datos.Descripcion,
 		Prioridad:   datos.Prioridad,
 		Estado:      EstadoPendiente,
