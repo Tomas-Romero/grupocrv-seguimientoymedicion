@@ -2,6 +2,7 @@ package postgres_test
 
 import (
 	"context"
+	"errors"
 	"slices"
 	"testing"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/adapters/postgres"
+	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/app"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/backlog"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/platform/db/dbprueba"
 )
@@ -131,5 +133,33 @@ func TestRegistrarItem_PrimerItem(t *testing.T) {
 	}
 	if !guardado.creadoEn.Equal(creadoEn) {
 		t.Errorf("creado_en = %v, se esperaba %v", guardado.creadoEn, creadoEn)
+	}
+}
+
+// US-005 / RN-005-9, RN-005-11, CA-005-8: si el proyecto no existe, RegistrarItem
+// devuelve ErrProyectoInexistente y no guarda nada. Un ID mal formado (SQLSTATE
+// 22P02) tambien es un proyecto inexistente.
+func TestRegistrarItem_ProyectoInexistente(t *testing.T) {
+	casos := []struct {
+		nombre string
+		id     string
+	}{
+		{"UUID que no esta en la base", "00000000-0000-0000-0000-000000000000"},
+		{"ID mal formado", "no-es-un-uuid"},
+	}
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			ctx := contexto(t)
+			pool := dbprueba.BaseMigrada(ctx, t)
+			repo := postgres.NuevoRepositorioBacklog(pool)
+
+			_, err := repo.RegistrarItem(ctx, c.id, itemConTitulo(t, "Alta de proyectos"))
+			if !errors.Is(err, app.ErrProyectoInexistente) {
+				t.Fatalf("error = %v, se esperaba ErrProyectoInexistente", err)
+			}
+			if n := dbprueba.ContarFilas(ctx, t, pool, "items_backlog"); n != 0 {
+				t.Errorf("items_backlog = %d, se esperaba ninguno", n)
+			}
+		})
 	}
 }
