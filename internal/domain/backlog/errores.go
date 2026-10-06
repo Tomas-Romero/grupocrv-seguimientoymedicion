@@ -7,4 +7,7 @@ import "errors"
 var (
 	// ErrTituloVacio: el titulo esta vacio o tiene solo espacios (RN-005-2).
 	ErrTituloVacio = errors.New("el titulo es obligatorio")
+	// ErrTituloMuyLargo: el titulo recortado pasa los 120 caracteres (RN-005-3).
+	// Se devuelve envuelto, indicando cuantos caracteres tiene.
+	ErrTituloMuyLargo = errors.New("el titulo no puede tener mas de 120 caracteres")
 )
