@@ -1,7 +1,10 @@
 package backlog_test
 
 import (
+	"errors"
+	"reflect"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -57,5 +60,35 @@ func TestNuevoItem_DatosValidos(t *testing.T) {
 	if item.ID != "" || item.Numero != 0 || item.ProyectoID != "" {
 		t.Errorf("ID, numero y proyecto = %q, %d, %q; se esperaban vacios hasta registrar el item",
 			item.ID, item.Numero, item.ProyectoID)
+	}
+}
+
+// US-005 / CA-005-5, RN-005-1, RN-005-2, CL-005-4: un titulo vacio o con solo
+// espacios se rechaza, aunque los espacios sean mas de 120, y no se devuelve
+// ningun item.
+func TestNuevoItem_TituloVacio(t *testing.T) {
+	casos := []struct {
+		nombre string
+		titulo string
+	}{
+		{"vacio", ""},
+		{"solo espacios", "   "},
+		{"tabulaciones y saltos de linea", "\t\n \r\n"},
+		{"mas de 120 espacios", strings.Repeat(" ", 130)},
+	}
+
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			datos := datosValidos()
+			datos.Titulo = c.titulo
+
+			item, err := backlog.NuevoItem(datos, creadoEn)
+			if !errors.Is(err, backlog.ErrTituloVacio) {
+				t.Fatalf("error = %v, se esperaba ErrTituloVacio", err)
+			}
+			if !reflect.DeepEqual(item, backlog.ItemBacklog{}) {
+				t.Errorf("con un error devolvio el item %+v, se esperaba ninguno", item)
+			}
+		})
 	}
 }
