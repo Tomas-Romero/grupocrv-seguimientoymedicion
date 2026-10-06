@@ -113,3 +113,32 @@ func TestBase_RegistrarItem_Simultaneas(t *testing.T) {
 		}
 	}
 }
+
+// US-005 / RN-005-9: ExisteProyecto encuentra solo los proyectos de la base. Un
+// ID desconocido o mal formado es un proyecto inexistente, no un error.
+func TestBase_ExisteProyecto(t *testing.T) {
+	base := memoria.NuevaBase()
+	proyecto := base.AgregarProyecto()
+
+	casos := []struct {
+		nombre string
+		id     string
+		existe bool
+	}{
+		{"proyecto de la base", proyecto, true},
+		{"UUID que no esta en la base", "00000000-0000-0000-0000-000000000000", false},
+		{"ID mal formado", "no-es-un-uuid", false},
+		{"ID vacio", "", false},
+	}
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			existe, err := base.ExisteProyecto(context.Background(), c.id)
+			if err != nil {
+				t.Fatalf("ExisteProyecto: %v", err)
+			}
+			if existe != c.existe {
+				t.Errorf("ExisteProyecto(%q) = %t, se esperaba %t", c.id, existe, c.existe)
+			}
+		})
+	}
+}
