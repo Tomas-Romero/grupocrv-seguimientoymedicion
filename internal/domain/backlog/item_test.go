@@ -321,3 +321,53 @@ func TestNuevoItem_VariosErrores(t *testing.T) {
 		t.Errorf("con errores devolvio el item %+v, se esperaba ninguno", item)
 	}
 }
+
+// US-005 / CL-005-14: los criterios repetidos se aceptan y se guardan los dos, en
+// orden.
+func TestNuevoItem_CriteriosRepetidos(t *testing.T) {
+	datos := datosValidos()
+	datos.Criterios = []string{"probado", "probado"}
+
+	item, err := backlog.NuevoItem(datos, creadoEn)
+	if err != nil {
+		t.Fatalf("NuevoItem: %v", err)
+	}
+	if !slices.Equal(item.Criterios, datos.Criterios) {
+		t.Errorf("criterios = %q, se esperaba %q", item.Criterios, datos.Criterios)
+	}
+}
+
+// US-005 / CA-005-2, CL-005-5: sin descripcion y sin criterios el item es valido.
+// La lista de criterios queda vacia, no ausente: la persistencia la guarda como
+// una lista vacia y no como un valor nulo.
+func TestNuevoItem_SinDescripcionNiCriterios(t *testing.T) {
+	datos := datosValidos()
+	datos.Descripcion = ""
+	datos.Criterios = nil
+
+	item, err := backlog.NuevoItem(datos, creadoEn)
+	if err != nil {
+		t.Fatalf("NuevoItem: %v", err)
+	}
+	if item.Descripcion != "" {
+		t.Errorf("descripcion = %q, se esperaba vacia", item.Descripcion)
+	}
+	if item.Criterios == nil || len(item.Criterios) != 0 {
+		t.Errorf("criterios = %#v, se esperaba una lista vacia", item.Criterios)
+	}
+}
+
+// US-005 / RN-005-8: el item guarda su propia copia de los criterios; cambiar
+// despues la lista recibida no lo modifica.
+func TestNuevoItem_CopiaLosCriterios(t *testing.T) {
+	datos := datosValidos()
+
+	item, err := backlog.NuevoItem(datos, creadoEn)
+	if err != nil {
+		t.Fatalf("NuevoItem: %v", err)
+	}
+	datos.Criterios[0] = "cambiado despues"
+	if item.Criterios[0] != "Se guarda con sus fechas" {
+		t.Errorf("el item cambio junto con los datos recibidos: criterio 1 = %q", item.Criterios[0])
+	}
+}
