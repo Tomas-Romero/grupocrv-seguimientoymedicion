@@ -224,3 +224,61 @@ func TestNuevoItem_Prioridad(t *testing.T) {
 		})
 	}
 }
+
+// errorUnido es lo que devuelve errors.Join: permite ver cada error por separado
+// y en su orden, sin una asercion de tipo sobre el error.
+type errorUnido interface {
+	Unwrap() []error
+}
+
+// US-005 / CA-005-7, RN-005-8, RN-005-14, CL-005-6: cada criterio vacio o con
+// solo espacios es un error con su posicion, contada desde 1. Se reconoce con
+// errors.Is y la posicion se obtiene con errors.As.
+func TestNuevoItem_CriteriosVacios(t *testing.T) {
+	datos := datosValidos()
+	datos.Criterios = []string{"", "válido", "  "}
+
+	_, err := backlog.NuevoItem(datos, creadoEn)
+	if !errors.Is(err, backlog.ErrCriterioVacio) {
+		t.Fatalf("error = %v, se esperaba ErrCriterioVacio", err)
+	}
+	var unido errorUnido
+	if !errors.As(err, &unido) {
+		t.Fatalf("se esperaban los errores unidos con errors.Join, se obtuvo: %v", err)
+	}
+	errs := unido.Unwrap()
+	posiciones := []int{1, 3}
+	if len(errs) != len(posiciones) {
+		t.Fatalf("se obtuvieron %d errores, se esperaban %d: %v", len(errs), len(posiciones), err)
+	}
+	for i, posicion := range posiciones {
+		var criterio backlog.CriterioVacioError
+		if !errors.As(errs[i], &criterio) {
+			t.Fatalf("error %d = %v, se esperaba un CriterioVacioError", i+1, errs[i])
+		}
+		if criterio.Posicion != posicion {
+			t.Errorf("error %d: posicion = %d, se esperaba %d", i+1, criterio.Posicion, posicion)
+		}
+	}
+	mensaje := "el criterio de aceptacion de la posicion 1 esta vacio\n" +
+		"el criterio de aceptacion de la posicion 3 esta vacio"
+	if err.Error() != mensaje {
+		t.Errorf("mensaje = %q, se esperaba %q", err.Error(), mensaje)
+	}
+}
+
+// US-005 / RN-005-8: los criterios se guardan recortados y en el orden en que
+// se recibieron.
+func TestNuevoItem_CriteriosRecortados(t *testing.T) {
+	datos := datosValidos()
+	datos.Criterios = []string{"  Se guarda  ", "\tSe lista\n"}
+
+	item, err := backlog.NuevoItem(datos, creadoEn)
+	if err != nil {
+		t.Fatalf("NuevoItem: %v", err)
+	}
+	esperados := []string{"Se guarda", "Se lista"}
+	if !slices.Equal(item.Criterios, esperados) {
+		t.Errorf("criterios = %q, se esperaba %q", item.Criterios, esperados)
+	}
+}
