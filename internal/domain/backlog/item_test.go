@@ -92,3 +92,64 @@ func TestNuevoItem_TituloVacio(t *testing.T) {
 		})
 	}
 }
+
+// US-005 / CA-005-4, RN-005-1, RN-005-3, CL-005-1, CL-005-2, CL-005-3, CL-005-4,
+// CL-005-15: el titulo tiene como maximo 120 caracteres, contados en runas y
+// despues de recortar los extremos. Los saltos de linea internos cuentan.
+func TestNuevoItem_LargoDelTitulo(t *testing.T) {
+	a120 := strings.Repeat("a", 120)
+	casos := []struct {
+		nombre      string
+		titulo      string
+		guardado    string // titulo esperado si se acepta
+		errEsperado error  // error esperado si se rechaza
+		mensaje     string // mensaje esperado si se rechaza
+	}{
+		{nombre: "120 caracteres", titulo: a120, guardado: a120},
+		{
+			nombre: "121 caracteres", titulo: strings.Repeat("a", 121), errEsperado: backlog.ErrTituloMuyLargo,
+			mensaje: "el titulo no puede tener mas de 120 caracteres (tiene 121)",
+		},
+		{nombre: "120 caracteres con espacios en los extremos", titulo: "  " + a120 + "  ", guardado: a120},
+		{nombre: "120 letras ñ, que ocupan 240 bytes", titulo: strings.Repeat("ñ", 120), guardado: strings.Repeat("ñ", 120)},
+		{nombre: "121 letras ñ", titulo: strings.Repeat("ñ", 121), errEsperado: backlog.ErrTituloMuyLargo},
+		{nombre: "tabulaciones y saltos en los extremos", titulo: "\tCrear proyecto\n", guardado: "Crear proyecto"},
+		{
+			nombre:   "salto de linea interno dentro del limite",
+			titulo:   strings.Repeat("a", 60) + "\n" + strings.Repeat("a", 59),
+			guardado: strings.Repeat("a", 60) + "\n" + strings.Repeat("a", 59),
+		},
+		{
+			nombre: "salto de linea interno que pasa el limite",
+			titulo: strings.Repeat("a", 60) + "\n" + strings.Repeat("a", 60), errEsperado: backlog.ErrTituloMuyLargo,
+		},
+		{nombre: "mas de 120 espacios es un titulo vacio, no largo", titulo: strings.Repeat(" ", 130), errEsperado: backlog.ErrTituloVacio},
+	}
+
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			datos := datosValidos()
+			datos.Titulo = c.titulo
+
+			item, err := backlog.NuevoItem(datos, creadoEn)
+			if c.errEsperado == nil {
+				if err != nil {
+					t.Fatalf("NuevoItem: %v", err)
+				}
+				if item.Titulo != c.guardado {
+					t.Errorf("titulo guardado = %q, se esperaba %q", item.Titulo, c.guardado)
+				}
+				return
+			}
+			if !errors.Is(err, c.errEsperado) {
+				t.Fatalf("error = %v, se esperaba %v", err, c.errEsperado)
+			}
+			if errors.Is(c.errEsperado, backlog.ErrTituloVacio) && errors.Is(err, backlog.ErrTituloMuyLargo) {
+				t.Errorf("un titulo de solo espacios tambien se informo como demasiado largo: %v", err)
+			}
+			if c.mensaje != "" && err.Error() != c.mensaje {
+				t.Errorf("mensaje = %q, se esperaba %q", err.Error(), c.mensaje)
+			}
+		})
+	}
+}
