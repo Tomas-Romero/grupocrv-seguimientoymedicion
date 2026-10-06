@@ -282,3 +282,42 @@ func TestNuevoItem_CriteriosRecortados(t *testing.T) {
 		t.Errorf("criterios = %q, se esperaba %q", item.Criterios, esperados)
 	}
 }
+
+// US-005 / RN-005-13, CL-005-11: con varios datos invalidos el dominio devuelve
+// todos los errores juntos, unidos con errors.Join y en orden fijo: titulo,
+// prioridad y criterios por posicion. errors.Is reconoce cada uno.
+func TestNuevoItem_VariosErrores(t *testing.T) {
+	datos := backlog.DatosItem{
+		Titulo:    "   ",
+		Prioridad: "urgente",
+		Criterios: []string{"Se guarda", ""},
+	}
+
+	item, err := backlog.NuevoItem(datos, creadoEn)
+	var unido errorUnido
+	if !errors.As(err, &unido) {
+		t.Fatalf("se esperaban los errores unidos con errors.Join, se obtuvo: %v", err)
+	}
+	errs := unido.Unwrap()
+	esperados := []error{backlog.ErrTituloVacio, backlog.ErrPrioridadInvalida, backlog.ErrCriterioVacio}
+	if len(errs) != len(esperados) {
+		t.Fatalf("se obtuvieron %d errores, se esperaban %d: %v", len(errs), len(esperados), err)
+	}
+	for i, esperado := range esperados {
+		if !errors.Is(errs[i], esperado) {
+			t.Errorf("error %d = %v, se esperaba %v", i+1, errs[i], esperado)
+		}
+		if !errors.Is(err, esperado) {
+			t.Errorf("errors.Is no reconoce %v en el error unido", esperado)
+		}
+	}
+	mensaje := "el titulo es obligatorio\n" +
+		"la prioridad tiene que ser must, should, could o wont: se recibio \"urgente\"\n" +
+		"el criterio de aceptacion de la posicion 2 esta vacio"
+	if err.Error() != mensaje {
+		t.Errorf("mensaje = %q, se esperaba %q", err.Error(), mensaje)
+	}
+	if !reflect.DeepEqual(item, backlog.ItemBacklog{}) {
+		t.Errorf("con errores devolvio el item %+v, se esperaba ninguno", item)
+	}
+}
