@@ -7,7 +7,7 @@
 | **Issue** | #7 |
 | **Escenarios BDD** | `features/US-005-crear-item-backlog.feature` |
 | **Código** | `internal/domain/backlog/`, caso de uso en `internal/app/`, repositorio en `internal/adapters/postgres/`, migración nueva en `migraciones/` |
-| **Última actualización** | 2026-10-05 |
+| **Última actualización** | 2026-10-06 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
 > implementación. Si durante la implementación descubrís que algo de acá está
@@ -39,9 +39,9 @@ La creación pasa por dos capas, y cada una valida solo lo que puede saber:
      nada más.
   2. Valida los datos con el dominio, que devuelve todos los errores unidos.
   3. Registra el ítem a través del repositorio, que dentro de una transacción
-     bloquea el proyecto con `FOR UPDATE`, vuelve a verificar que exista (por si
-     desapareció entre el paso 1 y este), le asigna el número correlativo e
-     inserta el ítem. El ID lo genera la base.
+     bloquea el proyecto con `FOR NO KEY UPDATE`, vuelve a verificar que exista
+     (por si desapareció entre el paso 1 y este), le asigna el número
+     correlativo e inserta el ítem. El ID lo genera la base.
 
 | Nombre | Tipo | Obligatorio | Rango / formato válido |
 |---|---|---|---|
@@ -120,12 +120,15 @@ Entre paréntesis, la capa que la hace cumplir.
   numeración de un proyecto es independiente de la de los demás.
 - **RN-005-11** (persistencia) — Dentro de la transacción que registra el
   ítem, el repositorio bloquea la fila del proyecto
-  (`SELECT ... FROM proyectos WHERE id = $1 FOR UPDATE`). Si no hay fila, el
-  proyecto no existe (RN-005-9). Si la hay, el número es el máximo actual del
-  proyecto más 1. Una segunda alta simultánea en el mismo proyecto espera ese
-  bloqueo y termina bien, con el número siguiente y sin error. Como el número
-  se calcula dentro de la transacción, una transacción revertida no deja
-  huecos. `UNIQUE (proyecto_id, numero)` queda como red de seguridad.
+  (`SELECT ... FROM proyectos WHERE id = $1 FOR NO KEY UPDATE`). Si no hay
+  fila, el proyecto no existe (RN-005-9). Si la hay, el número es el máximo
+  actual del proyecto más 1. Una segunda alta simultánea en el mismo proyecto
+  espera ese bloqueo y termina bien, con el número siguiente y sin error. Como
+  el número se calcula dentro de la transacción, una transacción revertida no
+  deja huecos. `UNIQUE (proyecto_id, numero)` queda como red de seguridad. El
+  candado es `FOR NO KEY UPDATE` y no `FOR UPDATE`: serializa las altas de
+  ítems del mismo proyecto sin bloquear las claves foráneas que apuntan al
+  proyecto (ver "Decisiones tomadas y descartadas").
 - **RN-005-12** (aplicación) — Si cualquier validación falla, no se registra
   nada: ni el ítem ni sus criterios.
 - **RN-005-13** (dominio) — El dominio valida todos los datos y devuelve todos
@@ -284,14 +287,24 @@ la solicitud es inválida (el equivalente a un 404), no es un error de carga del
   el proyecto, que una función pura no conoce. El UUID lo genera la base
   (`DEFAULT gen_random_uuid()`) y se devuelve con `RETURNING`: así el dominio no
   genera IDs, sigue siendo puro y no hace falta ninguna dependencia nueva.
-- **El número se asigna con el proyecto bloqueado.** `SELECT ... FOR UPDATE`
-  sobre la fila del proyecto serializa las altas de un mismo proyecto: la
-  segunda espera y termina bien con el número siguiente, en vez de fallar. La
-  misma consulta vuelve a verificar que el proyecto exista (sin fila,
-  `ErrProyectoInexistente`), y como el número se calcula dentro de la
-  transacción, un rollback no deja huecos. `UNIQUE (proyecto_id, numero)` queda
-  como red de seguridad. Se descartó calcular el máximo más 1 sin bloquear:
-  la segunda alta simultánea podía chocar con el `UNIQUE` y fallar.
+- **El número se asigna con el proyecto bloqueado.**
+  `SELECT ... FOR NO KEY UPDATE` sobre la fila del proyecto serializa las altas
+  de un mismo proyecto: la segunda espera y termina bien con el número
+  siguiente, en vez de fallar. La misma consulta vuelve a verificar que el
+  proyecto exista (sin fila, `ErrProyectoInexistente`), y como el número se
+  calcula dentro de la transacción, un rollback no deja huecos.
+  `UNIQUE (proyecto_id, numero)` queda como red de seguridad. Se descartó
+  calcular el máximo más 1 sin bloquear: la segunda alta simultánea podía
+  chocar con el `UNIQUE` y fallar.
+- **El candado es `FOR NO KEY UPDATE`, no `FOR UPDATE`.** Dos
+  `FOR NO KEY UPDATE` sobre la misma fila se excluyen, así que las altas de
+  ítems de un proyecto se serializan igual. A diferencia de `FOR UPDATE`, no
+  choca con el `FOR KEY SHARE` que toma Postgres al verificar una clave
+  foránea: mientras se registra un ítem, se pueden seguir insertando filas que
+  solo apuntan al proyecto, como un integrante nuevo. Se descartó `FOR UPDATE`:
+  además de serializar las altas, bloqueaba esas claves foráneas sin
+  necesidad. Las altas de sprints de US-008 usan el mismo candado, así que esas
+  sí esperan.
 - **Todos los errores de validación juntos.** El dominio valida todo y devuelve
   los errores unidos con `errors.Join`, para que quien carga el ítem vea de una
   vez todo lo que tiene que corregir, en lugar de un error por intento. El
@@ -305,7 +318,7 @@ la solicitud es inválida (el equivalente a un 404), no es un error de carga del
   proyecto exista con una lectura simple antes de validar con el dominio, para
   que el 404 tenga prioridad: si la URL apunta a un proyecto que no existe, no
   tiene sentido devolver errores de un formulario que no se puede cargar ahí.
-  El repositorio lo vuelve a verificar con `FOR UPDATE` dentro de la
+  El repositorio lo vuelve a verificar con `FOR NO KEY UPDATE` dentro de la
   transacción, porque el proyecto puede desaparecer entre esa lectura y el
   alta.
 - **Las posiciones de los criterios se cuentan desde 1.** El mensaje lo lee una
