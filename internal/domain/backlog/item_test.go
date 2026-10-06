@@ -4,6 +4,7 @@ import (
 	"errors"
 	"reflect"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -179,6 +180,46 @@ func TestNuevoItem_Descripcion(t *testing.T) {
 			}
 			if item.Descripcion != c.guardada {
 				t.Errorf("descripcion guardada = %q, se esperaba %q", item.Descripcion, c.guardada)
+			}
+		})
+	}
+}
+
+// US-005 / CA-005-6, RN-005-5, CL-005-7, CL-005-12: la prioridad es obligatoria y
+// sigue MoSCoW. Se aceptan solo los cuatro valores exactos en minuscula; el
+// dominio no la pasa a minuscula ni la recorta.
+func TestNuevoItem_Prioridad(t *testing.T) {
+	validas := []backlog.Prioridad{
+		backlog.PrioridadMust, backlog.PrioridadShould, backlog.PrioridadCould, backlog.PrioridadWont,
+	}
+	for _, p := range validas {
+		t.Run("valida "+string(p), func(t *testing.T) {
+			datos := datosValidos()
+			datos.Prioridad = p
+
+			item, err := backlog.NuevoItem(datos, creadoEn)
+			if err != nil {
+				t.Fatalf("NuevoItem: %v", err)
+			}
+			if item.Prioridad != p {
+				t.Errorf("prioridad = %q, se esperaba %q", item.Prioridad, p)
+			}
+		})
+	}
+
+	invalidas := []backlog.Prioridad{"urgente", "", "MUST", " must ", "Must"}
+	for _, p := range invalidas {
+		t.Run("invalida "+strconv.Quote(string(p)), func(t *testing.T) {
+			datos := datosValidos()
+			datos.Prioridad = p
+
+			_, err := backlog.NuevoItem(datos, creadoEn)
+			if !errors.Is(err, backlog.ErrPrioridadInvalida) {
+				t.Fatalf("error = %v, se esperaba ErrPrioridadInvalida", err)
+			}
+			// El error indica el valor recibido.
+			if !strings.Contains(err.Error(), strconv.Quote(string(p))) {
+				t.Errorf("el mensaje %q no indica el valor recibido %q", err.Error(), string(p))
 			}
 		})
 	}
