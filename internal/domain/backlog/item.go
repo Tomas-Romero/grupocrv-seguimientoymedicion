@@ -43,25 +43,28 @@ type ItemBacklog struct {
 	CreadoEn    time.Time
 }
 
-// NuevoItem valida los datos y arma un item pendiente y sin estimar.
+// NuevoItem valida los datos y arma un item pendiente y sin estimar. Si algun
+// dato es invalido no devuelve item: devuelve todos los errores unidos con
+// errors.Join, en el orden de RN-005-13 (titulo, prioridad y criterios por
+// posicion), para que quien carga el item vea de una vez todo lo que tiene que
+// corregir.
 func NuevoItem(datos DatosItem, creadoEn time.Time) (ItemBacklog, error) {
+	var errs []error
+
 	// RN-005-1: se recorta antes de validar, y se guarda recortado.
 	titulo := strings.TrimSpace(datos.Titulo)
-	if titulo == "" {
-		return ItemBacklog{}, ErrTituloVacio
-	}
-	// Se cuentan runas y no bytes: una tilde o una ñ es un caracter (CL-005-3).
-	if n := utf8.RuneCountInString(titulo); n > LargoMaximoTitulo {
-		return ItemBacklog{}, fmt.Errorf("%w (tiene %d)", ErrTituloMuyLargo, n)
+	if err := validarTitulo(titulo); err != nil {
+		errs = append(errs, err)
 	}
 	if !datos.Prioridad.valida() {
-		return ItemBacklog{}, fmt.Errorf("%w: se recibio %q", ErrPrioridadInvalida, string(datos.Prioridad))
+		errs = append(errs, fmt.Errorf("%w: se recibio %q", ErrPrioridadInvalida, string(datos.Prioridad)))
 	}
 	criterios, errsCriterios := recortarCriterios(datos.Criterios)
-	if err := errors.Join(errsCriterios...); err != nil {
+	errs = append(errs, errsCriterios...)
+
+	if err := errors.Join(errs...); err != nil {
 		return ItemBacklog{}, err
 	}
-
 	return ItemBacklog{
 		Titulo: titulo,
 		// RN-005-4: opcional y sin largo maximo; si queda vacia, es valida.
@@ -72,6 +75,18 @@ func NuevoItem(datos DatosItem, creadoEn time.Time) (ItemBacklog, error) {
 		Criterios:   criterios,
 		CreadoEn:    creadoEn,
 	}, nil
+}
+
+// validarTitulo valida el titulo ya recortado (RN-005-2 y RN-005-3).
+func validarTitulo(titulo string) error {
+	if titulo == "" {
+		return ErrTituloVacio
+	}
+	// Se cuentan runas y no bytes: una tilde o una ñ es un caracter (CL-005-3).
+	if n := utf8.RuneCountInString(titulo); n > LargoMaximoTitulo {
+		return fmt.Errorf("%w (tiene %d)", ErrTituloMuyLargo, n)
+	}
+	return nil
 }
 
 // recortarCriterios devuelve una copia de los criterios recortados, en el mismo
