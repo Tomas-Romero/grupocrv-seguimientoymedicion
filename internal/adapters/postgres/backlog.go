@@ -31,9 +31,27 @@ type RepositorioBacklog struct {
 	pool *pgxpool.Pool
 }
 
+// RepositorioBacklog cumple el puerto del caso de uso de US-005.
+var _ app.RepositorioBacklog = (*RepositorioBacklog)(nil)
+
 // NuevoRepositorioBacklog arma el repositorio sobre el pool de conexiones.
 func NuevoRepositorioBacklog(pool *pgxpool.Pool) *RepositorioBacklog {
 	return &RepositorioBacklog{pool: pool}
+}
+
+// ExisteProyecto es la lectura simple con la que el caso de uso verifica el
+// proyecto antes de validar los datos (RN-005-9). Un ID mal formado es un
+// proyecto inexistente, no un error.
+func (r *RepositorioBacklog) ExisteProyecto(ctx context.Context, proyectoID string) (bool, error) {
+	var existe bool
+	err := r.pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM proyectos WHERE id = $1)`, proyectoID).Scan(&existe)
+	if esIDMalFormado(err) {
+		return false, nil
+	}
+	if err != nil {
+		return false, fmt.Errorf("consultar el proyecto %s: %w", proyectoID, err)
+	}
+	return existe, nil
 }
 
 // RegistrarItem guarda el item en el proyecto con el numero siguiente y lo
