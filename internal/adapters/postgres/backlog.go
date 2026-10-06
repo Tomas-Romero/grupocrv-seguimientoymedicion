@@ -4,13 +4,27 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/app"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/backlog"
 )
+
+// codigoTextoInvalido es el SQLSTATE que devuelve Postgres cuando un texto no
+// se puede convertir al tipo de la columna; con un UUID, es un ID mal formado.
+const codigoTextoInvalido = "22P02"
+
+// esIDMalFormado dice si err es el error de un ID que no es un UUID valido. Un
+// ID asi no puede ser de ningun proyecto: se trata como proyecto inexistente.
+func esIDMalFormado(err error) bool {
+	var pgErr *pgconn.PgError
+	return errors.As(err, &pgErr) && pgErr.Code == codigoTextoInvalido
+}
 
 // RepositorioBacklog guarda los items del Product Backlog (US-005).
 type RepositorioBacklog struct {
@@ -34,6 +48,17 @@ func (r *RepositorioBacklog) RegistrarItem(ctx context.Context, proyectoID strin
 	}
 	// Despues de un Commit exitoso, Rollback no hace nada.
 	defer func() { _ = tx.Rollback(ctx) }()
+
+	// RN-005-9: el proyecto se vuelve a verificar dentro de la transaccion, por
+	// si desaparecio despues de la lectura del caso de uso.
+	var existe int
+	err = tx.QueryRow(ctx, `SELECT 1 FROM proyectos WHERE id = $1`, proyectoID).Scan(&existe)
+	if errors.Is(err, pgx.ErrNoRows) || esIDMalFormado(err) {
+		return backlog.ItemBacklog{}, fmt.Errorf("%w (id %s)", app.ErrProyectoInexistente, proyectoID)
+	}
+	if err != nil {
+		return backlog.ItemBacklog{}, fmt.Errorf("leer el proyecto %s: %w", proyectoID, err)
+	}
 
 	var numero int
 	const siguiente = `SELECT COALESCE(MAX(numero), 0) + 1 FROM items_backlog WHERE proyecto_id = $1`
