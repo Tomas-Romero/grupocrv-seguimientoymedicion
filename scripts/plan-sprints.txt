@@ -1,0 +1,53 @@
+# Plan de sprints decidido en el Planning del 06/10 (ver docs/plan-de-trabajo.md).
+# Formato: ID=Sprint N   (o ID=ninguno para sacar el item de todo sprint)
+# Lo lee scripts/mover-sprints.sh. Los items que no figuran aca no se tocan.
+
+# --- Sprint 2 (06/10 a 12/10): las historias con spec mergeada ---------------
+US-001=Sprint 2
+US-002=Sprint 2
+US-005=Sprint 2
+US-025=Sprint 2
+US-026=Sprint 2
+
+# --- Sprint 3 (13/10 a 19/10) -------------------------------------------------
+US-003=Sprint 3
+US-006=Sprint 3
+US-008=Sprint 3
+US-009=Sprint 3
+US-010=Sprint 3
+US-011=Sprint 3
+US-013=Sprint 3
+US-019=Sprint 3
+T-004=Sprint 3
+T-005=Sprint 3
+
+# --- Sprint 4 (20/10 a 26/10) -------------------------------------------------
+US-014=Sprint 4
+US-015=Sprint 4
+US-016=Sprint 4
+US-018=Sprint 4
+US-022=Sprint 4
+US-023=Sprint 4
+US-027=Sprint 4
+US-028=Sprint 4
+US-029=Sprint 4
+T-011=Sprint 4
+
+# --- Sprint 5 (27/10 a 02/11) -------------------------------------------------
+US-004=Sprint 5
+US-012=Sprint 5
+US-020=Sprint 5
+US-021=Sprint 5
+US-030=Sprint 5
+US-031=Sprint 5
+US-033=Sprint 5
+US-034=Sprint 5
+T-008=Sprint 5
+T-009=Sprint 5
+
+# --- Recorte aplicado: fuera del alcance comprometido (19 SP) -----------------
+US-007=ninguno
+US-017=ninguno
+US-024=ninguno
+US-032=ninguno
+T-007=ninguno
