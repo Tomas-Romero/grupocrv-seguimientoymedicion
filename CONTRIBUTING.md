@@ -77,14 +77,21 @@ scripts/                    Automatización del repo.
 
 | Qué | Convención | Ejemplo |
 |---|---|---|
-| Paquete Go | una palabra, minúscula, singular | `metrics`, `sprint`, `defect` |
-| Archivo Go | `snake_case.go`, nombrado por el concepto | `velocity.go`, `planning_poker.go` |
-| Test | mismo nombre + `_test.go` | `velocity_test.go` |
+| Paquete Go | una palabra, minúscula, singular, en español | `metricas`, `sprint`, `defecto` |
+| Archivo Go | `snake_case.go`, nombrado por el concepto, en español | `velocidad.go`, `planning_poker.go` |
+| Test | mismo nombre + `_test.go` | `velocidad_test.go` |
 | Plantilla templ | `snake_case.templ` | `dashboard_page.templ`, `backlog_row.templ` |
 | Spec SDD | `US-NNN-slug-corto.md` | `US-026-velocidad-equipo.md` |
 | Escenario BDD | `US-NNN-slug-corto.feature` | `US-026-velocidad-equipo.feature` |
 | Migración | `NNNNN_descripcion.sql` | `00004_tabla_defectos.sql` |
 | ADR | `NNNN-titulo.md` | `0002-por-que-htmx.md` |
+
+El dominio, las tablas, las especificaciones y los nombres de paquetes y archivos Go
+se escriben **en español**, sin acentos ni eñe en los identificadores. Los términos de
+Scrum de una lista cerrada (Sprint, Sprint Goal, Backlog, Story Points, Planning Poker,
+Daily, Review, Retrospective, Definition of Ready y Definition of Done) quedan en inglés
+dentro de cualquier nombre: `ItemBacklog`, `SesionPlanningPoker`, `ResumenSprint`. Ver
+[`docs/adr/0003-idioma-del-dominio.md`](docs/adr/0003-idioma-del-dominio.md).
 
 El `slug` es el mismo en la spec, el feature y la rama. Eso es lo que hace que
 la trazabilidad se pueda seguir sin una planilla aparte.
@@ -150,17 +157,17 @@ Este es el paso que más nota vale y el único que no se puede simular después.
 ```bash
 # 1. RED — escribí el test que falla
 #    Corré los tests y confirmá que falla POR LA RAZÓN CORRECTA.
-go test ./internal/domain/metrics/ -run TestVelocidad -v
-git add internal/domain/metrics/velocity_test.go
-git commit -m "test(metrics): RED velocidad del equipo sobre sprints cerrados [US-026]"
+go test ./internal/domain/metricas/ -run TestVelocidad -v
+git add internal/domain/metricas/velocidad_test.go
+git commit -m "test(metricas): RED velocidad del equipo sobre sprints cerrados [US-026]"
 
 # 2. GREEN — la implementación más simple que hace pasar el test
 #    Sin generalizar de más. Sin "ya que estoy".
-git add internal/domain/metrics/velocity.go
-git commit -m "feat(metrics): GREEN calculo de velocidad del equipo [US-026]"
+git add internal/domain/metricas/velocidad.go
+git commit -m "feat(metricas): GREEN calculo de velocidad del equipo [US-026]"
 
 # 3. REFACTOR — limpiá con los tests en verde
-git commit -m "refactor(metrics): extraer SprintSummary y eliminar duplicacion [US-026]"
+git commit -m "refactor(metricas): extraer ResumenSprint y eliminar duplicacion [US-026]"
 ```
 
 Repetí el ciclo por cada regla de negocio y cada caso límite de la spec. Un PR
@@ -209,7 +216,7 @@ git push --force-with-lease
 **Título con el mismo formato que los commits, terminando en el ID:**
 
 ```
-feat(metrics): calculo de velocidad del equipo [US-026]
+feat(metricas): calculo de velocidad del equipo [US-026]
 ```
 
 Completá la plantilla entera. Los tres puntos que más se olvidan y que hacen que
@@ -256,7 +263,7 @@ tipo(alcance): descripcion en imperativo [ID]
 | Parte | Regla |
 |---|---|
 | `tipo` | `feat` `fix` `test` `refactor` `docs` `chore` `ci` `perf` |
-| `alcance` | el paquete o área tocada: `metrics`, `sprint`, `ui`, `db`, `workflows` |
+| `alcance` | el paquete o área tocada: `metricas`, `sprint`, `ui`, `db`, `workflows` |
 | `descripcion` | minúscula, imperativo, sin punto final, sin acentos, máximo ~70 caracteres |
 | `[ID]` | `[US-026]`, `[DEF-007]`, `[T-002]` — obligatorio |
 
@@ -266,9 +273,9 @@ descripción. Es lo que convierte el historial en evidencia.
 **Ejemplos buenos**
 
 ```
-test(metrics): RED velocidad con cero sprints cerrados [US-026]
-feat(metrics): GREEN calculo de velocidad del equipo [US-026]
-refactor(metrics): extraer SprintSummary [US-026]
+test(metricas): RED velocidad con cero sprints cerrados [US-026]
+feat(metricas): GREEN calculo de velocidad del equipo [US-026]
+refactor(metricas): extraer ResumenSprint [US-026]
 fix(effort): rechazar horas negativas y mayores a 24 [DEF-007]
 docs(specs): especificacion de velocidad del equipo [US-026]
 ci(workflows): fallar si la cobertura del dominio baja de 85 [T-002]
@@ -282,7 +289,7 @@ arreglos varios                    sin tipo, sin ID, no dice nada
 feat: cambios                      "cambios" no es una descripción
 Feat(Metrics): Velocidad.          mayúsculas y punto final
 WIP                                no se commitea trabajo a medias en main
-feat(metrics): agregue la velocidad y de paso arregle el dashboard y toque el css
+feat(metricas): agregue la velocidad y de paso arregle el dashboard y toque el css
                                    son tres commits, no uno
 ```
 
