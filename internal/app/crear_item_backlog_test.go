@@ -114,3 +114,59 @@ func TestCrearItemBacklog_ProyectoInexistente(t *testing.T) {
 		t.Errorf("se registraron %d items, se esperaba ninguno", len(repo.altas))
 	}
 }
+
+// US-005 / CA-005-5, RN-005-12: con datos invalidos no se registra nada, y los
+// errores del dominio se devuelven tal cual, sin prefijos: su mensaje es el que
+// ve la persona (spec, seccion 7).
+func TestCrearItemBacklog_DatosInvalidos(t *testing.T) {
+	repo := &repositorioFalso{existe: true}
+	crear := app.NuevoCrearItemBacklog(repo, relojFijo)
+	datos := datosValidos()
+	datos.Titulo = "   "
+
+	_, err := crear.Ejecutar(context.Background(), "proyecto-1", datos)
+	if !errors.Is(err, backlog.ErrTituloVacio) {
+		t.Fatalf("error = %v, se esperaba ErrTituloVacio", err)
+	}
+	if err.Error() != "el titulo es obligatorio" {
+		t.Errorf("mensaje = %q, se esperaba el del dominio sin cambios", err.Error())
+	}
+	if len(repo.altas) != 0 {
+		t.Errorf("se registraron %d items, se esperaba ninguno", len(repo.altas))
+	}
+}
+
+// US-005 / RN-005-9, RN-005-11: los errores del repositorio se devuelven
+// envueltos con el proyecto, sin perder el original. Si el proyecto desaparece
+// dentro de la transaccion, el repositorio devuelve ErrProyectoInexistente y
+// el caso de uso lo deja reconocible.
+func TestCrearItemBacklog_ErroresDelRepositorio(t *testing.T) {
+	errBase := errors.New("la base no responde")
+	casos := []struct {
+		nombre    string
+		repo      *repositorioFalso
+		esperado  error
+		registros int
+	}{
+		{"falla la consulta del proyecto", &repositorioFalso{errExiste: errBase}, errBase, 0},
+		{"el proyecto desaparece antes del alta", &repositorioFalso{existe: true, errRegistrar: app.ErrProyectoInexistente}, app.ErrProyectoInexistente, 1},
+		{"falla el alta", &repositorioFalso{existe: true, errRegistrar: errBase}, errBase, 1},
+	}
+
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			crear := app.NuevoCrearItemBacklog(c.repo, relojFijo)
+
+			_, err := crear.Ejecutar(context.Background(), "proyecto-1", datosValidos())
+			if !errors.Is(err, c.esperado) {
+				t.Fatalf("error = %v, se esperaba %v", err, c.esperado)
+			}
+			if !strings.Contains(err.Error(), "proyecto-1") {
+				t.Errorf("el mensaje %q no indica el proyecto", err.Error())
+			}
+			if len(c.repo.altas) != c.registros {
+				t.Errorf("llamadas a RegistrarItem = %d, se esperaban %d", len(c.repo.altas), c.registros)
+			}
+		})
+	}
+}
