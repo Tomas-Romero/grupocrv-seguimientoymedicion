@@ -53,6 +53,9 @@ func NuevoItem(datos DatosItem, creadoEn time.Time) (ItemBacklog, error) {
 	if n := utf8.RuneCountInString(titulo); n > LargoMaximoTitulo {
 		return ItemBacklog{}, fmt.Errorf("%w (tiene %d)", ErrTituloMuyLargo, n)
 	}
+	if !datos.Prioridad.valida() {
+		return ItemBacklog{}, fmt.Errorf("%w: se recibio %q", ErrPrioridadInvalida, string(datos.Prioridad))
+	}
 
 	return ItemBacklog{
 		Titulo: titulo,
