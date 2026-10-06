@@ -67,10 +67,15 @@ func (r *RepositorioBacklog) RegistrarItem(ctx context.Context, proyectoID strin
 	// Despues de un Commit exitoso, Rollback no hace nada.
 	defer func() { _ = tx.Rollback(ctx) }()
 
-	// RN-005-9: el proyecto se vuelve a verificar dentro de la transaccion, por
+	// RN-005-11: el candado sobre la fila del proyecto serializa las altas del
+	// mismo proyecto: una segunda alta espera aca y despues calcula el numero
+	// siguiente. Es FOR NO KEY UPDATE y no FOR UPDATE para no bloquear las claves
+	// foraneas que apuntan al proyecto (por ejemplo, un integrante nuevo).
+	//
+	// La misma lectura vuelve a verificar que el proyecto exista (RN-005-9), por
 	// si desaparecio despues de la lectura del caso de uso.
 	var existe int
-	err = tx.QueryRow(ctx, `SELECT 1 FROM proyectos WHERE id = $1`, proyectoID).Scan(&existe)
+	err = tx.QueryRow(ctx, `SELECT 1 FROM proyectos WHERE id = $1 FOR NO KEY UPDATE`, proyectoID).Scan(&existe)
 	if errors.Is(err, pgx.ErrNoRows) || esIDMalFormado(err) {
 		return backlog.ItemBacklog{}, fmt.Errorf("%w (id %s)", app.ErrProyectoInexistente, proyectoID)
 	}
@@ -78,6 +83,9 @@ func (r *RepositorioBacklog) RegistrarItem(ctx context.Context, proyectoID strin
 		return backlog.ItemBacklog{}, fmt.Errorf("leer el proyecto %s: %w", proyectoID, err)
 	}
 
+	// El maximo se lee en una sentencia aparte, despues del candado: con READ
+	// COMMITTED cada sentencia ve lo confirmado hasta ese momento, asi que una
+	// alta que espero el candado ve el item que registro la otra.
 	var numero int
 	const siguiente = `SELECT COALESCE(MAX(numero), 0) + 1 FROM items_backlog WHERE proyecto_id = $1`
 	if err := tx.QueryRow(ctx, siguiente, proyectoID).Scan(&numero); err != nil {
