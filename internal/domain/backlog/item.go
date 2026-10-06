@@ -7,6 +7,7 @@
 package backlog
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -56,6 +57,10 @@ func NuevoItem(datos DatosItem, creadoEn time.Time) (ItemBacklog, error) {
 	if !datos.Prioridad.valida() {
 		return ItemBacklog{}, fmt.Errorf("%w: se recibio %q", ErrPrioridadInvalida, string(datos.Prioridad))
 	}
+	criterios, errsCriterios := recortarCriterios(datos.Criterios)
+	if err := errors.Join(errsCriterios...); err != nil {
+		return ItemBacklog{}, err
+	}
 
 	return ItemBacklog{
 		Titulo: titulo,
@@ -64,7 +69,21 @@ func NuevoItem(datos DatosItem, creadoEn time.Time) (ItemBacklog, error) {
 		Prioridad:   datos.Prioridad,
 		Estado:      EstadoPendiente,
 		StoryPoints: SinEstimar(),
-		Criterios:   datos.Criterios,
+		Criterios:   criterios,
 		CreadoEn:    creadoEn,
 	}, nil
+}
+
+// recortarCriterios devuelve una copia de los criterios recortados, en el mismo
+// orden, y un CriterioVacioError por cada uno que quede vacio (RN-005-8).
+func recortarCriterios(criterios []string) ([]string, []error) {
+	recortados := make([]string, len(criterios))
+	var errs []error
+	for i, criterio := range criterios {
+		recortados[i] = strings.TrimSpace(criterio)
+		if recortados[i] == "" {
+			errs = append(errs, CriterioVacioError{Posicion: i + 1})
+		}
+	}
+	return recortados, errs
 }
