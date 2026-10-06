@@ -45,14 +45,28 @@ type Proyectos interface {
 	CantidadIntegrantes(proyecto string) (int, error)
 }
 
+// DatosHistoria son los datos con los que un escenario crea una historia. Las
+// frases que no nombran descripcion ni criterios los dejan vacios.
+type DatosHistoria struct {
+	Titulo      string
+	Descripcion string
+	Prioridad   string
+	Criterios   []string
+}
+
 // Backlog es el area de US-005, US-006 y US-013.
 type Backlog interface {
-	CrearHistoria(proyecto, titulo, prioridad string) error
+	CrearHistoria(proyecto string, historia DatosHistoria) error
 	CambiarPrioridadHistoria(titulo, prioridad string) error
 	EstimarHistoria(titulo string, puntos int) error
 	CantidadHistoriasEnBacklog(proyecto string) (int, error)
 	PrioridadDeHistoria(titulo string) (string, error)
-	PuntosDeHistoria(titulo string) (int, error)
+	// PuntosDeHistoria devuelve estimada = false si la historia esta sin
+	// estimar: sin estimar no es lo mismo que 0 puntos (RN-005-7).
+	PuntosDeHistoria(titulo string) (puntos int, estimada bool, err error)
+	NumeroDeHistoria(titulo string) (int, error)
+	EstadoDeHistoria(titulo string) (string, error)
+	CriteriosDeHistoria(titulo string) ([]string, error)
 	HistoriaEstaEnBacklog(titulo string) (bool, error)
 }
 
