@@ -7,7 +7,7 @@
 | **Issue** | #9 |
 | **Escenarios BDD** | `features/US-008-crear-sprint.feature` |
 | **Código** | `internal/domain/sprint/`, caso de uso en `internal/app/`, repositorio en `internal/adapters/postgres/`, migración nueva en `migraciones/` |
-| **Última actualización** | 2026-10-05 |
+| **Última actualización** | 2026-10-06 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
 > implementación. Si durante la implementación descubrís que algo de acá está
@@ -205,9 +205,13 @@ Entre paréntesis, la capa que la hace cumplir.
   Sprint Goal (`sprint_goal`), las fechas como `DATE` y el estado. Igual que
   `proyectos`, lleva restricciones como red de seguridad:
   `UNIQUE (proyecto_id, numero)`, `CHECK (fecha_fin >= fecha_inicio)` y
-  `CHECK (estado IN ('abierto', 'cerrado'))`. El nombre no se guarda
-  (RN-008-12). La duración, las fechas del proyecto, RN-008-13 y RN-008-17 no se
-  imponen en la base: las hacen cumplir el dominio y el repositorio.
+  `CHECK (estado IN ('abierto', 'cerrado'))`. Como red de seguridad de
+  RN-008-17 lleva además un índice único parcial, que impide dos sprints
+  abiertos en el mismo proyecto:
+  `CREATE UNIQUE INDEX ... ON sprints (proyecto_id) WHERE estado = 'abierto'`.
+  El nombre no se guarda (RN-008-12). La duración, las fechas del proyecto y
+  RN-008-13 no se imponen en la base, y RN-008-17 no depende del índice: las
+  hacen cumplir el dominio y el repositorio.
 - **Verificación de la concurrencia.** RN-008-14 y CL-008-15 se verifican con un
   test concurrente contra un Postgres real.
 - **Dependencia con US-002.** RN-008-7 se verifica al crear el sprint dos
@@ -273,6 +277,13 @@ Entre paréntesis, la capa que la hace cumplir.
   fechas del proyecto (por ejemplo, en un proyecto más corto creado con fechas),
   la creación se rechaza como cualquier otra y, en un `Dado`, el escenario se
   corta. Ese escenario tiene que usar la frase con fechas.
+- **Criterios que dependen de US-011.** CA-008-4 y CA-008-9 necesitan un sprint
+  anterior cerrado, y cerrar un sprint es US-011. En el PR de US-008, esos dos
+  criterios se cubren con tests unitarios (la función del dominio de RN-008-13,
+  con el último sprint cerrado como parámetro) y de integración (el
+  repositorio, con un sprint cerrado armado directamente en la base). Sus
+  escenarios BDD se agregan en el PR de US-011. CA-008-1 se escribe con el
+  Sprint 1, así que no necesita cerrar ningún sprint.
 - **Fuera de alcance.** La pantalla de alta (depende de T-004), asignar
   historias (US-009), marcarlas como completadas (US-010), cerrar el sprint
   (US-011), consultar los sprints anteriores (US-012) y editar o cancelar un
@@ -333,8 +344,8 @@ Entre paréntesis, la capa que la hace cumplir.
   registró, cuando la segunda obtiene el bloqueo el sprint de la primera ya
   existe y está abierto: la segunda se rechaza siempre con
   `ErrUltimoSprintAbierto`, aunque sus fechas empiecen después. Ninguna termina
-  con un error de la restricción `UNIQUE` (RN-008-14). Se verifica con un test
-  concurrente contra un Postgres real.
+  con un error de la restricción `UNIQUE` ni del índice de sprints abiertos
+  (RN-008-14). Se verifica con un test concurrente contra un Postgres real.
 - **CL-008-16** — Una transacción que se revierte después de calcular el número
   no deja hueco: la siguiente alta del proyecto toma ese mismo número.
 - **CL-008-17** — El último sprint del proyecto está abierto y el nuevo, además,
@@ -357,7 +368,7 @@ Entre paréntesis, la capa que la hace cumplir.
 | La fecha de fin es anterior a la de inicio | `sprint.ErrFechasIncoherentes` | "fecha de fin anterior a la de inicio" |
 | El sprint dura más de 28 días, contando el inicio y el fin | `sprint.ErrDuracionExcedida`, envuelto indicando cuántos días dura | "el sprint no puede durar mas de 28 dias" |
 | Alguna de las fechas queda fuera de las del proyecto | `sprint.ErrFueraDelProyecto`, envuelto indicando las fechas del proyecto | "las fechas del sprint tienen que estar dentro de las del proyecto" |
-| El último sprint del proyecto sigue abierto | `sprint.ErrUltimoSprintAbierto`, envuelto indicando el nombre del último sprint | "no se puede crear un sprint mientras el ultimo sigue abierto" |
+| El último sprint del proyecto sigue abierto | `sprint.ErrUltimoSprintAbierto`, envuelto indicando el nombre del último sprint | "no se puede crear un sprint mientras el ultimo sigue abierto: primero hay que cerrarlo" |
 | El último sprint del proyecto está cerrado y el nuevo empieza el mismo día en que ese termina, o antes | `sprint.ErrInicioNoPosteriorAlUltimo`, envuelto indicando el nombre y la fecha de fin del último sprint | "el sprint tiene que empezar despues de que termine el ultimo sprint del proyecto" |
 | El proyecto no existe | `app.ErrProyectoInexistente` (el de US-005), envuelto indicando el ID recibido | "el proyecto no existe" |
 
@@ -372,7 +383,7 @@ errores, el mensaje es la unión de los mensajes, uno por línea.
 segunda verificación de RN-008-7 encuentra que las fechas del proyecto
 cambiaron (RN-008-14 y CL-008-18).
 
-`ErrUltimoSprintAbierto` e `ErrInicioNoPosteriorAlUltimo` también son valores
+`ErrUltimoSprintAbierto` y `ErrInicioNoPosteriorAlUltimo` también son valores
 del dominio, pero los devuelve el repositorio dentro de la transacción
 (RN-008-13, RN-008-14 y RN-008-17), porque solo ahí se ve el último sprint con
 el proyecto bloqueado. Nunca vienen juntos: si el último está abierto, se
@@ -500,6 +511,14 @@ unidos, y en ningún caso se registra nada.
   leídas en la transacción no cambian hasta que termine, así que verificarlas
   ahí cierra esa ventana. Cuesta poco, porque el `FOR UPDATE` ya lee esa fila, y
   se usa la misma función del dominio para no duplicar la regla.
+- **En la transacción, primero las fechas del proyecto.** El paso 2 de
+  RN-008-14 va antes que RN-008-17 y RN-008-13 por dos razones. Usa solo la
+  fila que se acaba de bloquear: si falla, la transacción termina sin leer los
+  sprints. Y mantiene el orden del caso de uso, donde RN-008-7 se verifica en el
+  dominio antes de llamar al repositorio: un sprint fuera de las fechas del
+  proyecto se rechaza con `ErrFueraDelProyecto` aunque el último sprint esté
+  abierto, tanto si lo detecta el caso de uso como si lo detecta la
+  transacción porque las fechas cambiaron en el medio.
 - **Primero el proyecto, después los datos.** Igual que en US-005: si la URL
   apunta a un proyecto que no existe, es una solicitud inválida (el equivalente
   a un 404) y no un error del formulario, así que tiene prioridad sobre los
@@ -537,6 +556,13 @@ unidos, y en ningún caso se registra nada.
   cumplir RN-008-7, y son consecutivas, para cumplir RN-008-13. Se eligieron 14
   días porque es una duración habitual de sprint y entran 26 sprints en el
   proyecto por defecto de los steps.
+- **Los escenarios de CA-008-4 y CA-008-9 llegan con US-011.** Necesitan un
+  sprint anterior cerrado, y el step `el sprint "X" cerrado` usa el cierre de
+  US-011. Hasta entonces, esos criterios se cubren con tests unitarios y de
+  integración, que pueden armar un sprint cerrado sin pasar por el cierre
+  (sección 5). Se descartó un cierre mínimo en el adaptador de los steps:
+  cerraría el sprint sin pasar por la aplicación, y el escenario no probaría
+  nada real.
 - **Fuera de alcance.** Asignar historias (US-009), marcarlas como completadas
   (US-010), cerrar el sprint (US-011) y consultar los sprints anteriores
   (US-012) son historias propias. Editar o cancelar un sprint no está en el
@@ -547,4 +573,4 @@ unidos, y en ningún caso se registra nada.
 - [ ] No use IA
 - [x] Use IA para: redacción de la especificación con Claude Code a partir de
   la historia, decisiones y criterios definidos por el equipo
-- Revisado y entendido por: (pendiente)
+- Revisado y entendido por:
