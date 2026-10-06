@@ -1,0 +1,135 @@
+package postgres_test
+
+import (
+	"context"
+	"slices"
+	"testing"
+	"time"
+
+	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/adapters/postgres"
+	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/backlog"
+	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/platform/db/dbprueba"
+)
+
+// creadoEn es la fecha de creacion de los items de estos tests.
+var creadoEn = time.Date(2026, 10, 6, 12, 0, 0, 0, time.UTC)
+
+// contexto devuelve un contexto con un limite holgado para un test de
+// integracion.
+func contexto(t *testing.T) context.Context {
+	t.Helper()
+	ctx, cancelar := context.WithTimeout(context.Background(), 30*time.Second)
+	t.Cleanup(cancelar)
+	return ctx
+}
+
+// crearProyecto inserta un proyecto y devuelve su ID. El ID se genera en el
+// INSERT porque proyectos.id todavia no tiene DEFAULT (lo agrega US-001).
+func crearProyecto(ctx context.Context, t *testing.T, pool *pgxpool.Pool, nombre string) string {
+	t.Helper()
+	var id string
+	const insertar = `
+INSERT INTO proyectos (id, nombre, fecha_inicio, fecha_fin)
+VALUES (gen_random_uuid(), $1, '2026-01-01', '2026-12-31')
+RETURNING id::text`
+	if err := pool.QueryRow(ctx, insertar, nombre).Scan(&id); err != nil {
+		t.Fatalf("crear el proyecto %q: %v", nombre, err)
+	}
+	return id
+}
+
+// nuevoItem arma un item valido con el dominio, como lo haria el caso de uso.
+func nuevoItem(t *testing.T, datos backlog.DatosItem) backlog.ItemBacklog {
+	t.Helper()
+	item, err := backlog.NuevoItem(datos, creadoEn)
+	if err != nil {
+		t.Fatalf("NuevoItem: %v", err)
+	}
+	return item
+}
+
+// itemConTitulo es un item valido, con prioridad must y sin criterios.
+func itemConTitulo(t *testing.T, titulo string) backlog.ItemBacklog {
+	t.Helper()
+	return nuevoItem(t, backlog.DatosItem{Titulo: titulo, Prioridad: backlog.PrioridadMust})
+}
+
+// fila es lo que quedo guardado de un item, leido directamente de la tabla.
+type fila struct {
+	proyectoID  string
+	numero      int
+	titulo      string
+	descripcion string
+	prioridad   string
+	estado      string
+	storyPoints *int32
+	criterios   []string
+	creadoEn    time.Time
+}
+
+func leerFila(ctx context.Context, t *testing.T, pool *pgxpool.Pool, id string) fila {
+	t.Helper()
+	var f fila
+	const consulta = `
+SELECT proyecto_id::text, numero, titulo, descripcion, prioridad, estado, story_points, criterios, creado_en
+FROM items_backlog WHERE id = $1`
+	err := pool.QueryRow(ctx, consulta, id).Scan(&f.proyectoID, &f.numero, &f.titulo, &f.descripcion,
+		&f.prioridad, &f.estado, &f.storyPoints, &f.criterios, &f.creadoEn)
+	if err != nil {
+		t.Fatalf("leer el item %s: %v", id, err)
+	}
+	return f
+}
+
+// US-005 / CA-005-1, RN-005-6, RN-005-7, RN-005-8, RN-005-10, RN-005-15,
+// CL-005-10, CL-005-14: el primer item de un proyecto queda guardado con el
+// numero 1, un ID que genera la base, en estado pendiente, sin Story Points
+// (nulo, no 0) y con sus criterios en orden, repetidos incluidos.
+func TestRegistrarItem_PrimerItem(t *testing.T) {
+	ctx := contexto(t)
+	pool := dbprueba.BaseMigrada(ctx, t)
+	proyecto := crearProyecto(ctx, t, pool, "Demo")
+	repo := postgres.NuevoRepositorioBacklog(pool)
+	item := nuevoItem(t, backlog.DatosItem{
+		Titulo:      "Crear proyecto",
+		Descripcion: "Alta de proyectos",
+		Prioridad:   backlog.PrioridadShould,
+		Criterios:   []string{"Se guarda", "Se guarda", "Se lista"},
+	})
+
+	registrado, err := repo.RegistrarItem(ctx, proyecto, item)
+	if err != nil {
+		t.Fatalf("RegistrarItem: %v", err)
+	}
+	if registrado.ID == "" || registrado.Numero != 1 || registrado.ProyectoID != proyecto {
+		t.Fatalf("ID, numero y proyecto = %q, %d, %q; se esperaba un ID de la base, 1 y %q",
+			registrado.ID, registrado.Numero, registrado.ProyectoID, proyecto)
+	}
+
+	guardado := leerFila(ctx, t, pool, registrado.ID)
+	esperado := fila{
+		proyectoID:  proyecto,
+		numero:      1,
+		titulo:      "Crear proyecto",
+		descripcion: "Alta de proyectos",
+		prioridad:   "should",
+		estado:      "pendiente",
+		criterios:   []string{"Se guarda", "Se guarda", "Se lista"},
+	}
+	if guardado.proyectoID != esperado.proyectoID || guardado.numero != esperado.numero ||
+		guardado.titulo != esperado.titulo || guardado.descripcion != esperado.descripcion ||
+		guardado.prioridad != esperado.prioridad || guardado.estado != esperado.estado {
+		t.Errorf("fila guardada = %+v, se esperaba %+v", guardado, esperado)
+	}
+	if guardado.storyPoints != nil {
+		t.Errorf("story_points = %d, se esperaba nulo (sin estimar)", *guardado.storyPoints)
+	}
+	if !slices.Equal(guardado.criterios, esperado.criterios) {
+		t.Errorf("criterios = %q, se esperaba %q", guardado.criterios, esperado.criterios)
+	}
+	if !guardado.creadoEn.Equal(creadoEn) {
+		t.Errorf("creado_en = %v, se esperaba %v", guardado.creadoEn, creadoEn)
+	}
+}
