@@ -9,6 +9,18 @@ import (
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/backlog"
 )
 
+// Base cumple el puerto del caso de uso de US-005.
+var _ app.RepositorioBacklog = (*Base)(nil)
+
+// ExisteProyecto dice si el proyecto esta en la base. Cualquier ID que no este,
+// incluido uno mal formado, es un proyecto inexistente y no un error.
+func (b *Base) ExisteProyecto(_ context.Context, proyectoID string) (bool, error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	return b.proyectos[proyectoID], nil
+}
+
 // RegistrarItem guarda el item en el proyecto con el numero siguiente (el
 // maximo actual mas 1, RN-005-11) y un ID nuevo. Si el proyecto no esta en la
 // base, devuelve app.ErrProyectoInexistente y no guarda nada.
