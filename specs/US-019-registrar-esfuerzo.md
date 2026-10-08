@@ -54,7 +54,8 @@ La carga pasa por dos capas, y cada una valida solo lo que puede saber:
 | `hoy` | `time.Time` | Sí | La fecha actual; la pasa quien llama al dominio (el dominio no lee el reloj) |
 
 No son entradas: el ID (lo genera la base) ni la fecha de carga (`creado_en`,
-`DEFAULT now()`). El sprint no se guarda: se deduce de la historia (US-020).
+`DEFAULT now()`). El sprint no se guarda: se deduce de la fecha del registro
+(RN-019-12).
 
 El valor de `horas` llega de un formulario como texto (`2,5` o `2.5`).
 Convertirlo a número es tarea del adaptador HTTP, no del dominio.
@@ -106,6 +107,15 @@ Entre paréntesis, la capa que la hace cumplir.
 - **RN-019-7** (aplicación) — Se puede registrar esfuerzo sobre una historia en
   cualquier estado (`pendiente`, `en_progreso` o `completado`) y esté o no
   asignada a un sprint. Registrar horas no cambia el estado de la historia.
+- **RN-019-12** (consulta) — El sprint de un registro no se guarda: se deduce de
+  su `fecha`. Es el sprint del proyecto cuyo rango (inicio y fin, ambos días
+  incluidos) contiene esa fecha, o ninguno si cae fuera de todo sprint. US-008
+  garantiza que los sprints de un proyecto no se superponen, así que hay a lo
+  sumo uno. Esta historia no hace esa consulta: la hacen US-020, US-021 y
+  US-027. Lo que fija acá es que el sprint depende de la fecha del trabajo y
+  **no de la historia**: si una historia no completada vuelve al backlog y pasa
+  al sprint siguiente (US-011), las horas ya cargadas siguen en el sprint donde
+  se trabajaron.
 - **RN-019-8** (dominio) — El dominio valida todos los datos y devuelve todos
   los errores juntos, unidos con `errors.Join`, en este orden fijo: primero el
   de la fecha, después el de la actividad y al final el de las horas. Cada
@@ -188,6 +198,12 @@ Entre paréntesis, la capa que la hace cumplir.
   `ErrFechaFutura`, `ErrActividadVacia`, `ErrHorasFueraDeRango`.
 - **CL-019-14** — Registrar sobre una historia completada o que no está en un
   sprint: se acepta (RN-019-7).
+- **CL-019-16** — Una historia con horas registradas con fecha dentro del
+  Sprint 1 no se completa, vuelve al backlog y pasa al Sprint 2: esas horas
+  siguen en el Sprint 1. Las que se registren con fecha dentro del Sprint 2
+  cuentan en el Sprint 2.
+- **CL-019-17** — Registrar con una fecha que cae entre dos sprints o antes del
+  primero: se acepta y el registro no pertenece a ningún sprint.
 - **CL-019-15** — Un integrante de otro proyecto, o una historia de otro
   proyecto: se rechaza con `ErrIntegranteInexistente` o `ErrItemInexistente`
   respectivamente, aunque el integrante o la historia existan en otro lado.
@@ -233,6 +249,8 @@ nada.
   nada.
 - **CA-019-7** (error) — Horas que no son múltiplo de 0,25 → rechazo.
 - **CA-019-8** (error) — Actividad vacía o solo espacios → rechazo.
+- **CA-019-11** (alternativo) — Las horas de una historia que cambia de sprint
+  siguen contando en el sprint de la fecha en que se trabajaron.
 - **CA-019-9** (error) — Integrante o historia que no son del proyecto →
   rechazo.
 - **CA-019-10** (error) — Proyecto inexistente → rechazo, no se registra nada.
@@ -262,9 +280,20 @@ nada.
   entre en una fila de tabla.
 - **Esfuerzo atado a una historia.** La historia dice "registrar esfuerzo"
   pero US-020 consulta "por historia, integrante y sprint" y US-021 lo compara
-  contra la estimación de la historia: sin historia no hay con qué comparar. El
-  sprint no se guarda en el registro: se deduce de la historia, así no puede
-  quedar inconsistente si la historia cambia de sprint (US-011).
+  contra la estimación de la historia: sin historia no hay con qué comparar.
+- **El sprint se deduce de la fecha del registro, no de la historia ni se
+  guarda.** Primera versión: deducirlo de la historia. Problema que marcó
+  Vergara: cuando una historia no completada vuelve al backlog y pasa al sprint
+  siguiente (US-011), sus horas ya cargadas se mudarían y cambiarían las
+  métricas de un sprint cerrado. Se evaluó guardar `sprint_id` al registrar y
+  se descartó: duplica un dato que ya se puede derivar, depende de US-009 (qué
+  sprint tiene la historia) y de la tabla `sprints` para la clave foránea, y
+  las horas cargadas antes de que la historia entre a un sprint quedarían sin
+  sprint para siempre. Por fecha, como los sprints de un proyecto no se
+  superponen (US-008), cada fecha cae en un solo sprint o en ninguno. Límite
+  conocido: si las fechas de un sprint cambiaran, cambiaría el sprint de sus
+  registros; hoy no se pueden editar (US-008 deja fuera editar o cancelar).
+- **0 horas no se acepta** (RN-019-1): un registro sin horas no aporta nada.
 - **Historia e integrante tienen que ser del proyecto.** Las claves foráneas
   solas no lo garantizan (podría ser un integrante de otro proyecto). Lo
   verifica el caso de uso con una lectura por proyecto.
