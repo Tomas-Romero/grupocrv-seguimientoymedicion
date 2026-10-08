@@ -42,3 +42,4 @@ US-034|Exportar el reporte del proyecto a un archivo PDF|E9 Reportes|8|must|4|ht
 T-007|Generar automaticamente la matriz de trazabilidad|E10 Plataforma|5|could|4|ci|tecnica
 T-008|Documentacion tecnica, manual de usuario e informe de metricas y cobertura|E10 Plataforma|5|must|4|docs|tecnica
 T-009|Preparar la presentacion final y ensayar el recorrido de trazabilidad con datos reales|E10 Plataforma|5|must|4|docs|tecnica
+T-011|Pantallas de alta, edicion y listado de proyecto, backlog y sprint con templ y HTMX|E10 Plataforma|8|must|4|ui|tecnica
