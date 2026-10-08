@@ -7,7 +7,7 @@
 | **Issue** | #21 |
 | **Escenarios BDD** | `features/US-013-estimar-historia-fibonacci.feature` |
 | **Código** | `internal/domain/backlog/` (`StoryPoints`, `ItemBacklog.Estimar`), caso de uso en `internal/app/`, repositorio en `internal/adapters/postgres/` |
-| **Última actualización** | 2026-10-07 |
+| **Última actualización** | 2026-10-08 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
 > implementación. Si durante la implementación descubrís que algo de acá está
@@ -201,10 +201,15 @@ reutiliza.
   que US-010 llegue a `main`. Hasta entonces CA-013-5 y CL-013-8/9 se cubren con
   tests unitarios del dominio y el escenario BDD se agrega cuando ese paso
   exista.
-- **Frases nuevas del diccionario** (a aprobar en el PR de implementación):
-  `la historia "X" está sin estimar`. El resto usa frases que ya existen
-  (`se estima la historia "X" en N story points`,
-  `la historia "X" tiene N story points`).
+- **Sin frases nuevas en el diccionario.** Los escenarios usan las que ya
+  existen: `se estima la historia "X" en N story points`,
+  `la historia "X" tiene N story points` y `la historia "X" está sin estimar`.
+  La spec original proponía esta última como nueva, pero ya estaba desde
+  US-005. Los negativos (CL-013-3) no se pueden escribir con la frase
+  `en (\d+) story points`, así que los cubren los tests del dominio.
+- **Puertos.** El caso de uso `EstimarItem` define el puerto
+  `RepositorioEstimacion` (`ObtenerItem` y `GuardarEstimacion`), separado de
+  `RepositorioBacklog` de US-005: cada caso de uso declara solo lo que consume.
 
 ## Uso de IA en esta especificación
 
