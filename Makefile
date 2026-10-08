@@ -42,8 +42,8 @@ build: gen ## Compila el binario en ./bin/server
 run: build ## Compila y ejecuta
 	./bin/server
 
-migrate: ## Aplica las migraciones pendientes
-	goose -dir migraciones postgres "$${DATABASE_URL}" up
+migrate: ## Aplica las migraciones pendientes, aunque lleguen fuera de orden (T-012)
+	goose -allow-missing -dir migraciones postgres "$${DATABASE_URL}" up
 
 seed: ## Carga datos de ejemplo
 	psql -v ON_ERROR_STOP=1 -d "$${DATABASE_URL}" -f migraciones/datos/ejemplo.sql
