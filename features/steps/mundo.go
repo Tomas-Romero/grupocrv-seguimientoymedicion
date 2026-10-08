@@ -82,6 +82,10 @@ type Sprints interface {
 
 // Metricas es el area de US-025 y US-026.
 type Metricas interface {
+	// AgregarItemAlSprint arma el contexto: suma una historia al sprint, con sus
+	// story points y si esta completada. No valida nada: las reglas se aplican al
+	// calcular, igual que en el dominio.
+	AgregarItemAlSprint(sprint string, puntos int, completado bool) error
 	PuntosPlanificados(sprint string) (int, error)
 	PuntosCompletados(sprint string) (int, error)
 	VelocidadDelEquipo() (float64, error)
