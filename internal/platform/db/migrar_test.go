@@ -3,6 +3,7 @@ package db_test
 import (
 	"context"
 	"testing"
+	"testing/fstest"
 	"time"
 
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/platform/db"
@@ -45,5 +46,37 @@ func TestMigrar_DosVeces(t *testing.T) {
 	}
 	if aplicaciones != 1 {
 		t.Fatalf("la migracion 1 figura %d veces en goose_db_version, se esperaba 1", aplicaciones)
+	}
+}
+
+// migracion arma el archivo de una migracion de goose que crea una tabla.
+func migracion(tabla string) *fstest.MapFile {
+	return &fstest.MapFile{Data: []byte(
+		"-- +goose Up\nCREATE TABLE " + tabla + " (id INTEGER);\n" +
+			"-- +goose Down\nDROP TABLE " + tabla + ";\n")}
+}
+
+// T-012: una migracion con numero menor al ultimo aplicado se aplica igual. Pasa
+// cuando dos ramas agregan migraciones en paralelo: la 00002 de US-001 llega
+// despues de que la 00003 de US-005 ya se aplico en una base.
+func TestMigrar_FueraDeOrden(t *testing.T) {
+	pool := baseTemporal(t)
+	ctx, cancelar := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancelar()
+
+	antes := fstest.MapFS{"00003_tres.sql": migracion("tres")}
+	if err := db.Migrar(ctx, pool, antes); err != nil {
+		t.Fatalf("Migrar con la 00003: %v", err)
+	}
+
+	despues := fstest.MapFS{
+		"00002_dos.sql":  migracion("dos"),
+		"00003_tres.sql": migracion("tres"),
+	}
+	if err := db.Migrar(ctx, pool, despues); err != nil {
+		t.Fatalf("Migrar con la 00002 llegando despues de la 00003: %v", err)
+	}
+	if !existeTabla(ctx, t, pool, "dos") {
+		t.Fatal("despues de migrar no existe la tabla de la 00002")
 	}
 }
