@@ -20,12 +20,18 @@ var errSinConectar = errors.New("la operacion todavia no esta conectada a la apl
 // que el rechazo lo produce la aplicacion (RN-005-9) y no este adaptador.
 const idDeProyectoInexistente = "00000000-0000-0000-0000-000000000000"
 
-// backlogSobreApp conecta el area Backlog con el caso de uso de US-005 sobre la
-// base en memoria del escenario (ADR 0002). Las consultas de los Entonces leen
+// idDeItemInexistente es el ID con el que se llama a EstimarItem cuando el
+// escenario nombra una historia que no creo. Igual que con el proyecto, el
+// rechazo (ErrItemInexistente) lo produce la aplicacion y no este adaptador.
+const idDeItemInexistente = "00000000-0000-0000-0000-000000000000"
+
+// backlogSobreApp conecta el area Backlog con los casos de uso de US-005 y US-013
+// sobre la base en memoria del escenario (ADR 0002). Las consultas de los Entonces leen
 // la base directamente, porque todavia no hay casos de uso de lectura (US-007).
 type backlogSobreApp struct {
 	escenario *escenario
 	crear     *app.CrearItemBacklog
+	estimar   *app.EstimarItem
 
 	// proyectoDe guarda en que proyecto quedo cada historia, por titulo. Los
 	// escenarios no repiten titulos (docs/diccionario-steps.md).
@@ -38,6 +44,7 @@ func nuevoBacklogSobreApp(e *escenario) *backlogSobreApp {
 	return &backlogSobreApp{
 		escenario:  e,
 		crear:      app.NuevoCrearItemBacklog(e.base, ahoraEnEscenarios),
+		estimar:    app.NuevoEstimarItem(e.base),
 		proyectoDe: map[string]string{},
 	}
 }
@@ -103,9 +110,16 @@ func (b *backlogSobreApp) CambiarPrioridadHistoria(_, _ string) error {
 	return errSinConectar
 }
 
-// EstimarHistoria es de US-013.
-func (b *backlogSobreApp) EstimarHistoria(_ string, _ int) error {
-	return errSinConectar
+// EstimarHistoria estima la historia con el caso de uso de US-013. Si el
+// escenario nombra una historia que no creo, llama con un ID que no esta en la
+// base: el rechazo es de la aplicacion (RN-013-6).
+func (b *backlogSobreApp) EstimarHistoria(titulo string, puntos int) error {
+	itemID := idDeItemInexistente
+	if item, err := b.historia(titulo); err == nil {
+		itemID = item.ID
+	}
+	_, err := b.estimar.Ejecutar(context.Background(), itemID, puntos)
+	return err
 }
 
 // HistoriaEstaEnBacklog depende de los sprints (US-009 y US-011).
