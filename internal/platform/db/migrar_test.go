@@ -60,7 +60,7 @@ func migracion(tabla string) *fstest.MapFile {
 // cuando dos ramas agregan migraciones en paralelo: la 00002 de US-001 llega
 // despues de que la 00003 de US-005 ya se aplico en una base.
 func TestMigrar_FueraDeOrden(t *testing.T) {
-	pool := baseTemporal(t)
+	pool := dbprueba.BaseTemporal(t)
 	ctx, cancelar := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancelar()
 
@@ -76,7 +76,7 @@ func TestMigrar_FueraDeOrden(t *testing.T) {
 	if err := db.Migrar(ctx, pool, despues); err != nil {
 		t.Fatalf("Migrar con la 00002 llegando despues de la 00003: %v", err)
 	}
-	if !existeTabla(ctx, t, pool, "dos") {
+	if !dbprueba.ExisteTabla(ctx, t, pool, "dos") {
 		t.Fatal("despues de migrar no existe la tabla de la 00002")
 	}
 }
