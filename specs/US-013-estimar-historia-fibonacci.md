@@ -106,7 +106,10 @@ Entre paréntesis, la capa que la hace cumplir.
   `ItemBacklog`, `Estado` y `StoryPoints`. La spec se puede mergear antes.
 - **No cambia la escala de US-025.** `CalcularResumenSprint` sigue aceptando
   cualquier entero no negativo (no valida Fibonacci); la escala se impone acá,
-  al estimar.
+  al estimar. Que US-025 tolere un ítem con `0` (RN-025-3 y CL-025-5) no lo
+  vuelve una estimación válida: es una defensa del cálculo, no una regla de
+  estimación. Un ítem con `0` solo podría existir si se cargara a mano en la
+  base, porque ni US-005 (crea sin estimar) ni esta historia lo permiten.
 - **Fuera de alcance.** La pantalla de estimación y el Planning Poker (depende
   de T-004 y de la historia de sesiones de poker), la Definition of Ready (se
   valida en US-009), listar ítems sin estimar (US-007) y el cambio de estado a
@@ -170,6 +173,11 @@ reutiliza.
   Se descartó incluir `21`: un ítem que no entra en 13 puntos es demasiado
   grande para un sprint de dos semanas y la práctica es dividirlo, no
   estimarlo más alto.
+- **`0` queda fuera de la escala** (observación de Vergara sobre CL-025-5, que
+  trata `0` sin error). Se descartó sumar el `0`, aunque el Planning Poker
+  habitual lo incluya: "sin estimar" ya tiene su propio valor (ausente), un
+  `0` significaría "no requiere esfuerzo" y un ítem así no tiene sentido en un
+  sprint. Lo de US-025 es tolerancia del cálculo, no una regla.
 - **`0` no es una estimación válida.** "Sin estimar" y "estimado en 0" son
   cosas distintas desde US-005; permitir `0` dejaría un ítem que parece
   estimado pero no aporta nada al sprint, y rompería la Definition of Ready
