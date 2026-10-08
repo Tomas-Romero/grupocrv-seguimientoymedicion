@@ -16,6 +16,7 @@ func registrarProyectos(sc *godog.ScenarioContext, m *mundo) {
 	sc.Step(`^un proyecto "([^"]*)"$`, m.dadoUnProyecto)
 	sc.Step(`^un proyecto "([^"]*)" con fechas del "([^"]*)" al "([^"]*)"$`, m.dadoUnProyectoConFechas)
 	sc.Step(`^el integrante "([^"]*)" con rol "([^"]*)"$`, m.dadoUnIntegrante)
+	sc.Step(`^ningún proyecto$`, m.dadoNingunProyecto)
 
 	sc.Step(`^se crea un proyecto "([^"]*)" con fechas del "([^"]*)" al "([^"]*)"$`, m.cuandoSeCreaProyecto)
 	sc.Step(`^se modifica el nombre del proyecto "([^"]*)" a "([^"]*)"$`, m.cuandoSeModificaNombre)
@@ -54,6 +55,19 @@ func (m *mundo) dadoUnProyectoConFechas(nombre, inicio, fin string) error {
 		return fmt.Errorf("crear el proyecto %q del contexto: %w", nombre, err)
 	}
 	m.proyectoActual = nombre
+	return nil
+}
+
+// proyectoInexistente es el proyecto actual que deja `Dado ningún proyecto`.
+// Ningun step crea un proyecto con este nombre, asi que las areas no le
+// encuentran ID y llaman a la aplicacion con uno que no existe: el rechazo lo
+// produce el caso de uso, no el step (CA-005-8, CA-008-10).
+const proyectoInexistente = "(ningún proyecto)"
+
+// dadoNingunProyecto deja al escenario sin un proyecto existente: los steps que
+// siguen operan sobre uno que no existe. No necesita ningun area conectada.
+func (m *mundo) dadoNingunProyecto() error {
+	m.proyectoActual = proyectoInexistente
 	return nil
 }
 
