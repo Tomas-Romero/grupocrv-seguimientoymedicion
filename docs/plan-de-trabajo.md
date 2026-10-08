@@ -9,41 +9,126 @@ verificable todas las semanas**: un incremento demostrable, un acta de
 retrospectiva y el tablero al día. El reparto y los objetivos se revisan en cada
 Sprint Planning y cualquier cambio se anota en el acta del sprint.
 
-| Sprint | Fechas | Sprint Goal (resumen) | Estado |
-|---|---|---|---|
-| 0 | 14/09 – 20/09 | Repo, CI, tablero y walking skeleton | cerrado (16 SP) |
-| 1 | 21/09 – 05/10 | El MVP: proyectos, backlog, sprints y primeras métricas | cierra el 05/10 |
-| 2 | 06/10 – 12/10 | A definir en el Planning del 06/10 | — |
-| 3 | 13/10 – 19/10 | A definir en el Planning del 06/10 | — |
-| 4 | 20/10 – 26/10 | A definir en el Planning del 06/10 | — |
-| 5 | 27/10 – 02/11 | Cierre: documentación, reporte PDF, demo y ensayo | — |
-| — | 02/11 | **Presentación final** | — |
+| Sprint | Fechas | Sprint Goal (resumen) | SP | Estado |
+|---|---|---|---|---|
+| 0 | 14/09 – 20/09 | Repo, CI, tablero y walking skeleton | 16 | cerrado |
+| 1 | 21/09 – 05/10 | El MVP: proyectos, backlog, sprints y primeras métricas | 5 de 33 | cerrado, ver `docs/retros/sprint-1.md` |
+| 2 | 06/10 – 12/10 | Las cinco historias con spec mergeada, implementadas con TDD y BDD | 16 | en curso |
+| 3 | 13/10 – 19/10 | El ciclo proyecto → backlog → sprint funciona en dominio y aplicación; layout base de la UI | 36 | |
+| 4 | 20/10 – 26/10 | Planning Poker, defectos, métricas completas y pantallas de alta, edición y listado | 44 | |
+| 5 | 27/10 – 02/11 | Cierre: dashboard, reporte PDF, documentación y ensayo de la presentación | 43 | |
+| — | 02/11 | **Presentación final** | — | |
 
 Los sprints cierran los **lunes a la noche** con Review y Retrospective, y el
 siguiente arranca el martes. El Sprint 1 duró dos semanas (21/09 – 05/10).
 
-## Estado al 05/10 y replanteo
+## Estado al 05/10 y plan decidido en el Planning del 06/10
 
-Cambió la fecha de presentación (ahora **lunes 02/11**) y el Sprint 1 cierra
-sin historias de negocio mergeadas: lo hecho fue infraestructura (conexión a la
-base, health check, portabilidad en Windows), cuatro defectos de puesta en
-marcha detectados en la prueba en máquina limpia y las primeras specs.
+El Sprint 1 cerró con **5 de 33 SP**: ninguna historia de negocio llegó a `main`,
+pero quedaron mergeadas las especificaciones de US-001, US-002, US-005, US-025 y
+US-026, y la infraestructura (godog, perfil `full`, `CODEOWNERS`, ADR 0002 y 0003).
+Quedaban **150 SP** para cuatro sprints, y el equipo midió una velocidad de 5.
+El plan de abajo es lo que se decidió con esos datos.
 
-Quedan **155 SP** en cuatro sprints (2 al 5), unos 39 SP por sprint, que es
-parecido a la carga que se había planificado y bastante más de lo que se
-entregó. El Planning del 06/10 decide el alcance real. Punto de partida
-propuesto, en el orden de dependencias del plan original:
+### Reglas desde ahora
 
-| Bloque | Contenido (tablas de abajo) | SP | Sprint propuesto |
+1. **Definition of Ready estricta.** Solo entra a un sprint una historia con su
+   spec **mergeada** en `main`. El Sprint 2 se arma con eso y nada más.
+2. **Las specs del sprint siguiente se abren como PR antes del jueves** (Refinement)
+   y se revisan en menos de 24 horas.
+3. **El plan por sprint es el techo, no el compromiso.** Cada Planning fija el
+   compromiso con la velocidad medida: si el sprint anterior completó menos del
+   75 % de lo comprometido, se recorta el siguiente antes de empezar.
+4. **Una historia entrega dominio, caso de uso, repositorio y BDD.** Las pantallas
+   quedan fuera de las historias (las specs lo dicen) y se construyen en T-011,
+   sobre el layout de T-004.
+
+### Recorte aplicado
+
+Salen del alcance comprometido (sin sprint; vuelven solo si sobra capacidad):
+US-017 (3), US-024 (3), US-032 (5), T-007 (5, la matriz de trazabilidad se arma a
+mano en `docs/trazabilidad.md`) y US-007 (3, el listado entra en T-011). Son
+**19 SP**.
+
+### Item nuevo
+
+**T-011 — Pantallas de alta, edición y listado de proyecto, backlog y sprint** (8 SP,
+Conforti, Sprint 4). Ninguna historia cubría las pantallas, y sin ellas la
+aplicación no se puede usar.
+
+### Segundo recorte, preparado de antemano
+
+Si el Sprint 2 completa **menos de 12 SP**, el Planning del 13/10 saca, en este
+orden: US-031 (5), US-021 (3), US-020 (3), US-012 (2) y US-004 (2). Son **15 SP**.
+
+### Plan por sprint (139 SP)
+
+**Sprint 2 — 06/10 a 12/10 — 16 SP.** Las cinco historias con spec mergeada.
+
+| ID | Historia | SP | Responsable |
 |---|---|---|---|
-| A | El MVP (original «Sprint 1») | 33 | 2 |
-| B | La interfaz (original «Sprint 2») | 37 | 3 |
-| C | Funcionalidad y calidad (original «Sprint 3») | 47 | 4 |
-| D | Cierre y entrega (original «Sprint 4») | 38 | 5 |
+| US-001 | Crear un proyecto | 3 | Conforti |
+| US-002 | Modificar un proyecto | 2 | Conforti |
+| US-005 | Crear un ítem de backlog | 5 | Vergara |
+| US-025 | Story Points planificados y completados | 3 | Tomás |
+| US-026 | Velocidad del equipo | 3 | Tomás |
 
-Las secciones de abajo conservan el contenido y el reparto originales; se
-renumeran cuando el Planning confirme el alcance. Si no entra todo, se aplica la
-lista de recorte antes de empezar el sprint, no a mitad de semana.
+Además, durante el sprint se escriben las specs del Sprint 3. Primera tanda, en PR
+antes del **jueves 08/10**: US-003 (Conforti), US-008 (Vergara), US-013 y US-019
+(Tomás). Segunda tanda, antes del **lunes 12/10**: US-006, US-010 y US-011
+(Vergara) y US-009 (Conforti).
+
+**Sprint 3 — 13/10 a 19/10 — 36 SP.** Carga: Tomás 12, Vergara 13, Conforti 11.
+
+| ID | Historia | SP | Responsable |
+|---|---|---|---|
+| US-003 | Registrar integrantes | 3 | Conforti |
+| US-009 | Asignar historias a un sprint | 3 | Conforti |
+| T-004 | Layout base y navegación | 5 | Conforti |
+| US-006 | Editar y repriorizar ítems | 3 | Vergara |
+| US-008 | Crear un sprint | 3 | Vergara |
+| US-010 | Marcar historias como completadas | 2 | Vergara |
+| US-011 | Cerrar un sprint | 5 | Vergara |
+| US-013 | Estimar en Fibonacci | 2 | Tomás |
+| US-019 | Registrar esfuerzo | 5 | Tomás |
+| T-005 | Validaciones y errores uniformes | 5 | Tomás |
+
+**Sprint 4 — 20/10 a 26/10 — 44 SP.** Carga: Tomás 15, Vergara 13, Conforti 16.
+
+| ID | Historia | SP | Responsable |
+|---|---|---|---|
+| US-014 | Iniciar sesión de Planning Poker | 5 | Vergara |
+| US-015 | Voto individual oculto | 5 | Vergara |
+| US-018 | Registrar la estimación acordada | 3 | Vergara |
+| US-016 | Revelar votos y detectar divergencias | 5 | Tomás |
+| US-027 | Horas estimadas, reales y desviación | 5 | Tomás |
+| US-028 | Porcentaje de historias completadas | 2 | Tomás |
+| US-029 | Defectos detectados y resueltos | 3 | Tomás |
+| US-022 | Registrar un defecto | 5 | Conforti |
+| US-023 | Cambiar el estado de un defecto | 3 | Conforti |
+| T-011 | Pantallas de alta, edición y listado | 8 | Conforti |
+
+**Sprint 5 — 27/10 a 02/11 — 43 SP.** Carga: Tomás 15, Vergara 15, Conforti 13.
+**Congelamiento de funcionalidades: jueves 29/10.** De ahí a la presentación solo
+hay documentación, defectos y ensayo.
+
+| ID | Historia | SP | Responsable |
+|---|---|---|---|
+| US-030 | Dashboard | 5 | Conforti |
+| US-034 | Exportar el reporte a PDF | 8 | Conforti |
+| US-031 | Burndown del sprint | 5 | Vergara |
+| US-033 | Reporte en pantalla | 5 | Vergara |
+| T-008 | Documentación, manual e informe | 5 | Vergara |
+| US-004 | Estado general de un proyecto | 2 | Tomás |
+| US-012 | Sprints anteriores | 2 | Tomás |
+| US-020 | Consultar esfuerzo | 3 | Tomás |
+| US-021 | Comparar estimado contra real | 3 | Tomás |
+| T-009 | Presentación y ensayo | 5 | Tomás |
+
+**Riesgo R1 sigue crítico:** el plan exige unos 35 SP por sprint con una velocidad
+medida de 5. Solo es posible si las specs ya están mergeadas, el trabajo se
+paraleliza y no se repiten los errores del Sprint 1. Por eso el punto de control
+del **12/10** es obligatorio.
 
 ## Cómo se reparte y por qué
 
@@ -75,8 +160,12 @@ Los sprints van de martes a lunes.
 | Sábado y domingo | Colchón: todo mergeado o replanificado |
 | Lunes | Review (30 min, demo con `docker compose up`) y Retro (30 min) a la noche. El acta `docs/retros/sprint-N.md` se commitea el mismo lunes |
 
-Daily asíncrono todos los días antes de las 22:00 con el formato *hecho / hoy /
-bloqueos*.
+Daily **escrita** en el grupo todos los días antes de las 22:00 con el formato
+*hecho / hoy / bloqueos*, aunque se hable en persona: lo que no queda escrito no
+sirve como evidencia.
+
+> Las secciones siguientes son el **plan original**, que se conserva como referencia
+> (dependencias y notas por historia). El plan vigente es el de arriba.
 
 ## Sprint 1 — El MVP (plan original, 33 SP)
 
@@ -90,12 +179,12 @@ escenario BDD corre automatizado de punta a punta.
 | US-001 | Crear un proyecto | 3 | Conforti | Primer escenario BDD de punta a punta (con T-006) |
 | US-002 | Modificar un proyecto | 2 | Conforti | Depende de US-001 |
 | US-003 | Registrar integrantes | 3 | Conforti | Depende de US-001 |
-| US-005 | Crear un ítem de backlog | 5 | Vergara | Define `BacklogItem`, prioridad y criterios de aceptación |
+| US-005 | Crear un ítem de backlog | 5 | Vergara | Define `ItemBacklog`, prioridad y criterios de aceptación |
 | US-006 | Editar y repriorizar ítems | 3 | Vergara | Depende de US-005 |
 | US-008 | Crear un Sprint | 3 | Vergara | Define `Sprint` y Sprint Goal |
 | US-009 | Asignar historias a un Sprint | 3 | Conforti | Depende de US-005 y US-008: se hace al final del sprint |
 | US-025 | SP planificados y completados de un Sprint | 3 | Tomás | Función pura sobre un resumen del sprint, sin depender de la base |
-| US-026 | Velocidad del equipo | 3 | Tomás | Depende de US-025 (`SprintSummary`) |
+| US-026 | Velocidad del equipo | 3 | Tomás | Depende de US-025 (`ResumenSprint`) |
 | T-006 | Integrar godog y automatizar el primer escenario | 5 | Tomás | Se apoya en la spec y el `.feature` de US-001 |
 
 Carga: Tomás 11 · Vergara 11 · Conforti 11.
@@ -135,7 +224,7 @@ su ciclo de vida y el Dashboard muestra las métricas principales del proyecto.
 
 | ID | Historia | SP | Responsable | Notas |
 |---|---|---|---|---|
-| US-014 | Iniciar sesión de Planning Poker | 5 | Vergara | Define `PokerSession`. Va primero: el resto del poker depende de esto |
+| US-014 | Iniciar sesión de Planning Poker | 5 | Vergara | Define `SesionPlanningPoker`. Va primero: el resto del poker depende de esto |
 | US-015 | Voto individual oculto | 5 | Vergara | |
 | US-017 | Nueva ronda ante divergencia | 3 | Vergara | Should. Primer candidato a recorte |
 | US-018 | Registrar la estimación acordada | 3 | Vergara | |
