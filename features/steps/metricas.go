@@ -12,6 +12,9 @@ import (
 // Steps del area Metricas (US-025 y US-026).
 
 func registrarMetricas(sc *godog.ScenarioContext, m *mundo) {
+	sc.Step(`^el sprint "([^"]*)" con una historia de (-?\d+) story points completada$`, m.dadoHistoriaDeSprintCompletada)
+	sc.Step(`^el sprint "([^"]*)" con una historia de (-?\d+) story points sin completar$`, m.dadoHistoriaDeSprintSinCompletar)
+
 	sc.Step(`^se consultan los story points planificados del sprint "([^"]*)"$`, m.cuandoSeConsultanPlanificados)
 	sc.Step(`^se consultan los story points completados del sprint "([^"]*)"$`, m.cuandoSeConsultanCompletados)
 	sc.Step(`^se consulta la velocidad del equipo$`, m.cuandoSeConsultaVelocidad)
@@ -19,6 +22,28 @@ func registrarMetricas(sc *godog.ScenarioContext, m *mundo) {
 	sc.Step(`^los story points planificados son (\d+)$`, m.entoncesPlanificadosSon)
 	sc.Step(`^los story points completados son (\d+)$`, m.entoncesCompletadosSon)
 	sc.Step(`^la velocidad del equipo es (\d+(?:[.,]\d+)?)$`, m.entoncesVelocidadEs)
+}
+
+// dadoHistoriaDeSprintCompletada y dadoHistoriaDeSprintSinCompletar arman el
+// sprint de un escenario de metricas. Aceptan numeros negativos a proposito: es
+// la unica forma de escribir el escenario de error de US-025 (CA-025-4).
+func (m *mundo) dadoHistoriaDeSprintCompletada(sprint string, puntos int) error {
+	return m.agregarHistoriaDeSprint(sprint, puntos, true)
+}
+
+func (m *mundo) dadoHistoriaDeSprintSinCompletar(sprint string, puntos int) error {
+	return m.agregarHistoriaDeSprint(sprint, puntos, false)
+}
+
+func (m *mundo) agregarHistoriaDeSprint(sprint string, puntos int, completada bool) error {
+	metricas, err := m.metricas()
+	if err != nil {
+		return err
+	}
+	if err = metricas.AgregarItemAlSprint(sprint, puntos, completada); err != nil {
+		return fmt.Errorf("agregar una historia al sprint %q del contexto: %w", sprint, err)
+	}
+	return nil
 }
 
 func (m *mundo) cuandoSeConsultanPlanificados(sprint string) error {

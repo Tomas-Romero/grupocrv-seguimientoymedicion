@@ -17,6 +17,11 @@
 #  Uso:
 #    ./scripts/crear-issues.sh            # crea los issues
 #    ./scripts/crear-issues.sh --dry-run  # solo muestra lo que haria
+#    ./scripts/crear-issues.sh --solo T-011        # solo esos IDs (separados por coma)
+#
+#  OJO: para un item que YA existe, esto vuelve a escribir sus campos del Project
+#  con los valores del CSV, incluido el Sprint original. Despues de un Planning
+#  no lo corras sin --solo: pisaria el plan (ver scripts/mover-sprints.sh).
 # =============================================================================
 set -euo pipefail
 
@@ -26,7 +31,15 @@ PROYECTO_NUM=3
 CSV="$(dirname "$0")/backlog.csv"
 HECHOS=" T-001 T-002 T-003 "   # tareas ya terminadas al momento de la carga
 DRY_RUN=0
-[[ "${1:-}" == "--dry-run" ]] && DRY_RUN=1
+SOLO=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --dry-run) DRY_RUN=1 ;;
+    --solo)    SOLO="${2:?falta la lista de IDs de --solo}"; shift ;;
+    *)         echo "Opcion desconocida: $1"; exit 1 ;;
+  esac
+  shift
+done
 
 command -v gh >/dev/null || { echo "Falta gh CLI"; exit 1; }
 [[ -f "$CSV" ]] || { echo "No encuentro $CSV"; exit 1; }
@@ -79,6 +92,7 @@ CREADOS=0
 while IFS='|' read -r id titulo epica sp prioridad sprint area tipo; do
   [[ "$id" == "id" ]] && continue      # cabecera
   [[ -z "${id// }" ]] && continue      # linea vacia
+  [[ -n "$SOLO" && ",$SOLO," != *",$id,"* ]] && continue
 
   LABELS="tipo:${tipo},prio:${prioridad},area:${area},sp:${sp},sprint:${sprint}"
 
