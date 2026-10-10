@@ -12,6 +12,7 @@ import (
 	"sync"
 
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/backlog"
+	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/proyecto"
 )
 
 // Base es una base de datos en memoria. Se puede usar desde varias goroutines.
@@ -22,13 +23,19 @@ type Base struct {
 	ultimoID  int
 	proyectos map[string]bool
 	items     map[string][]backlog.ItemBacklog // por proyecto, en orden de alta
+
+	// datosProyectos guarda los datos de los proyectos registrados con
+	// RegistrarProyecto (US-001). Todo proyecto de esta tabla esta tambien en
+	// proyectos, que es el mapa donde busca ExisteProyecto.
+	datosProyectos map[string]proyecto.Proyecto
 }
 
 // NuevaBase devuelve una base vacia.
 func NuevaBase() *Base {
 	return &Base{
-		proyectos: map[string]bool{},
-		items:     map[string][]backlog.ItemBacklog{},
+		proyectos:      map[string]bool{},
+		items:          map[string][]backlog.ItemBacklog{},
+		datosProyectos: map[string]proyecto.Proyecto{},
 	}
 }
 
