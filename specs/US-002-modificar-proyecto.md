@@ -6,7 +6,7 @@
 | **Autor** | Angelo Conforti |
 | **Issue** | #5 |
 | **Escenarios BDD** | `features/US-002-modificar-proyecto.feature` |
-| **Código** | `internal/domain/proyecto/` |
+| **Código** | `internal/domain/proyecto/`, caso de uso en `internal/app/` |
 | **Última actualización** | 2026-10-05 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
