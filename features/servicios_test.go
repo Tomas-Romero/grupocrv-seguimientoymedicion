@@ -36,11 +36,9 @@ func ahoraEnEscenarios() time.Time {
 func nuevosServicios() (steps.Servicios, error) {
 	e := &escenario{base: memoria.NuevaBase(), proyectos: map[string]string{}}
 	return steps.Servicios{
-		// TEMPORAL (T-006): doble en memoria del area Proyectos. Hasta US-001
-		// tambien registra los proyectos en la base del escenario, que es donde
-		// los busca el caso de uso de US-005. US-001 lo reemplaza por el
-		// adaptador real sobre internal/app.
-		Proyectos: nuevosProyectosEnMemoria(e),
+		// US-001: el caso de uso real sobre la base en memoria. Los proyectos que
+		// crea quedan en la misma base donde los busca el caso de uso de US-005.
+		Proyectos: nuevosProyectosSobreApp(e),
 		// US-005: el caso de uso real sobre la base en memoria.
 		Backlog: nuevoBacklogSobreApp(e),
 		// US-025: calculo del dominio sobre los items que arma el escenario.

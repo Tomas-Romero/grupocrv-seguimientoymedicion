@@ -16,12 +16,18 @@ import (
 // Usa goose como biblioteca con un Provider, que recibe todo por parametro en
 // lugar de guardarlo en variables globales. El *sql.DB que necesita goose se arma
 // sobre el mismo pool, asi que no abre una segunda conexion.
+//
+// Acepta migraciones con numero menor al ultimo aplicado (T-012): cuando dos
+// ramas agregan migraciones en paralelo, la de numero menor puede llegar despues
+// a una base que ya aplico la otra. Sin esto, goose la ve como faltante y no
+// migra nada.
 func Migrar(ctx context.Context, pool *pgxpool.Pool, archivos fs.FS) error {
 	sqlDB := stdlib.OpenDBFromPool(pool)
 	// Cerrar este *sql.DB no cierra el pool: solo suelta lo que goose uso.
 	defer func() { _ = sqlDB.Close() }()
 
-	proveedor, err := goose.NewProvider(goose.DialectPostgres, sqlDB, archivos)
+	proveedor, err := goose.NewProvider(goose.DialectPostgres, sqlDB, archivos,
+		goose.WithAllowOutofOrder(true))
 	if err != nil {
 		return fmt.Errorf("preparar las migraciones: %w", err)
 	}
