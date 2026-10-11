@@ -20,6 +20,7 @@ func registrarProyectos(sc *godog.ScenarioContext, m *mundo) {
 
 	sc.Step(`^se crea un proyecto "([^"]*)" con fechas del "([^"]*)" al "([^"]*)"$`, m.cuandoSeCreaProyecto)
 	sc.Step(`^se modifica el nombre del proyecto "([^"]*)" a "([^"]*)"$`, m.cuandoSeModificaNombre)
+	sc.Step(`^se modifican las fechas del proyecto "([^"]*)" del "([^"]*)" al "([^"]*)"$`, m.cuandoSeModificanFechas)
 	sc.Step(`^se registra al integrante "([^"]*)" con rol "([^"]*)"$`, m.cuandoSeRegistraIntegrante)
 
 	sc.Step(`^el proyecto "([^"]*)" existe con fechas del "([^"]*)" al "([^"]*)"$`, m.entoncesElProyectoExiste)
@@ -104,6 +105,22 @@ func (m *mundo) cuandoSeModificaNombre(actual, nuevo string) error {
 		return err
 	}
 	return m.registrarAccion(proyectos.ModificarNombreProyecto(actual, nuevo))
+}
+
+func (m *mundo) cuandoSeModificanFechas(nombre, inicio, fin string) error {
+	proyectos, err := m.proyectos()
+	if err != nil {
+		return err
+	}
+	desde, err := parsearFecha(inicio)
+	if err != nil {
+		return err
+	}
+	hasta, err := parsearFecha(fin)
+	if err != nil {
+		return err
+	}
+	return m.registrarAccion(proyectos.ModificarFechasProyecto(nombre, desde, hasta))
 }
 
 func (m *mundo) cuandoSeRegistraIntegrante(nombre, rol string) error {
