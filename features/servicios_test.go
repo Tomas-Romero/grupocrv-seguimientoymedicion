@@ -36,8 +36,9 @@ func ahoraEnEscenarios() time.Time {
 func nuevosServicios() (steps.Servicios, error) {
 	e := &escenario{base: memoria.NuevaBase(), proyectos: map[string]string{}}
 	return steps.Servicios{
-		// US-001: el caso de uso real sobre la base en memoria. Los proyectos que
-		// crea quedan en la misma base donde los busca el caso de uso de US-005.
+		// US-001 y US-002: los casos de uso reales sobre la base en memoria. Los
+		// proyectos que crea quedan en la misma base donde los busca el caso de uso
+		// de US-005.
 		Proyectos: nuevosProyectosSobreApp(e),
 		// US-005: el caso de uso real sobre la base en memoria.
 		Backlog: nuevoBacklogSobreApp(e),
