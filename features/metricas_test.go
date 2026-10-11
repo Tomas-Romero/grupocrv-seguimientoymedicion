@@ -13,7 +13,8 @@ import (
 // cuando existan los sprints y el backlog reales (US-008 y US-005), la capa de
 // aplicacion va a adaptar sus items a metricas.ItemDelSprint.
 type metricasEnMemoria struct {
-	items map[string][]metricas.ItemDelSprint
+	items    map[string][]metricas.ItemDelSprint
+	cerrados []metricas.SprintCerrado
 }
 
 var _ steps.Metricas = (*metricasEnMemoria)(nil)
@@ -47,7 +48,19 @@ func (m *metricasEnMemoria) PuntosCompletados(sprint string) (int, error) {
 	return resumen.Completados, err
 }
 
-// VelocidadDelEquipo se implementa con US-026.
+// RegistrarSprintCerrado suma un sprint cerrado, en el orden en que llega.
+func (m *metricasEnMemoria) RegistrarSprintCerrado(nombre string, planificados, completados int) error {
+	m.cerrados = append(m.cerrados, metricas.SprintCerrado{
+		Nombre:  nombre,
+		Resumen: metricas.ResumenSprint{Planificados: planificados, Completados: completados},
+	})
+	return nil
+}
+
 func (m *metricasEnMemoria) VelocidadDelEquipo() (float64, error) {
-	return 0, errNoImplementado
+	velocidad, err := metricas.CalcularVelocidad(m.cerrados)
+	if err != nil {
+		return 0, fmt.Errorf("velocidad del equipo: %w", err)
+	}
+	return velocidad, nil
 }

@@ -114,6 +114,7 @@ conectada, falla con `area sin conectar a los steps: <área>`: es a propósito.
 | `Dado ningún proyecto` | `^ningún proyecto$` |
 | `Y el sprint "Sprint 1" con una historia de 5 story points completada` | `^el sprint "([^"]*)" con una historia de (-?\d+) story points completada$` |
 | `Y el sprint "Sprint 1" con una historia de 3 story points sin completar` | `^el sprint "([^"]*)" con una historia de (-?\d+) story points sin completar$` |
+| `Y el sprint cerrado "Sprint 1" con 20 story points completados de 25 planificados` | `^el sprint cerrado "([^"]*)" con (\d+) story points completados de (\d+) planificados$` |
 
 Un escenario **no repite títulos de historias**: el área Backlog las identifica
 por título, y la spec de US-005 permite repetirlos entre sí, así que dos historias
@@ -123,6 +124,11 @@ Las dos frases `el sprint "S" con una historia de N story points ...` arman el s
 los escenarios de métricas (US-025 y US-026) sin pasar por el backlog ni por los sprints
 reales: cada línea suma una historia al sprint. Aceptan un número negativo a propósito,
 porque es la única forma de escribir el escenario de error de US-025 (CA-025-4).
+
+`el sprint cerrado "S" con N story points completados de M planificados` arma un sprint
+ya cerrado para los escenarios de la velocidad (US-026). No valida nada: "8 completados de
+5 planificados" es justo el dato corrupto que tiene que rechazar el dominio. Un nombre
+vacío (`el sprint cerrado "" ...`) sirve para probar el rechazo del sprint sin nombre.
 
 El primer `Dado un proyecto "X"` usa fechas por defecto (del 2026-01-01 al
 2026-12-31) y queda como **proyecto actual**: los steps que siguen y no nombran

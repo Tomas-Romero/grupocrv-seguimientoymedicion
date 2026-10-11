@@ -7,7 +7,7 @@
 | **Issue** | #12 |
 | **Escenarios BDD** | `features/US-026-velocidad-equipo.feature` |
 | **Código** | `internal/domain/metricas/` |
-| **Última actualización** | 2026-09-29 |
+| **Última actualización** | 2026-10-06 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
 > implementación. Si durante la implementación descubrís que algo de acá está
@@ -54,6 +54,10 @@ complica la lectura.
   invariante de US-025 (RN-025-4: `Completados <= Planificados`). Si algún
   sprint lo viola, la función no promedia nada: es un dato corrupto, no un
   caso a calcular.
+- **RN-026-4** — Se validan todos los sprints y se devuelven todos los errores
+  encontrados, unidos con `errors.Join`, en el orden de la lista (por cada
+  sprint: primero el nombre vacío y después el resumen inconsistente), igual
+  que en US-001 y US-005. Con algún error no se devuelve velocidad.
 
 ## 5. Restricciones
 
@@ -76,6 +80,9 @@ complica la lectura.
   completó nada).
 - **CL-026-4** — El promedio da un número no entero (por ejemplo, 31.5): se
   redondea a 1 decimal, no se trunca ni se redondea a entero.
+- **CL-026-5** — Varios sprints inválidos a la vez (por ejemplo, el primero sin
+  nombre y el tercero con más completados que planificados): se devuelven los
+  dos errores unidos, en el orden de la lista. `errors.Is` reconoce cada uno.
 
 ## 7. Condiciones de error
 
@@ -83,6 +90,9 @@ complica la lectura.
 |---|---|---|
 | Algún `SprintCerrado` tiene `Resumen.Completados > Resumen.Planificados` | `ErrResumenInconsistente`, envuelto indicando el nombre del sprint | "el sprint «Nombre» tiene mas Story Points completados que planificados: revisa sus datos" |
 | Algún `SprintCerrado.Nombre` está vacío | `ErrNombreVacio`, envuelto indicando la posición en la lista, contada desde 1 (igual que en US-005, RN-005-14) | "todo sprint cerrado necesita un nombre para poder mostrarlo" |
+
+Con varios sprints inválidos, los errores se devuelven unidos con `errors.Join`
+(RN-026-4) y se comparan con `errors.Is`.
 
 ## 8. Criterios de aceptación
 
@@ -113,6 +123,10 @@ complica la lectura.
   recientes. Es más difícil de explicar en la defensa y la guía no lo pide;
   si hace falta suavizar el número, se discute como una historia nueva con su
   propia spec.
+- **Se devuelven todos los errores juntos**, como US-001 y US-005: quien muestra
+  el resultado ve de una vez todos los sprints que tiene que corregir. Se
+  descartó cortar en el primer sprint inválido, que obligaría a corregir de a
+  uno. La spec original no lo decía; se resolvió al implementar.
 - **Se descartó devolver un error cuando la lista está vacía.** No cerrar
   ningún sprint todavía es el estado normal del proyecto al principio, no un
   dato corrupto: por eso es un caso límite (CL-026-1) y no un error.

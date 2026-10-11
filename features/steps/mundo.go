@@ -86,6 +86,10 @@ type Metricas interface {
 	// story points y si esta completada. No valida nada: las reglas se aplican al
 	// calcular, igual que en el dominio.
 	AgregarItemAlSprint(sprint string, puntos int, completado bool) error
+
+	// RegistrarSprintCerrado arma el contexto de la velocidad: suma un sprint ya
+	// cerrado con sus story points planificados y completados.
+	RegistrarSprintCerrado(nombre string, planificados, completados int) error
 	PuntosPlanificados(sprint string) (int, error)
 	PuntosCompletados(sprint string) (int, error)
 	VelocidadDelEquipo() (float64, error)
