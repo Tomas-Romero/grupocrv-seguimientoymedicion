@@ -56,7 +56,9 @@ func (a *proyectosSobreApp) ProyectoExiste(nombre string) (time.Time, time.Time,
 func (a *proyectosSobreApp) ModificarNombreProyecto(_, _ string) error {
 	return errNoImplementado
 }
-
+func (a *proyectosSobreApp) ModificarFechasProyecto(_ string, _, _ time.Time) error {
+	return errNoImplementado
+}
 // RegistrarIntegrante es de US-003.
 func (a *proyectosSobreApp) RegistrarIntegrante(_, _, _ string) error {
 	return errNoImplementado
