@@ -157,7 +157,7 @@ Entre paréntesis, la capa que la hace cumplir.
 | Situación | Error devuelto | Mensaje del error (origen) |
 |---|---|---|
 | Datos inválidos | Los de US-005 (`ErrTituloVacio`, `ErrTituloMuyLargo`, `ErrPrioridadInvalida`, `ErrCriterioVacio`), unidos en el orden de RN-005-13 | Los de la sección 7 de US-005 |
-| El ítem está completado | `backlog.ErrItemCompletado` (el de US-013), envuelto indicando el ID | El de US-013; ver "Decisiones" |
+| El ítem está completado | `backlog.ErrItemCompletado` (el de US-013), envuelto indicando el ID | El mensaje general (cambio pedido en el #93) |
 | El ítem no existe | `app.ErrItemInexistente` (el de US-013 y US-019), envuelto indicando el ID | "el item no existe" |
 
 Los errores de datos se unen entre sí como en US-005. `ErrItemCompletado` y
@@ -200,10 +200,7 @@ valores de paquete comparables con `errors.Is`, y en ningún caso se modifica el
   de un sprint medido (US-025 y US-026) y de sus reportes. Se descartó permitir
   editar solo el texto: dos reglas distintas para un mismo estado no aportan.
 - **Se reutiliza `ErrItemCompletado` de US-013.** La condición es la misma: el
-  ítem está completado. Su mensaje de origen en US-013 ("un item completado no
-  se puede estimar") nombra la estimación, así que para servir a las dos
-  historias hace falta un mensaje general. Queda para acordar con US-013 (#93,
-  todavía abierto).
+  ítem está completado. Usa el mensaje general (cambio pedido en el #93).
 - **`UPDATE` condicionado en lugar de bloqueo.** Una sola sentencia atómica
   alcanza para no editar un ítem que se completó en el medio, sin bloquear
   filas ni abrir una transacción. Es la misma protección que necesita US-013
