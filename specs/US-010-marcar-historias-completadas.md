@@ -170,7 +170,7 @@ Entre paréntesis, la capa que la hace cumplir.
 |---|---|---|
 | El ítem no existe | `app.ErrItemInexistente` (el de US-013 y US-019), envuelto indicando el ID | "el item no existe" |
 | El Sprint no existe | `app.ErrSprintInexistente` (el de US-009), envuelto indicando el ID | "el sprint no existe" |
-| El Sprint está cerrado | `sprint.ErrSprintCerrado` (el de US-009), envuelto indicando el nombre del Sprint | El de US-009; ver "Decisiones" |
+| El Sprint está cerrado | `sprint.ErrSprintCerrado` (el de US-009), envuelto indicando el nombre del Sprint | "el sprint esta cerrado": el mensaje general (hecho en la corrección de US-009, #104) |
 | El ítem no está asignado a ese Sprint | `sprint.ErrItemFueraDelSprint` | "la historia no esta asignada a este sprint" |
 
 Los dos primeros tienen prioridad y no se unen con los demás (RN-010-1). Los dos
@@ -224,10 +224,8 @@ modifica el ítem.
   datos mínimos, como US-009. El estado y la fecha son del ítem, como `Estimar`
   en US-013.
 - **Se reutiliza `ErrSprintCerrado` de US-009.** La condición es la misma: el
-  Sprint está cerrado. Su mensaje de origen en US-009 ("el sprint esta cerrado:
-  no se le pueden asignar historias") nombra la asignación. Hace falta uno
-  general para las dos historias; queda para acordar con US-009, que todavía no
-  está implementada.
+  Sprint está cerrado. Usa el mensaje general (hecho en la corrección de
+  US-009, #104).
 - **US-013 tiene que condicionar su estimación.** Ver la dependencia con
   US-013 en la sección 5 (#100).
 - **Las frases existentes operan sobre el Sprint abierto.** Evita una frase que
