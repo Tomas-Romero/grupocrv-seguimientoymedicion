@@ -13,8 +13,8 @@ Sprint Planning y cualquier cambio se anota en el acta del sprint.
 |---|---|---|---|---|
 | 0 | 14/09 – 20/09 | Repo, CI, tablero y walking skeleton | 16 | cerrado |
 | 1 | 21/09 – 05/10 | El MVP: proyectos, backlog, sprints y primeras métricas | 5 de 33 | cerrado, ver `docs/retros/sprint-1.md` |
-| 2 | 06/10 – 12/10 | Las cinco historias con spec mergeada, implementadas con TDD y BDD | 16 | en curso |
-| 3 | 13/10 – 19/10 | El ciclo proyecto → backlog → sprint funciona en dominio y aplicación; layout base de la UI | 36 | |
+| 2 | 06/10 – 12/10 | Las cinco historias con spec mergeada, implementadas con TDD y BDD | 16 de 16 | cerrado, ver `docs/retros/sprint-2.md` |
+| 3 | 13/10 – 19/10 | El ciclo proyecto → backlog → sprint funciona en dominio y aplicación; layout base de la UI | 21 comprometidos, techo 36 | en curso, ver "Compromiso del Sprint 3" |
 | 4 | 20/10 – 26/10 | Planning Poker, defectos, métricas completas y pantallas de alta, edición y listado | 44 | |
 | 5 | 27/10 – 02/11 | Cierre: dashboard, reporte PDF, documentación y ensayo de la presentación | 43 | |
 | — | 02/11 | **Presentación final** | — | |
@@ -92,6 +92,63 @@ antes del **jueves 08/10**: US-003 (Conforti), US-008 (Vergara), US-013 y US-019
 | US-013 | Estimar en Fibonacci | 2 | Tomás |
 | US-019 | Registrar esfuerzo | 5 | Tomás |
 | T-005 | Validaciones y errores uniformes | 5 | Tomás |
+
+### Compromiso del Sprint 3 (Planning del 13/10)
+
+El techo es de 36 SP, pero la velocidad medida es de 16 (Sprint 2). El
+compromiso se fija en **21 SP**: lo que tiene su spec mergeada, y la cadena que
+sostiene el Sprint Goal. Lo demás es objetivo estirado y se toma solo si hay
+capacidad.
+
+| Persona | Compromiso | SP | Objetivo estirado | SP |
+|---|---|---|---|---|
+| Conforti | US-003, US-009 | 6 | T-004 | 5 |
+| Vergara | US-008, US-006, US-010 | 8 | US-011 | 5 |
+| Tomás | US-013 (ya implementada), US-019 | 7 | T-005 | 5 |
+
+**Orden de la cadena.** US-008 (Vergara) → US-009 (Conforti) → US-010 (Vergara) →
+US-011 (Vergara). Cada una necesita a la anterior mergeada en `main`, así que la
+primera tiene que entrar a mitad de semana. US-003, US-006, US-013 y US-019 no
+dependen de la cadena.
+
+**Antes de empezar cada historia.**
+
+- Su spec está mergeada en `main` (Definition of Ready). Las de US-006, US-010 y
+  US-011 y la corrección de US-009 estaban en revisión el 12/10.
+- US-010 espera además a #100 (la estimación no puede cambiar un ítem
+  completado), que hace Tomás.
+
+**Migraciones.** Se numeran por adelantado para que dos ramas no usen el mismo
+número (`Migrar` acepta migraciones fuera de orden, T-012):
+
+| Número | Historia | Qué crea |
+|---|---|---|
+| 00004 | US-008 | Tabla `sprints` |
+| 00005 | US-003 | `DEFAULT gen_random_uuid()` en `integrantes.id` |
+| 00006 | US-019 | Tabla `registros_esfuerzo` |
+| 00007 | US-009 | Tabla de la relación Sprint-ítem (histórica) |
+| 00008 | US-010 | Columna `completado_en` en `items_backlog` |
+
+US-006, US-011 y US-013 no llevan migración.
+
+**Fechas del sprint.**
+
+| Día | Qué pasa |
+|---|---|
+| Martes 13/10 | Planning. Specs de la segunda tanda mergeadas |
+| Miércoles 14/10 | US-008 mergeada (de ella depende US-009) |
+| Jueves 15/10 | Refinement. Cada historia tiene su PR en borrador con el RED a la vista |
+| Viernes 16/10 | Revisión cruzada de todo lo abierto |
+| Fin de semana | Colchón: todo mergeado o replanificado |
+| Lunes 19/10 | Review con demo y Retro. El acta se commitea el mismo lunes |
+
+**Reglas que se refuerzan** (acciones de la retro del Sprint 2):
+
+1. Todo se mergea con *Rebase and merge*; no se usa *Squash*.
+2. Todo PR se revisa en menos de 24 horas.
+3. Antes de abrir un PR: `make check` con la base levantada, y el cuerpo del PR
+   sin texto de terminal pegado.
+4. "Revisado y entendido por" completo en la sección de IA, en el PR y en la spec.
 
 **Sprint 4 — 20/10 a 26/10 — 44 SP.** Carga: Tomás 15, Vergara 13, Conforti 16.
 
