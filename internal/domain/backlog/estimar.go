@@ -5,10 +5,11 @@ import (
 	"slices"
 )
 
-// ErrItemCompletado: un item completado no se puede estimar ni re-estimar,
-// porque cambiaria hacia atras los Story Points completados de un sprint ya
-// medido (RN-013-4).
-var ErrItemCompletado = errors.New("un item completado no se puede estimar")
+// ErrItemCompletado: el item esta completado, asi que no se puede estimar ni
+// re-estimar, porque cambiaria hacia atras los Story Points completados de un
+// sprint ya medido (RN-013-4). El mensaje es general a proposito: lo reusan las
+// otras operaciones sobre un item (editar en US-006, asignar en US-009).
+var ErrItemCompletado = errors.New("el item esta completado")
 
 // Estimar devuelve una copia del item con los Story Points puestos. Un item
 // pendiente o en progreso se puede estimar y volver a estimar: la ultima
