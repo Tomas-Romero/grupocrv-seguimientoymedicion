@@ -1,0 +1,243 @@
+# US-010 — Marcar historias como completadas dentro de un Sprint
+
+| | |
+|---|---|
+| **Estado** | borrador |
+| **Autor** | Juan Ignacio Vergara |
+| **Issue** | #18 |
+| **Escenarios BDD** | `features/US-010-marcar-historias-completadas.feature` |
+| **Código** | `internal/domain/sprint/` (validación), `internal/domain/backlog/` (`ItemBacklog.Completar` y `Reabrir`), casos de uso en `internal/app/`, repositorio en `internal/adapters/postgres/`, migración nueva en `migraciones/` |
+| **Última actualización** | 2026-10-12 |
+
+> Esta especificación se escribe y se mergea **antes** de abrir la rama de
+> implementación. Si durante la implementación descubrís que algo de acá está
+> mal, corregís la spec en el mismo PR — no la dejás desactualizada.
+
+## 1. Objetivo
+
+> Como integrante del equipo, quiero marcar como completadas las historias de un
+> Sprint, para registrar el avance del trabajo mientras el Sprint está en curso.
+
+Marcar (y, si fue un error de carga, desmarcar) una historia asignada al Sprint
+abierto. Es el dato que usan los Story Points completados (US-025), la
+velocidad (US-026) y el burndown (US-031), y el que decide qué historias
+vuelven al backlog al cerrar el Sprint (US-011).
+
+## 2. Entradas
+
+| Nombre | Tipo | Obligatorio | Rango / formato válido |
+|---|---|---|---|
+| `itemID` | UUID | Sí | Un ítem existente. Viene de la URL; lo verifica el caso de uso |
+| `sprintID` | UUID | Sí | Un Sprint existente. Viene de la URL (el tablero del Sprint); lo verifica el caso de uso |
+| `completadoEn` | `time.Time` | Solo al marcar | La pone el caso de uso con el reloj inyectado, como `creadoEn` en US-005; el dominio la recibe |
+
+Son dos operaciones, **marcar** y **desmarcar**, con el mismo recorrido:
+
+1. **Aplicación:** carga el ítem y después el Sprint, con lecturas simples. Si
+   alguno no existe, devuelve `ErrItemInexistente` o `ErrSprintInexistente` sin
+   validar nada más, con el orden y la prioridad de RN-009-1 y RN-009-2.
+2. **Dominio de `sprint`:** valida, con datos mínimos del ítem y del Sprint
+   (tipos propios del paquete, como en US-009), que el ítem esté en ese Sprint
+   y que el Sprint esté abierto.
+3. **Dominio de `backlog`:** `ItemBacklog.Completar(en)` o `Reabrir()` devuelve
+   una copia con el estado nuevo, igual que `Estimar` en US-013.
+4. **Persistencia:** guarda el cambio en una transacción con el Sprint bloqueado
+   (RN-010-9).
+
+## 3. Salidas esperadas
+
+| Atributo | Después de marcar | Después de desmarcar |
+|---|---|---|
+| Estado | `completado` | `pendiente` |
+| Fecha de completado | `completadoEn` (o la original, si ya estaba completado) | Sin fecha |
+| Resto del ítem y su asignación al Sprint | Sin cambios | Sin cambios |
+
+`ItemBacklog` suma el campo `CompletadoEn time.Time`: su valor cero significa
+"sin fecha", y solo un ítem `completado` la tiene. Si hay errores, no se
+devuelve ítem y no se modifica nada.
+
+## 4. Reglas de negocio
+
+Entre paréntesis, la capa que la hace cumplir.
+
+- **RN-010-1** (aplicación) — El ítem y el Sprint tienen que existir. Se
+  verifican en el orden de RN-009-1 y RN-009-2, con la misma prioridad y sin
+  unirse con los errores de validación. Un ID mal formado es un inexistente.
+- **RN-010-2** (dominio) — Solo se marca o desmarca un ítem asignado a ese
+  Sprint (la relación de US-009). Si no, `ErrItemFueraDelSprint`.
+- **RN-010-3** (dominio) — Solo con el Sprint `abierto`. Con el Sprint
+  `cerrado` no se marca ni se desmarca: `ErrSprintCerrado` (el de US-009).
+- **RN-010-4** (dominio) — Los errores de RN-010-2 y RN-010-3 se devuelven
+  juntos con `errors.Join`, en este orden: Sprint cerrado, ítem fuera del
+  Sprint (mismo criterio que RN-009-8).
+- **RN-010-5** (dominio) — Marcar deja el ítem `completado` con
+  `completadoEn`. Vale desde `pendiente` o `en_progreso`.
+- **RN-010-6** (dominio) — Marcar un ítem que ya está `completado` no es un
+  error y no cambia nada: conserva la fecha original.
+- **RN-010-7** (dominio) — Desmarcar deja el ítem `pendiente` y sin fecha,
+  aunque antes de completarse estuviera `en_progreso`. Desmarcar un ítem que no
+  está completado no es un error y no cambia nada.
+- **RN-010-8** (dominio) — El dominio no lee el reloj: la fecha entra como
+  parámetro.
+- **RN-010-9** (persistencia) — El repositorio guarda el cambio en una
+  transacción `READ COMMITTED`, con estos pasos en orden, y se detiene en el
+  primer error:
+  1. Bloquea la fila del Sprint y lee su estado:
+     `SELECT ... FROM sprints WHERE id = $1 FOR NO KEY UPDATE`. Si no hay fila,
+     `ErrSprintInexistente`.
+  2. Lee el estado del ítem y a qué Sprint está asignado. Si no hay fila,
+     `ErrItemInexistente`.
+  3. Vuelve a verificar RN-010-2 y RN-010-3 con la misma función del dominio y
+     los datos leídos con el candado tomado.
+  4. Actualiza el estado y la fecha del ítem.
+
+  El orden de bloqueo (primero el Sprint, después el ítem) es el de RN-009-11.
+  Un cierre (US-011) o una asignación (US-009) del mismo Sprint esperan, o hacen
+  esperar, a este candado; un marcado que llega después del cierre ve el Sprint
+  `cerrado` y se rechaza (CL-010-9).
+- **RN-010-10** (aplicación) — La operación es de todo o nada: si algo falla,
+  el ítem queda como estaba.
+
+## 5. Restricciones
+
+- **Dominio puro:** igual que US-005 y US-008 (sección 5).
+- **Migración nueva.** Agrega a `items_backlog` la columna `completado_en`
+  (`TIMESTAMPTZ`, nula) y la red de seguridad
+  `CHECK ((estado = 'completado') = (completado_en IS NOT NULL))`. Se numera
+  después de la migración de la relación de US-009 y el número se avisa en el
+  grupo antes de crearla, como pide US-009.
+- **Dependencia con US-009.** Necesita la relación ítem-Sprint: sin US-009 no
+  hay ítems asignados que marcar.
+- **Dependencia con US-013 (#100).** US-013 guarda la estimación con un
+  `UPDATE` sin condición (RN-013-7). Si un ítem se completa entre la lectura y
+  ese `UPDATE`, se re-estima un ítem completado y se rompe RN-013-4. US-013
+  tiene que condicionar su `UPDATE` a `estado <> 'completado'`, igual que
+  RN-006-8. Salió de la revisión del #93 y está abierto como #100: tiene que
+  estar en `main` antes que la implementación de esta historia, o en el mismo
+  PR.
+- **Dependencia con US-011.** El escenario de CA-010-5 necesita un Sprint
+  cerrado, y el cierre es US-011. Hasta entonces, CA-010-5 se cubre con tests
+  unitarios (el dominio con el Sprint cerrado como dato) y de integración (el
+  repositorio con un Sprint cerrado armado en la base). Mismo criterio que
+  US-008 y US-009.
+- **Frases BDD.** `Dado la historia "X" completada` y
+  `Cuando se marca la historia "X" como completada` ya están en el diccionario.
+  Operan sobre el último Sprint del proyecto actual, que es el único que puede
+  estar abierto (RN-008-17); así CA-010-4 se prueba con una historia que no está
+  en él. El estado se verifica con `la historia "X" tiene estado "completado"`
+  (US-005). Se agrega:
+
+  | Frase | Expresión |
+  |---|---|
+  | `Cuando se desmarca la historia "X"` | `^se desmarca la historia "([^"]*)"$` |
+
+  La interfaz `Sprints` de `features/steps/mundo.go` suma
+  `DesmarcarHistoria(titulo string) error`. La fecha de completado no se
+  verifica en los escenarios (el reloj de los escenarios es fijo): CA-010-1 y
+  CA-010-3 la cubren con tests unitarios.
+- **Fuera de alcance.** Pasar un ítem a `en_progreso` (ninguna historia lo pide
+  todavía), el tablero del Sprint (T-011), el burndown (US-031) y cerrar el
+  Sprint (US-011).
+
+## 6. Casos límite
+
+- **CL-010-1** — Ítem `pendiente` o `en_progreso` asignado al Sprint abierto:
+  se marca, con la fecha recibida.
+- **CL-010-2** — Ítem ya completado, marcado otra vez con otra fecha: no cambia
+  nada y conserva la fecha original (RN-010-6).
+- **CL-010-3** — Ítem completado, desmarcado: queda `pendiente` y sin fecha. Si
+  antes de completarse estaba `en_progreso`, igual queda `pendiente`.
+- **CL-010-4** — Ítem `pendiente`, desmarcado: no cambia nada (RN-010-7).
+- **CL-010-5** — Ítem del backlog sin asignar, o asignado a otro Sprint:
+  `ErrItemFueraDelSprint`.
+- **CL-010-6** — Sprint cerrado e ítem completado en él, desmarcado: se rechaza
+  con `ErrSprintCerrado`. Lo medido no se toca.
+- **CL-010-7** — Sprint cerrado e ítem que no está en él: se devuelven
+  `ErrSprintCerrado` y `ErrItemFueraDelSprint` unidos, en el orden de RN-010-4.
+- **CL-010-8** — Ítem o Sprint inexistente, o con ID mal formado, aunque además
+  haya otros problemas: solo el error de inexistencia (RN-010-1).
+- **CL-010-9** — El Sprint se cierra entre la lectura del caso de uso y la
+  transacción: el repositorio lo ve `cerrado` con el candado tomado y rechaza
+  con `ErrSprintCerrado`. Se verifica llamando al repositorio con un Sprint ya
+  cerrado en la base.
+- **CL-010-10** — Dos marcados simultáneos del mismo ítem: el segundo espera el
+  candado del Sprint, ve el ítem completado y no cambia nada. Queda la fecha
+  del primero y ninguno da error.
+
+## 7. Condiciones de error
+
+| Situación | Error devuelto | Mensaje del error (origen) |
+|---|---|---|
+| El ítem no existe | `app.ErrItemInexistente` (el de US-013 y US-019), envuelto indicando el ID | "el item no existe" |
+| El Sprint no existe | `app.ErrSprintInexistente` (el de US-009), envuelto indicando el ID | "el sprint no existe" |
+| El Sprint está cerrado | `sprint.ErrSprintCerrado` (el de US-009), envuelto indicando el nombre del Sprint | El de US-009; ver "Decisiones" |
+| El ítem no está asignado a ese Sprint | `sprint.ErrItemFueraDelSprint` | "la historia no esta asignada a este sprint" |
+
+Los dos primeros tienen prioridad y no se unen con los demás (RN-010-1). Los dos
+últimos son del dominio y se unen entre sí en el orden de RN-010-4; el
+repositorio puede devolverlos también, con la misma función, si el Sprint se
+cerró en el medio. Todos se comparan con `errors.Is`, y en ningún caso se
+modifica el ítem.
+
+## 8. Criterios de aceptación
+
+- **CA-010-1** (normal) — Una historia asignada al Sprint abierto se marca como
+  completada: queda completada y con la fecha de completado.
+- **CA-010-2** (alternativo) — Una historia completada se desmarca con el Sprint
+  abierto: vuelve a pendiente y pierde la fecha.
+- **CA-010-3** (límite) — Marcar una historia que ya está completada no cambia
+  nada: conserva su fecha original.
+- **CA-010-4** (error) — Una historia que no está asignada a ese Sprint no se
+  marca.
+- **CA-010-5** (error) — Con el Sprint cerrado no se marca ni se desmarca.
+- **CA-010-6** (error) — Una historia o un Sprint inexistentes se rechazan y no
+  se modifica nada.
+
+---
+
+## Decisiones tomadas y descartadas
+
+- **Solo historias del Sprint, y con el Sprint abierto.** Marcar es registrar el
+  avance del Sprint en curso; lo de un Sprint cerrado ya está medido (US-025 y
+  US-026). Se descartó marcar desde el backlog, fuera de un Sprint.
+- **Se guarda la fecha de completado.** El burndown (US-031) la necesita para
+  el avance diario. Entra como parámetro porque el dominio no lee el reloj. Se
+  descartó no guardarla y usar la fecha de cierre: el burndown quedaría plano
+  hasta el último día. Es un instante (`TIMESTAMPTZ`), como `creado_en`, y el
+  burndown la agrupa por día.
+- **Marcar dos veces no es un error.** Un doble clic o un reintento no tienen
+  que fallar ni mover la fecha (y con ella el burndown). Se descartó rechazarlo.
+  Por simetría, desmarcar un ítem que no está completado tampoco es un error.
+- **Se puede desmarcar mientras el Sprint esté abierto.** Los errores de carga
+  pasan, y con el Sprint abierto todavía no hay nada medido. Con el Sprint
+  cerrado, no: cambiaría hacia atrás la velocidad. Desmarcar vuelve a
+  `pendiente` porque no se guarda el estado anterior. Se descartó no permitir
+  desmarcar.
+- **Candado `FOR NO KEY UPDATE` sobre el Sprint.** Así el marcado no compite
+  con el cierre de US-011, que modifica esa fila: uno espera al otro y el
+  segundo ve el resultado del primero. También serializa con las asignaciones
+  (`FOR SHARE` en US-009) y no bloquea las claves foráneas (mismo criterio que
+  US-005 y US-008). Se descartó bloquear solo el ítem: no protege contra un
+  cierre simultáneo.
+- **La validación es del dominio de `sprint` y el cambio de estado, del de
+  `backlog`.** La regla (ítem en el Sprint, Sprint abierto) es del Sprint y usa
+  datos mínimos, como US-009. El estado y la fecha son del ítem, como `Estimar`
+  en US-013.
+- **Se reutiliza `ErrSprintCerrado` de US-009.** La condición es la misma: el
+  Sprint está cerrado. Su mensaje de origen en US-009 ("el sprint esta cerrado:
+  no se le pueden asignar historias") nombra la asignación. Hace falta uno
+  general para las dos historias; queda para acordar con US-009, que todavía no
+  está implementada.
+- **US-013 tiene que condicionar su estimación.** Ver la dependencia con
+  US-013 en la sección 5 (#100).
+- **Las frases existentes operan sobre el Sprint abierto.** Evita una frase que
+  nombre el Sprint en cada marcado, y alcanza porque un proyecto tiene como
+  máximo un Sprint abierto (RN-008-17).
+
+## Uso de IA en esta especificación
+
+- [ ] No use IA
+- [x] Use IA para: redacción de la especificación con Claude Code a partir de
+  la historia y de las decisiones del equipo, usando las specs de US-005,
+  US-008, US-009 y US-013 como modelo
+- Revisado y entendido por:
