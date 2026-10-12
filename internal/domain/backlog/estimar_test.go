@@ -156,3 +156,14 @@ func TestEstimar_ItemCompletadoConValorInvalido(t *testing.T) {
 		t.Errorf("el error %q tambien reporta el valor fuera de escala: debe ser solo ErrItemCompletado", err)
 	}
 }
+
+// US-013 / spec seccion 7: el mensaje de ErrItemCompletado es general, no habla
+// de estimar, porque lo reusan las otras operaciones sobre un item (editar en
+// US-006, asignar a un sprint en US-009).
+func TestErrItemCompletado_MensajeGeneral(t *testing.T) {
+	const esperado = "el item esta completado"
+
+	if backlog.ErrItemCompletado.Error() != esperado {
+		t.Errorf("mensaje = %q, se esperaba %q", backlog.ErrItemCompletado.Error(), esperado)
+	}
+}
