@@ -38,7 +38,7 @@ Son dos operaciones, **marcar** y **desmarcar**, con el mismo recorrido:
    validar nada más, con el orden y la prioridad de RN-009-1 y RN-009-2.
 2. **Dominio de `sprint`:** valida, con datos mínimos del ítem y del Sprint
    (tipos propios del paquete, como en US-009), que el ítem esté en ese Sprint
-   y que el Sprint esté abierto.
+   (que tenga una fila `pendiente` en él) y que el Sprint esté abierto.
 3. **Dominio de `backlog`:** `ItemBacklog.Completar(en)` o `Reabrir()` devuelve
    una copia con el estado nuevo, igual que `Estimar` en US-013.
 4. **Persistencia:** guarda el cambio en una transacción con el Sprint bloqueado
@@ -50,7 +50,7 @@ Son dos operaciones, **marcar** y **desmarcar**, con el mismo recorrido:
 |---|---|---|
 | Estado | `completado` | `pendiente` |
 | Fecha de completado | `completadoEn` (o la original, si ya estaba completado) | Sin fecha |
-| Resto del ítem y su asignación al Sprint | Sin cambios | Sin cambios |
+| Resto del ítem y su fila en el Sprint | Sin cambios: la fila sigue `pendiente` (el resultado lo pone US-011) | Sin cambios |
 
 `ItemBacklog` suma el campo `CompletadoEn time.Time`: su valor cero significa
 "sin fecha", y solo un ítem `completado` la tiene. Si hay errores, no se
@@ -63,8 +63,10 @@ Entre paréntesis, la capa que la hace cumplir.
 - **RN-010-1** (aplicación) — El ítem y el Sprint tienen que existir. Se
   verifican en el orden de RN-009-1 y RN-009-2, con la misma prioridad y sin
   unirse con los errores de validación. Un ID mal formado es un inexistente.
-- **RN-010-2** (dominio) — Solo se marca o desmarca un ítem asignado a ese
-  Sprint (la relación de US-009). Si no, `ErrItemFueraDelSprint`.
+- **RN-010-2** (dominio) — Solo se marca o desmarca un ítem que está en ese
+  Sprint. Con la relación histórica de US-009 (RN-009-13), "estar en el Sprint"
+  es tener una fila `pendiente` en él; haber estado en otro Sprint no cuenta.
+  Si no, `ErrItemFueraDelSprint`.
 - **RN-010-3** (dominio) — Solo con el Sprint `abierto`. Con el Sprint
   `cerrado` no se marca ni se desmarca: `ErrSprintCerrado` (el de US-009).
 - **RN-010-4** (dominio) — Los errores de RN-010-2 y RN-010-3 se devuelven
@@ -85,8 +87,8 @@ Entre paréntesis, la capa que la hace cumplir.
   1. Bloquea la fila del Sprint y lee su estado:
      `SELECT ... FROM sprints WHERE id = $1 FOR NO KEY UPDATE`. Si no hay fila,
      `ErrSprintInexistente`.
-  2. Lee el estado del ítem y a qué Sprint está asignado. Si no hay fila,
-     `ErrItemInexistente`.
+  2. Lee el estado del ítem y si tiene una fila `pendiente` en ese Sprint. Si
+     el ítem no existe, `ErrItemInexistente`.
   3. Vuelve a verificar RN-010-2 y RN-010-3 con la misma función del dominio y
      los datos leídos con el candado tomado.
   4. Actualiza el estado y la fecha del ítem.
@@ -106,8 +108,10 @@ Entre paréntesis, la capa que la hace cumplir.
   `CHECK ((estado = 'completado') = (completado_en IS NOT NULL))`. Se numera
   después de la migración de la relación de US-009 y el número se avisa en el
   grupo antes de crearla, como pide US-009.
-- **Dependencia con US-009.** Necesita la relación ítem-Sprint: sin US-009 no
-  hay ítems asignados que marcar.
+- **Dependencia con US-009.** Necesita la relación histórica ítem-Sprint
+  (RN-009-13, corregida en el #104): sin US-009 no hay ítems en un Sprint que
+  marcar. Marcar y desmarcar cambian el estado del ítem, no el resultado de su
+  fila, que completa US-011 al cerrar.
 - **Dependencia con US-013 (#100).** US-013 guarda la estimación con un
   `UPDATE` sin condición (RN-013-7). Si un ítem se completa entre la lectura y
   ese `UPDATE`, se re-estima un ítem completado y se rompe RN-013-4. US-013
@@ -148,10 +152,14 @@ Entre paréntesis, la capa que la hace cumplir.
 - **CL-010-3** — Ítem completado, desmarcado: queda `pendiente` y sin fecha. Si
   antes de completarse estaba `en_progreso`, igual queda `pendiente`.
 - **CL-010-4** — Ítem `pendiente`, desmarcado: no cambia nada (RN-010-7).
-- **CL-010-5** — Ítem del backlog sin asignar, o asignado a otro Sprint:
-  `ErrItemFueraDelSprint`.
-- **CL-010-6** — Sprint cerrado e ítem completado en él, desmarcado: se rechaza
-  con `ErrSprintCerrado`. Lo medido no se toca.
+- **CL-010-5** — Ítem sin fila `pendiente` en ese Sprint: está en el backlog
+  (aunque haya estado en Sprints cerrados) o en el Sprint de otro proyecto.
+  Se rechaza con `ErrItemFueraDelSprint`.
+- **CL-010-6** — Sprint cerrado e ítem que quedó completado en él, desmarcado:
+  se rechaza. Como al cerrar ninguna fila queda `pendiente` (US-011), el ítem
+  tampoco está en el Sprint, y se devuelven `ErrSprintCerrado` y
+  `ErrItemFueraDelSprint` unidos, en el orden de RN-010-4. Lo medido no se
+  toca.
 - **CL-010-7** — Sprint cerrado e ítem que no está en él: se devuelven
   `ErrSprintCerrado` y `ErrItemFueraDelSprint` unidos, en el orden de RN-010-4.
 - **CL-010-8** — Ítem o Sprint inexistente, o con ID mal formado, aunque además
@@ -171,7 +179,7 @@ Entre paréntesis, la capa que la hace cumplir.
 | El ítem no existe | `app.ErrItemInexistente` (el de US-013 y US-019), envuelto indicando el ID | "el item no existe" |
 | El Sprint no existe | `app.ErrSprintInexistente` (el de US-009), envuelto indicando el ID | "el sprint no existe" |
 | El Sprint está cerrado | `sprint.ErrSprintCerrado` (el de US-009), envuelto indicando el nombre del Sprint | "el sprint esta cerrado": el mensaje general (hecho en la corrección de US-009, #104) |
-| El ítem no está asignado a ese Sprint | `sprint.ErrItemFueraDelSprint` | "la historia no esta asignada a este sprint" |
+| El ítem no está en ese Sprint (no tiene una fila `pendiente` en él) | `sprint.ErrItemFueraDelSprint` | "la historia no esta asignada a este sprint" |
 
 Los dos primeros tienen prioridad y no se unen con los demás (RN-010-1). Los dos
 últimos son del dominio y se unen entre sí en el orden de RN-010-4; el
