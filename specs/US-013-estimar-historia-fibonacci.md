@@ -142,7 +142,7 @@ Entre paréntesis, la capa que la hace cumplir.
 | Situación | Error devuelto | Mensaje del error (origen) |
 |---|---|---|
 | El valor no está en {1, 2, 3, 5, 8, 13} | `backlog.ErrEstimacionFueraDeEscala`, envuelto indicando el valor recibido | "la estimacion tiene que ser 1, 2, 3, 5, 8 o 13" |
-| El ítem está completado | `backlog.ErrItemCompletado` | "un item completado no se puede estimar" |
+| El ítem está completado | `backlog.ErrItemCompletado` | "el item esta completado" |
 | El ítem no existe | `app.ErrItemInexistente`, envuelto indicando el ID recibido | "el item no existe" |
 
 Los dos primeros son del dominio, sin unirse entre sí (RN-013-5: solo se
