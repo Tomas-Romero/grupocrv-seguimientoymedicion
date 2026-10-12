@@ -2,21 +2,26 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/app"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/proyecto"
 )
 
-// RepositorioProyectos guarda los proyectos (US-001).
+// RepositorioProyectos guarda los proyectos (US-001 y US-002).
 type RepositorioProyectos struct {
 	pool *pgxpool.Pool
 }
 
-// RepositorioProyectos cumple el puerto del caso de uso de US-001.
-var _ app.RepositorioProyectos = (*RepositorioProyectos)(nil)
+// RepositorioProyectos cumple los puertos de los casos de uso de US-001 y US-002.
+var (
+	_ app.RepositorioProyectos         = (*RepositorioProyectos)(nil)
+	_ app.RepositorioModificarProyecto = (*RepositorioProyectos)(nil)
+)
 
 // NuevoRepositorioProyectos arma el repositorio sobre el pool de conexiones.
 func NuevoRepositorioProyectos(pool *pgxpool.Pool) *RepositorioProyectos {
@@ -39,4 +44,44 @@ RETURNING id::text`
 
 	p.ID = id
 	return p, nil
+}
+
+// BuscarProyecto devuelve el proyecto con ese ID (US-002). Compara el ID como
+// texto: un ID vacio o mal formado no es un error de sintaxis de uuid sino un
+// proyecto inexistente, igual que en el resto de los repositorios.
+func (r *RepositorioProyectos) BuscarProyecto(ctx context.Context, proyectoID string) (proyecto.Proyecto, error) {
+	const buscar = `
+SELECT id::text, nombre, descripcion, fecha_inicio, fecha_fin
+FROM proyectos
+WHERE id::text = $1`
+	var p proyecto.Proyecto
+	err := r.pool.QueryRow(ctx, buscar, proyectoID).
+		Scan(&p.ID, &p.Nombre, &p.Descripcion, &p.FechaInicio, &p.FechaFin)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return proyecto.Proyecto{}, fmt.Errorf("%w (id %s)", app.ErrProyectoInexistente, proyectoID)
+	}
+	if err != nil {
+		return proyecto.Proyecto{}, fmt.Errorf("buscar el proyecto: %w", err)
+	}
+	return p, nil
+}
+
+// ActualizarProyecto reemplaza el nombre, la descripcion y las fechas del
+// proyecto con el ID de p (US-002). No toca el ID, creado_en ni los datos
+// asociados (RN-002-4 y RN-002-7). actualizado_en lo mueve esta funcion porque
+// la tabla no tiene trigger: su DEFAULT solo corre en el INSERT. Si ninguna fila
+// coincide con el ID, devuelve app.ErrProyectoInexistente.
+func (r *RepositorioProyectos) ActualizarProyecto(ctx context.Context, p proyecto.Proyecto) error {
+	const actualizar = `
+UPDATE proyectos
+SET nombre = $2, descripcion = $3, fecha_inicio = $4, fecha_fin = $5, actualizado_en = now()
+WHERE id::text = $1`
+	etiqueta, err := r.pool.Exec(ctx, actualizar, p.ID, p.Nombre, p.Descripcion, p.FechaInicio, p.FechaFin)
+	if err != nil {
+		return fmt.Errorf("actualizar el proyecto: %w", err)
+	}
+	if etiqueta.RowsAffected() == 0 {
+		return fmt.Errorf("%w (id %s)", app.ErrProyectoInexistente, p.ID)
+	}
+	return nil
 }

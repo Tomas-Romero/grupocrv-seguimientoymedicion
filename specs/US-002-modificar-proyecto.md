@@ -6,7 +6,7 @@
 | **Autor** | Angelo Conforti |
 | **Issue** | #5 |
 | **Escenarios BDD** | `features/US-002-modificar-proyecto.feature` |
-| **Código** | `internal/domain/proyecto/` |
+| **Código** | `internal/domain/proyecto/`, caso de uso en `internal/app/` |
 | **Última actualización** | 2026-10-05 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
@@ -154,13 +154,11 @@ proyecto afectado.
 - **La marca `actualizado_en` la pone la persistencia.** Así el dominio sigue
   sin depender del reloj (no usa `time.Now()`). Se descartó pasarla como
   parámetro porque nada de la lógica de negocio la necesita.
-- **Frase de fechas pendiente de acordar con el equipo.** El diccionario de
-  steps solo tiene `se modifica el nombre del proyecto "X" a "Y"`, que cubre
-  CA-002-1, CA-002-4 y CA-002-5. Para CA-002-2 y CA-002-3 hace falta una frase de
-  fechas; se propone `se modifican las fechas del proyecto "X" del "..." al
-  "..."`. Hasta que se apruebe e incorpore al diccionario, esos dos criterios se
-  verifican con tests unitarios y no tienen escenario BDD. No se inventa la
-  frase en el `.feature`.
+- **Frase de fechas aprobada por el equipo.** El diccionario de steps solo tenía
+  `se modifica el nombre del proyecto "X" a "Y"`, que cubre CA-002-1, CA-002-4 y
+  CA-002-5. Para CA-002-2 y CA-002-3 se incorporó la frase
+  `se modifican las fechas del proyecto "X" del "..." al "..."`, así que esos dos
+  criterios también tienen escenario BDD.
 
 ## Uso de IA en esta especificación
 

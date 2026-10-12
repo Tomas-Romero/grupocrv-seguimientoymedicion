@@ -149,6 +149,7 @@ inexistente (CA-005-8, CA-008-10); con esa frase el escenario no lleva
 |---|---|
 | `Cuando se crea un proyecto "Demo" con fechas del "2026-09-14" al "2026-11-18"` | `^se crea un proyecto "([^"]*)" con fechas del "([^"]*)" al "([^"]*)"$` |
 | `Cuando se modifica el nombre del proyecto "Demo" a "Demo v2"` | `^se modifica el nombre del proyecto "([^"]*)" a "([^"]*)"$` |
+| `Cuando se modifican las fechas del proyecto "Demo" del "2026-10-01" al "2026-12-15"` | `^se modifican las fechas del proyecto "([^"]*)" del "([^"]*)" al "([^"]*)"$` |
 | `Cuando se registra al integrante "Vergara" con rol "product_builder"` | `^se registra al integrante "([^"]*)" con rol "([^"]*)"$` |
 | `Cuando se crea la historia "Crear proyecto" con prioridad "must"` | `^se crea la historia "([^"]*)" con prioridad "([^"]*)"$` |
 | `Cuando se crea la historia "Crear proyecto" con prioridad "must", la descripción "Alta" y los criterios:` + tabla de una columna | `^se crea la historia "([^"]*)" con prioridad "([^"]*)", la descripción "([^"]*)" y los criterios:$` |
@@ -162,6 +163,7 @@ inexistente (CA-005-8, CA-008-10); con esa frase el escenario no lleva
 | `Cuando se consultan los story points planificados del sprint "Sprint 1"` | `^se consultan los story points planificados del sprint "([^"]*)"$` |
 | `Cuando se consultan los story points completados del sprint "Sprint 1"` | `^se consultan los story points completados del sprint "([^"]*)"$` |
 | `Cuando se consulta la velocidad del equipo` | `^se consulta la velocidad del equipo$` |
+
 
 **Un solo `Cuando` por escenario.** Si necesitás dos acciones, la primera es
 contexto y va en un `Dado`. Un escenario con dos `Cuando` casi siempre está
