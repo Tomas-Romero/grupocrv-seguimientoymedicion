@@ -437,4 +437,4 @@ se registra nada.
 - [x] Use IA para: la corrección de la relación histórica (RN-009-6, RN-009-13,
   sección 5, CL-009-8, CL-009-12, errores y decisiones) y la excepción de
   RN-009-5, redactadas con Claude Code a partir de las decisiones del equipo —
-  revisado y entendido por:
+  revisado y entendido por: Juan Ignacio Vergara.
