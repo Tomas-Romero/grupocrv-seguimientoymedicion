@@ -50,23 +50,44 @@ FROM items_backlog WHERE id = $1`
 }
 
 // GuardarEstimacion escribe solo la columna story_points con un unico UPDATE
-// (RN-013-7). Sin estimar se guarda como nulo, no como 0. Si el item no existe,
-// o el ID no es un UUID, devuelve app.ErrItemInexistente.
+// (RN-013-7). Sin estimar se guarda como nulo, no como 0.
+//
+// El UPDATE esta condicionado a que el item no este completado (RN-013-4): si
+// se completo entre la lectura del caso de uso y este guardado, no actualiza
+// ninguna fila. Entonces se relee el item para distinguir los dos motivos: si no
+// existe, o el ID no es un UUID, devuelve app.ErrItemInexistente; si esta
+// completado, backlog.ErrItemCompletado.
 func (r *RepositorioBacklog) GuardarEstimacion(ctx context.Context, itemID string, puntos backlog.StoryPoints) error {
 	var valor any // nil se guarda como NULL
 	if p, estimado := puntos.Valor(); estimado {
 		valor = p
 	}
 
-	resultado, err := r.pool.Exec(ctx, `UPDATE items_backlog SET story_points = $2 WHERE id = $1`, itemID, valor)
+	const actualizar = `UPDATE items_backlog SET story_points = $2 WHERE id = $1 AND estado <> 'completado'`
+	resultado, err := r.pool.Exec(ctx, actualizar, itemID, valor)
 	if esIDMalFormado(err) {
 		return fmt.Errorf("%w (id %s)", app.ErrItemInexistente, itemID)
 	}
 	if err != nil {
 		return fmt.Errorf("guardar la estimacion del item %s: %w", itemID, err)
 	}
-	if resultado.RowsAffected() == 0 {
+	if resultado.RowsAffected() > 0 {
+		return nil
+	}
+
+	// Ninguna fila actualizada: o el item no existe o esta completado.
+	var estado string
+	err = r.pool.QueryRow(ctx, `SELECT estado FROM items_backlog WHERE id = $1`, itemID).Scan(&estado)
+	if errors.Is(err, pgx.ErrNoRows) {
 		return fmt.Errorf("%w (id %s)", app.ErrItemInexistente, itemID)
 	}
-	return nil
+	if err != nil {
+		return fmt.Errorf("releer el item %s: %w", itemID, err)
+	}
+	if backlog.Estado(estado) == backlog.EstadoCompletado {
+		return fmt.Errorf("%w (id %s)", backlog.ErrItemCompletado, itemID)
+	}
+	// El item existe y no esta completado: no hay motivo para que el UPDATE no
+	// haya tocado la fila. Se informa en lugar de devolver un exito falso.
+	return fmt.Errorf("no se pudo guardar la estimacion del item %s", itemID)
 }
