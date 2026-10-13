@@ -198,3 +198,23 @@ func TestEstimarItem_ItemQueDesaparece(t *testing.T) {
 		t.Fatalf("error = %v, se esperaba ErrItemInexistente", err)
 	}
 }
+
+// US-013 / RN-013-4, #100: si el item se completo entre la lectura y el
+// guardado, el repositorio devuelve ErrItemCompletado y el caso de uso lo deja
+// pasar reconocible, sin devolver item.
+func TestEstimarItem_ItemQueSeCompletaEnElMedio(t *testing.T) {
+	repo := &repositorioEstimacionFalso{
+		item:       itemDelRepositorio(t, backlog.EstadoPendiente),
+		existe:     true,
+		errGuardar: backlog.ErrItemCompletado,
+	}
+
+	item, err := app.NuevoEstimarItem(repo).Ejecutar(context.Background(), "item-1", 5)
+
+	if !errors.Is(err, backlog.ErrItemCompletado) {
+		t.Fatalf("error = %v, se esperaba ErrItemCompletado", err)
+	}
+	if item.ID != "" {
+		t.Errorf("devolvio el item %+v, se esperaba el valor cero", item)
+	}
+}
