@@ -7,7 +7,7 @@
 | **Issue** | #9 |
 | **Escenarios BDD** | `features/US-008-crear-sprint.feature` |
 | **Código** | `internal/domain/sprint/`, caso de uso en `internal/app/`, repositorio en `internal/adapters/postgres/`, migración nueva en `migraciones/` |
-| **Última actualización** | 2026-10-06 |
+| **Última actualización** | 2026-10-13 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
 > implementación. Si durante la implementación descubrís que algo de acá está
@@ -173,9 +173,10 @@ Entre paréntesis, la capa que la hace cumplir.
 ## 5. Restricciones
 
 - **Dominio puro.** `internal/domain/sprint` no importa nada fuera de la
-  biblioteca estándar, no hace SQL ni HTTP, no genera IDs y no llama a
-  `time.Now()`. Sus errores se definen solo con la biblioteca estándar, y nunca
-  importa `internal/platform`.
+  biblioteca estándar (US-009 agrega una única excepción,
+  `backlog.ErrItemCompletado`: RN-009-5), no hace SQL ni HTTP, no genera IDs y
+  no llama a `time.Now()`. Sus errores se definen solo con la biblioteca
+  estándar, y nunca importa `internal/platform`.
 - **No se compara con la fecha de hoy.** Como el dominio no lee el reloj,
   ninguna regla mira la fecha actual: un sprint puede tener fechas pasadas o
   futuras.
