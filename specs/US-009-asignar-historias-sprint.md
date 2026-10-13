@@ -7,7 +7,7 @@
 | **Issue** | #10 |
 | **Escenarios BDD** | `features/US-009-asignar-historias-sprint.feature` |
 | **Código** | `internal/domain/sprint/`, caso de uso en `internal/app/`, repositorio en `internal/adapters/postgres/`, migración nueva en `migraciones/` |
-| **Última actualización** | 2026-10-08 |
+| **Última actualización** | 2026-10-13 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
 > implementación. Si durante la implementación descubrís que algo de acá está
@@ -25,7 +25,9 @@ Ready: solo entra a un Sprint un ítem estimado y con criterios de aceptación.
 Depende de **US-005** (el ítem) y de **US-008** (el Sprint, que se crea
 `abierto` y del que un proyecto tiene como máximo uno abierto, el último).
 Alimenta a US-010 (marcar completadas), US-011 (cerrar el Sprint, que devuelve
-al backlog las no completadas) y US-025 (Story Points planificados).
+al backlog las no completadas) y US-025 (Story Points planificados). La relación
+es histórica: registra cada vez que un ítem estuvo en un Sprint y con qué
+resultado, y no se borra al cerrar (RN-009-13).
 
 ## 2. Entradas
 
@@ -51,22 +53,23 @@ La operación pasa por tres capas, y cada una valida solo lo que puede saber:
 |---|---|---|---|
 | `itemID` | UUID | Sí | Un ítem existente del backlog. Lo busca la capa de aplicación y lo vuelve a verificar el repositorio; nunca el dominio |
 | `sprintID` | UUID | Sí | Un Sprint existente. Lo busca la capa de aplicación y lo vuelve a verificar el repositorio; nunca el dominio |
-| Datos del ítem para el dominio | estructura mínima | Sí | Proyecto, estado (`pendiente`, `en_progreso` o `completado`), Story Points (presentes o ausentes), cantidad de criterios de aceptación y si ya está asignado a un Sprint |
+| Datos del ítem para el dominio | estructura mínima | Sí | Proyecto, estado (`pendiente`, `en_progreso` o `completado`), Story Points (presentes o ausentes), cantidad de criterios de aceptación y si ya está en el Sprint abierto del proyecto (su Sprint actual) |
 | Datos del Sprint para el dominio | estructura mínima | Sí | Proyecto y estado (`abierto` o `cerrado`) |
 
 Los datos mínimos son tipos propios del paquete `sprint`, igual que
-`ItemDelSprint` en US-025: el dominio de `sprint` no importa el de `backlog`.
-La capa de aplicación adapta `ItemBacklog` y `Sprint` a ellos.
+`ItemDelSprint` en US-025: el dominio de `sprint` no usa `ItemBacklog`. La capa
+de aplicación adapta `ItemBacklog` y `Sprint` a ellos. Lo único que toma de
+`backlog` es el error `ErrItemCompletado` (RN-009-5).
 
 No son entradas: el estado del Sprint ni el del ítem (los lee la persistencia) y
-la relación misma, que no tiene ID propio (RN-009-13).
+la relación misma, que se identifica por el ítem y el Sprint (RN-009-13).
 
 ## 3. Salidas esperadas
 
 Si se cumplen todas las reglas, el ítem queda **asignado al Sprint**: la relación
-queda registrada y el ítem conserva su estado, sus Story Points, sus criterios y
-su prioridad, sin cambios (RN-009-9). El caso de uso devuelve la asignación ya
-registrada:
+queda registrada con resultado `pendiente` (RN-009-13) y el ítem conserva su
+estado, sus Story Points, sus criterios y su prioridad, sin cambios
+(RN-009-9). El caso de uso devuelve la asignación ya registrada:
 
 ```
 Asignacion {
@@ -94,10 +97,15 @@ Entre paréntesis, la capa que la hace cumplir.
 - **RN-009-4** (dominio) — Solo se asignan ítems a un Sprint `abierto`. Si está
   `cerrado`, `ErrSprintCerrado`.
 - **RN-009-5** (dominio) — No se asigna un ítem `completado`. Si no,
-  `ErrItemCompletado`.
-- **RN-009-6** (dominio) — Un ítem está como máximo en un Sprint a la vez. Si ya
-  está asignado a un Sprint, el mismo u otro, se rechaza con
-  `ErrItemYaAsignado`. No se "mueve" de un Sprint a otro.
+  `backlog.ErrItemCompletado`, el de US-013; `sprint` no define uno propio. Es
+  la única excepción a que `sprint` no importe nada fuera de la biblioteca
+  estándar (sección 5): un ítem completado es el mismo concepto en las dos
+  historias, y duplicar el error obligaría a T-005 a traducir dos para la misma
+  condición.
+- **RN-009-6** (dominio) — Un ítem está como máximo en un Sprint abierto: su
+  Sprint actual. Si ya está en el Sprint abierto del proyecto, se rechaza con
+  `ErrItemYaAsignado`. Haber estado en Sprints cerrados no impide asignarlo de
+  nuevo (CL-009-12). No se "mueve" de un Sprint a otro.
 - **RN-009-7** (dominio) — Definition of Ready: el ítem tiene que estar
   **estimado** (Story Points presentes, no ausentes) y tener **al menos un
   criterio de aceptación**. Si no, `ErrItemSinEstimar` y `ErrItemSinCriterios`
@@ -120,7 +128,8 @@ Entre paréntesis, la capa que la hace cumplir.
   2. Bloquea la fila del ítem y lee su proyecto, su estado, sus Story Points y
      sus criterios, con `FOR UPDATE`. Si no hay fila, el ítem no existe
      (`ErrItemInexistente`).
-  3. Lee si el ítem ya tiene una asignación.
+  3. Lee si el ítem ya está en el Sprint abierto: una fila de la relación con
+     resultado `pendiente`.
   4. Vuelve a verificar RN-009-3 a RN-009-7 con la misma función del dominio,
      pasándole los datos leídos en los pasos 1 a 3 y no los de la lectura del
      caso de uso. Si falla, devuelve lo que devuelve esa función (los errores
@@ -133,21 +142,29 @@ Entre paréntesis, la capa que la hace cumplir.
   `ErrItemYaAsignado` (CL-009-10). Un cierre simultáneo del Sprint (US-011) que
   modifica su fila espera al `FOR SHARE`, y una asignación que llega después del
   cierre ve el Sprint `cerrado` y se rechaza con `ErrSprintCerrado`
-  (CL-009-14). La clave primaria de la relación sobre el ítem queda como red de
-  seguridad.
+  (CL-009-14). La clave primaria `(item_id, sprint_id)` y el índice único de
+  RN-009-13 quedan como red de seguridad.
 - **RN-009-12** (dominio) — No se valida la capacidad del Sprint: se pueden
   asignar ítems aunque los Story Points planificados superen la velocidad del
   equipo. Tampoco se compara con la fecha de hoy ni con las fechas del Sprint.
-- **RN-009-13** (persistencia) — La relación no tiene ID propio: se identifica
-  por el ítem, que puede estar en un solo Sprint (RN-009-6). Por eso no hay nada
-  que generar con `DEFAULT gen_random_uuid()`.
+- **RN-009-13** (persistencia) — La relación es **histórica**: tiene una fila
+  por cada vez que un ítem estuvo en un Sprint, identificada por
+  `(item_id, sprint_id)` y sin ID propio, así que no hay nada que generar con
+  `DEFAULT gen_random_uuid()`. Cada fila guarda el resultado del ítem en ese
+  Sprint: `pendiente` mientras el Sprint está abierto (asignar crea la fila
+  así), y `completado` o `no_completado` cuando US-011 lo cierra. Ninguna fila
+  se borra al cerrar. Un ítem tiene como máximo una fila `pendiente`, la de su
+  Sprint actual (RN-009-6).
 
 ## 5. Restricciones
 
 - **Dominio puro.** `internal/domain/sprint` no importa nada fuera de la
-  biblioteca estándar, no hace SQL ni HTTP, no genera IDs y no llama a
-  `time.Now()`. Sus errores se definen solo con la biblioteca estándar, y nunca
-  importa `internal/platform`.
+  biblioteca estándar, salvo una excepción: de `internal/domain/backlog` toma
+  solo `ErrItemCompletado` (RN-009-5), no `ItemBacklog` ni ninguna otra parte
+  del paquete. `backlog` también es dominio puro, así que `sprint` lo sigue
+  siendo. No hace SQL ni HTTP, no genera IDs y no llama a `time.Now()`. Sus
+  errores propios se definen solo con la biblioteca estándar, y nunca importa
+  `internal/platform`.
 - **Lo que el dominio no puede saber** (que el ítem y el Sprint existan, su
   estado actual en la base, si el ítem ya está asignado) lo resuelven la capa de
   aplicación y el repositorio, en el orden de la sección 2.
@@ -158,26 +175,34 @@ Entre paréntesis, la capa que la hace cumplir.
   los bloqueos tomados. Cualquier repositorio la usa: el de Postgres y el que
   usen los escenarios BDD.
 - **Persistencia.** Una migración nueva en `migraciones/` (nunca se edita una ya
-  mergeada) crea la tabla de la relación, con el ítem como clave primaria
-  (referencia al ítem) y la referencia al Sprint. Como referencia las tablas de
-  US-005 y de US-008, **tiene que numerarse después de las migraciones de esas
-  dos historias**: goose las aplica por número. El número se avisa en el grupo
-  antes de crearla. El nombre de la tabla lo define la implementación. La
-  validación de la DoR, del estado del Sprint y del proyecto no se imponen en la
-  base: las hacen cumplir el dominio y el repositorio.
+  mergeada) crea la tabla de la relación, con clave primaria
+  `(item_id, sprint_id)`, las referencias al ítem y al Sprint, y la columna del
+  resultado: `CHECK` en `pendiente`, `completado` y `no_completado`, y
+  `pendiente` por defecto. Como red de seguridad de RN-009-6, lleva un índice
+  único parcial sobre `item_id` donde el resultado es `pendiente`. Como
+  referencia las tablas de US-005 y de US-008, **tiene que numerarse después de
+  las migraciones de esas dos historias**: goose las aplica por número. El
+  número se avisa en el grupo antes de crearla. El nombre de la tabla lo define
+  la implementación. La validación de la DoR, del estado del Sprint y del
+  proyecto no se imponen en la base: las hacen cumplir el dominio y el
+  repositorio.
 - **Nivel de aislamiento.** La transacción usa el nivel por defecto de Postgres
   (`READ COMMITTED`), y los datos del ítem y de la asignación se leen en
   sentencias posteriores a los bloqueos. Así, una asignación que esperó ve lo
   que registró la otra y ve el estado del Sprint que dejó un cierre concurrente.
 - **Verificación de la concurrencia.** RN-009-11, CL-009-10 y CL-009-14 se
   verifican con un test de integración contra un Postgres real.
-- **Relación con US-011.** Cerrar el Sprint devuelve al backlog los ítems no
-  completados, es decir, elimina su relación. Esa operación no es de esta
-  historia: acá solo se define que un ítem sin relación se puede asignar
-  (CL-009-12).
+- **Relación con US-011.** Cerrar el Sprint no borra la relación: completa el
+  resultado de cada fila (`completado` o `no_completado`). Los ítems no
+  completados vuelven al backlog porque dejan de estar en un Sprint abierto, y
+  su estado vuelve a `pendiente`; no se borra nada. Esa operación es de US-011:
+  acá solo se define que un ítem que no está en el Sprint abierto se puede
+  asignar, aunque haya estado en Sprints cerrados (CL-009-12).
 - **Integración con US-025.** Los Story Points de los ítems asignados son la
   entrada de `ItemDelSprint`; la DoR de esta historia garantiza que ninguno
-  llegue sin estimar (RN-025-3).
+  llegue sin estimar (RN-025-3). Los planificados de un Sprint cerrado salen de
+  todas sus filas, completadas o no: por eso la relación no se borra al
+  cerrar.
 - **Dependencia con T-005.** El tipo de error común de T-005 vive fuera del
   dominio y traduce los errores de dominio a respuestas para el usuario; el
   dominio no lo conoce. Esa traducción tiene que ser compatible con errores
@@ -223,10 +248,10 @@ Entre paréntesis, la capa que la hace cumplir.
   Sprint pasa a tener 1.
 - **CL-009-7** — Ítem ya asignado al mismo Sprint: se rechaza con
   `ErrItemYaAsignado`; no es una operación sin efecto.
-- **CL-009-8** — Ítem asignado a un Sprint anterior, ya cerrado, que quedó
-  completado (los no completados vuelven al backlog al cerrar): al intentar
-  asignarlo al Sprint abierto se devuelven `ErrItemCompletado` y
-  `ErrItemYaAsignado` unidos, en el orden de RN-009-8.
+- **CL-009-8** — Ítem que quedó completado en un Sprint anterior, ya cerrado:
+  al intentar asignarlo al Sprint abierto se rechaza solo con
+  `ErrItemCompletado`. No está en el Sprint abierto, así que no es
+  `ErrItemYaAsignado` (RN-009-6).
 - **CL-009-9** — Ítem de un proyecto y Sprint de otro: se rechaza con
   `ErrProyectoDistinto`.
 - **CL-009-10** — Dos asignaciones simultáneas del mismo ítem al mismo Sprint
@@ -236,8 +261,9 @@ Entre paréntesis, la capa que la hace cumplir.
 - **CL-009-11** — Ítem o Sprint inexistente junto con un ítem que además no
   cumple la DoR: se devuelve solo el error de inexistencia, sin mirar el resto
   (RN-009-1 y RN-009-2). Si no existen los dos, solo `ErrItemInexistente`.
-- **CL-009-12** — Ítem devuelto al backlog por US-011 (ya no está en ningún
-  Sprint): puede asignarse a un Sprint nuevo.
+- **CL-009-12** — Ítem no completado de un Sprint cerrado, devuelto al backlog
+  por US-011: conserva su fila en ese Sprint, con resultado `no_completado`, y
+  se puede asignar al Sprint abierto. Queda con dos filas, una por Sprint.
 - **CL-009-13** — Sprint cerrado y, además, ítem sin estimar: se devuelven
   `ErrSprintCerrado` y `ErrItemSinEstimar` unidos, en el orden de RN-009-8. El
   dominio no corta en el primer error.
@@ -252,11 +278,11 @@ Entre paréntesis, la capa que la hace cumplir.
 
 | Situación | Error devuelto | Mensaje del error (origen) |
 |---|---|---|
-| El ítem no existe | `app.ErrItemInexistente`, envuelto indicando el ID recibido | "la historia no existe" |
+| El ítem no existe | `app.ErrItemInexistente` (el de US-013 y US-019), envuelto indicando el ID recibido | "el item no existe" |
 | El Sprint no existe | `app.ErrSprintInexistente`, envuelto indicando el ID recibido | "el sprint no existe" |
 | Ítem y Sprint son de proyectos distintos | `sprint.ErrProyectoDistinto` | "la historia y el sprint son de proyectos distintos" |
-| El Sprint está cerrado | `sprint.ErrSprintCerrado`, envuelto indicando el nombre del Sprint | "el sprint esta cerrado: no se le pueden asignar historias" |
-| El ítem está completado | `sprint.ErrItemCompletado` | "la historia ya esta completada" |
+| El Sprint está cerrado | `sprint.ErrSprintCerrado`, envuelto indicando el nombre del Sprint | "el sprint esta cerrado" |
+| El ítem está completado | `backlog.ErrItemCompletado` (el de US-013) | El mensaje general de US-013 (cambio pedido en el #93) |
 | El ítem ya está en un Sprint | `sprint.ErrItemYaAsignado` | "la historia ya esta asignada a un sprint" |
 | El ítem no tiene Story Points | `sprint.ErrItemSinEstimar` | "la historia no esta estimada: estimala antes de asignarla" |
 | El ítem no tiene criterios de aceptación | `sprint.ErrItemSinCriterios` | "la historia no tiene criterios de aceptacion" |
@@ -264,14 +290,16 @@ Entre paréntesis, la capa que la hace cumplir.
 La tercera columna es el texto de origen de cada error. Es el que ve la persona
 mientras T-005 no defina otra traducción.
 
-Los seis últimos son del dominio (`internal/domain/sprint`): se detectan todos en
-una sola validación, antes de escribir nada en la base, y se devuelven unidos con
-`errors.Join` en el orden de RN-009-8. Con varios errores, el mensaje es la unión
-de los mensajes, uno por línea. El repositorio los vuelve a verificar dentro de
-la transacción con la misma función (RN-009-11), así que también puede
-devolverlos, unidos del mismo modo, cuando el estado cambió entre la lectura del
-caso de uso y la transacción. `ErrItemYaAsignado` y `ErrSprintCerrado` son los
-que ocurren en la práctica por una operación simultánea (CL-009-10 y CL-009-14).
+Los seis últimos los devuelve la validación del dominio
+(`internal/domain/sprint`, que reutiliza `ErrItemCompletado` de `backlog`): se
+detectan todos en una sola validación, antes de escribir nada en la base, y se
+devuelven unidos con `errors.Join` en el orden de RN-009-8. Con varios errores,
+el mensaje es la unión de los mensajes, uno por línea. El repositorio los
+vuelve a verificar dentro de la transacción con la misma función (RN-009-11),
+así que también puede devolverlos, unidos del mismo modo, cuando el estado
+cambió entre la lectura del caso de uso y la transacción. `ErrItemYaAsignado` y
+`ErrSprintCerrado` son los que ocurren en la práctica por una operación
+simultánea (CL-009-10 y CL-009-14).
 
 `ErrItemInexistente` y `ErrSprintInexistente` los detecta la capa de aplicación
 (`internal/app`) antes de validar los datos, o el repositorio dentro de la
@@ -311,10 +339,12 @@ se registra nada.
 - **La Definition of Ready se valida acá, no en US-005.** US-005 permite
   registrar trabajo todavía sin refinar; el filtro está en la puerta del Sprint.
   Es la regla que sostiene a RN-025-3.
-- **Un ítem está como máximo en un Sprint.** Mover un ítem entre Sprints esconde
-  decisiones (¿y sus horas?, ¿y su Sprint de origen?) que ningún criterio pide.
-  Se descartó el "mover" y se rechaza con `ErrItemYaAsignado`, incluso hacia el
-  mismo Sprint, para no tener una operación silenciosa.
+- **Un ítem está como máximo en el Sprint abierto.** Mover un ítem entre Sprints
+  esconde decisiones (¿y sus horas?, ¿y su Sprint de origen?) que ningún
+  criterio pide. Se descartó el "mover" y se rechaza con `ErrItemYaAsignado`,
+  incluso hacia el mismo Sprint, para no tener una operación silenciosa. Haber
+  estado en Sprints cerrados no cuenta: un ítem que volvió al backlog se vuelve
+  a planificar (CL-009-12).
 - **Solo se asigna a un Sprint abierto.** Por US-008, un proyecto tiene como
   máximo un Sprint abierto y es el último, así que asignar a un Sprint cerrado
   sería planificar trabajo en un período que ya terminó. Se descartó permitirlo
@@ -325,8 +355,9 @@ se registra nada.
 - **Inexistencia con prioridad y sin unir.** Mismo criterio que US-005 y
   US-008: si el ítem o el Sprint no existen, no tiene sentido evaluar el resto.
   El ítem se verifica primero porque es el protagonista de la operación. Se
-  reutiliza el criterio de `ErrProyectoInexistente`, pero los errores son
-  propios: no hay un caso equivalente ya definido para ítems ni sprints.
+  reutiliza el criterio de `ErrProyectoInexistente`. `ErrItemInexistente` es el
+  mismo de US-013 y US-019, con su mensaje ("el item no existe");
+  `ErrSprintInexistente` es propio de esta historia.
 - **Cada capa valida lo que puede saber, y el repositorio vuelve a verificar.**
   El estado del Sprint y el del ítem pueden cambiar entre la lectura del caso de
   uso y el alta (un cierre, una edición), y dos asignaciones simultáneas
@@ -350,11 +381,25 @@ se registra nada.
 - **Paquete `internal/domain/sprint`.** Es el mismo que define US-008; los
   paquetes van en español (ADR 0003) y `sprint` se mantiene por ser un término
   de Scrum. Los datos mínimos del ítem y del Sprint son tipos propios del
-  paquete, para que no dependa del dominio de `backlog`.
-- **La relación se identifica por el ítem.** Como un ítem está en un Sprint como
-  máximo, el ítem es la clave de la relación. No hay ID propio ni
-  `DEFAULT gen_random_uuid()` que alinear. Se descartó una clave sintética más
-  una restricción de unicidad: guardaría dos veces la misma garantía.
+  paquete, para no depender de `ItemBacklog`. Lo único que toma de `backlog` es
+  `ErrItemCompletado`.
+- **Se reutiliza `backlog.ErrItemCompletado`.** Es la misma condición que en
+  US-013 y US-006 (el ítem está completado), así que hay un solo error con un
+  mensaje general. Se descartó un `ErrItemCompletado` propio de `sprint`: dos
+  errores con el mismo nombre y distinto mensaje para la misma condición, que
+  T-005 tendría que traducir por separado. Es la única excepción a que `sprint`
+  no importe nada fuera de la biblioteca estándar (sección 5).
+- **`ErrSprintCerrado` con mensaje general.** "el sprint esta cerrado" sirve
+  también para US-010, que reutiliza el error al marcar y desmarcar. El
+  mensaje anterior nombraba la asignación.
+- **La relación es histórica.** Una fila por cada vez que un ítem estuvo en un
+  Sprint, con su resultado, y ninguna se borra al cerrar. Sin esa historia se
+  pierden los Story Points planificados de los Sprints cerrados (US-025: lo
+  planificado incluye lo no completado) y el reporte de historias planificadas
+  y completadas de cada Sprint. Se descartó borrar la relación al cerrar, que
+  era la versión anterior de esta spec. La clave es `(item_id, sprint_id)`: no
+  hay ID propio ni `DEFAULT gen_random_uuid()`. Se descartó una clave sintética
+  más una restricción de unicidad: guardaría dos veces la misma garantía.
 - **Frase de diccionario con criterios, pendiente de acordar con el equipo.**
   Las frases actuales no dan criterios de aceptación y los escenarios de éxito
   los necesitan. Se propone:
@@ -389,3 +434,7 @@ se registra nada.
   (reglas, casos límite, errores y criterios de aceptación) a partir de la
   historia y de las specs de US-001, US-005, US-008 y US-025 — revisado por:
   Angelo Conforti.
+- [x] Use IA para: la corrección de la relación histórica (RN-009-6, RN-009-13,
+  sección 5, CL-009-8, CL-009-12, errores y decisiones) y la excepción de
+  RN-009-5, redactadas con Claude Code a partir de las decisiones del equipo —
+  revisado y entendido por: Juan Ignacio Vergara.
