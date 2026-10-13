@@ -111,3 +111,28 @@ func TestBase_GuardarEstimacion_ItemInexistente(t *testing.T) {
 		t.Errorf("se cambio un item existente: %+v", guardado.StoryPoints)
 	}
 }
+
+// US-013 / RN-013-4, RN-013-7, #100: guardar la estimacion de un item que ya
+// esta completado devuelve backlog.ErrItemCompletado y no cambia sus Story
+// Points. Cubre la ventana entre leer el item y guardarlo: si se completo en el
+// medio, la estimacion no se pisa.
+func TestBase_GuardarEstimacion_ItemCompletado(t *testing.T) {
+	ctx := context.Background()
+	base := memoria.NuevaBase()
+	completado := itemValido(t, "Alta de proyectos")
+	completado.Estado = backlog.EstadoCompletado
+	registrado, err := base.RegistrarItem(ctx, base.AgregarProyecto(), completado)
+	if err != nil {
+		t.Fatalf("RegistrarItem: %v", err)
+	}
+	puntos, _ := backlog.NuevosStoryPoints(8)
+
+	err = base.GuardarEstimacion(ctx, registrado.ID, puntos)
+
+	if !errors.Is(err, backlog.ErrItemCompletado) {
+		t.Fatalf("error = %v, se esperaba ErrItemCompletado", err)
+	}
+	if guardado, _, _ := base.ObtenerItem(ctx, registrado.ID); guardado.StoryPoints != backlog.SinEstimar() {
+		t.Errorf("se cambiaron los story points de un item completado: %+v", guardado.StoryPoints)
+	}
+}
