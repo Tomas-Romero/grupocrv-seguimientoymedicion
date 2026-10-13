@@ -7,7 +7,7 @@
 | **Issue** | #10 |
 | **Escenarios BDD** | `features/US-009-asignar-historias-sprint.feature` |
 | **Código** | `internal/domain/sprint/`, caso de uso en `internal/app/`, repositorio en `internal/adapters/postgres/`, migración nueva en `migraciones/` |
-| **Última actualización** | 2026-10-12 |
+| **Última actualización** | 2026-10-13 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
 > implementación. Si durante la implementación descubrís que algo de acá está
@@ -97,7 +97,11 @@ Entre paréntesis, la capa que la hace cumplir.
 - **RN-009-4** (dominio) — Solo se asignan ítems a un Sprint `abierto`. Si está
   `cerrado`, `ErrSprintCerrado`.
 - **RN-009-5** (dominio) — No se asigna un ítem `completado`. Si no,
-  `backlog.ErrItemCompletado` (el de US-013; `sprint` no define uno propio).
+  `backlog.ErrItemCompletado`, el de US-013; `sprint` no define uno propio. Es
+  la única excepción a que `sprint` no importe nada fuera de la biblioteca
+  estándar (sección 5): un ítem completado es el mismo concepto en las dos
+  historias, y duplicar el error obligaría a T-005 a traducir dos para la misma
+  condición.
 - **RN-009-6** (dominio) — Un ítem está como máximo en un Sprint abierto: su
   Sprint actual. Si ya está en el Sprint abierto del proyecto, se rechaza con
   `ErrItemYaAsignado`. Haber estado en Sprints cerrados no impide asignarlo de
@@ -155,9 +159,12 @@ Entre paréntesis, la capa que la hace cumplir.
 ## 5. Restricciones
 
 - **Dominio puro.** `internal/domain/sprint` no importa nada fuera de la
-  biblioteca estándar, no hace SQL ni HTTP, no genera IDs y no llama a
-  `time.Now()`. Sus errores se definen solo con la biblioteca estándar, y nunca
-  importa `internal/platform`.
+  biblioteca estándar, salvo una excepción: de `internal/domain/backlog` toma
+  solo `ErrItemCompletado` (RN-009-5), no `ItemBacklog` ni ninguna otra parte
+  del paquete. `backlog` también es dominio puro, así que `sprint` lo sigue
+  siendo. No hace SQL ni HTTP, no genera IDs y no llama a `time.Now()`. Sus
+  errores propios se definen solo con la biblioteca estándar, y nunca importa
+  `internal/platform`.
 - **Lo que el dominio no puede saber** (que el ítem y el Sprint existan, su
   estado actual en la base, si el ítem ya está asignado) lo resuelven la capa de
   aplicación y el repositorio, en el orden de la sección 2.
@@ -379,7 +386,9 @@ se registra nada.
 - **Se reutiliza `backlog.ErrItemCompletado`.** Es la misma condición que en
   US-013 y US-006 (el ítem está completado), así que hay un solo error con un
   mensaje general. Se descartó un `ErrItemCompletado` propio de `sprint`: dos
-  errores con el mismo nombre y distinto mensaje para la misma condición.
+  errores con el mismo nombre y distinto mensaje para la misma condición, que
+  T-005 tendría que traducir por separado. Es la única excepción a que `sprint`
+  no importe nada fuera de la biblioteca estándar (sección 5).
 - **`ErrSprintCerrado` con mensaje general.** "el sprint esta cerrado" sirve
   también para US-010, que reutiliza el error al marcar y desmarcar. El
   mensaje anterior nombraba la asignación.
@@ -426,5 +435,6 @@ se registra nada.
   historia y de las specs de US-001, US-005, US-008 y US-025 — revisado por:
   Angelo Conforti.
 - [x] Use IA para: la corrección de la relación histórica (RN-009-6, RN-009-13,
-  sección 5, CL-009-8, CL-009-12, errores y decisiones), redactada con Claude
-  Code a partir de la decisión del equipo — revisado por:
+  sección 5, CL-009-8, CL-009-12, errores y decisiones) y la excepción de
+  RN-009-5, redactadas con Claude Code a partir de las decisiones del equipo —
+  revisado y entendido por:
