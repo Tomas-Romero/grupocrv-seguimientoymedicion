@@ -87,7 +87,7 @@ func (a *proyectosSobreApp) ModificarFechasProyecto(nombre string, inicio, fin t
 }
 
 // RegistrarIntegrante es de US-003.
-func (a *proyectosSobreApp) RegistrarIntegrante(_, _, _ string) error {
+func (a *proyectosSobreApp) RegistrarIntegrante(_, _, _, _ string) error {
 	return errNoImplementado
 }
 
