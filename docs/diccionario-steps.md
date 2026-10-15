@@ -104,6 +104,7 @@ conectada, falla con `area sin conectar a los steps: <área>`: es a propósito.
 | `Dado un proyecto "Demo"` | `^un proyecto "([^"]*)"$` |
 | `Dado un proyecto "Demo" con fechas del "2026-09-14" al "2026-11-18"` | `^un proyecto "([^"]*)" con fechas del "([^"]*)" al "([^"]*)"$` |
 | `Y el integrante "Conforti" con rol "product_builder"` | `^el integrante "([^"]*)" con rol "([^"]*)"$` |
+| `Y el integrante "Conforti" con email "conforti@ejemplo.test" y rol "product_builder"` | `^el integrante "([^"]*)" con email "([^"]*)" y rol "([^"]*)"$` |
 | `Y una historia "Crear proyecto" con prioridad "must"` | `^una historia "([^"]*)" con prioridad "([^"]*)"$` |
 | `Y una historia "Crear proyecto" con prioridad "must" y 5 story points` | `^una historia "([^"]*)" con prioridad "([^"]*)" y (\d+) story points$` |
 | `Y un sprint "Sprint 1" con el objetivo "MVP navegable"` | `^un sprint "([^"]*)" con el objetivo "([^"]*)"$` |
@@ -119,6 +120,13 @@ conectada, falla con `area sin conectar a los steps: <área>`: es a propósito.
 Un escenario **no repite títulos de historias**: el área Backlog las identifica
 por título, y la spec de US-005 permite repetirlos entre sí, así que dos historias
 con el mismo título en un mismo escenario serían ambiguas.
+
+**Propuesta US-003** (se aprueba en el PR): las frases con email son la variante
+de las dos frases sin email. Se usan cuando el escenario necesita controlar el
+email: uno repetido, el mismo email en dos proyectos o uno con formato inválido.
+Las frases sin email arman uno a partir del nombre, con dominio `ejemplo.test`:
+siempre es válido y es distinto para cada nombre distinto, así que el escenario
+no tiene que ocuparse de él.
 
 Las dos frases `el sprint "S" con una historia de N story points ...` arman el sprint de
 los escenarios de métricas (US-025 y US-026) sin pasar por el backlog ni por los sprints
@@ -151,6 +159,7 @@ inexistente (CA-005-8, CA-008-10); con esa frase el escenario no lleva
 | `Cuando se modifica el nombre del proyecto "Demo" a "Demo v2"` | `^se modifica el nombre del proyecto "([^"]*)" a "([^"]*)"$` |
 | `Cuando se modifican las fechas del proyecto "Demo" del "2026-10-01" al "2026-12-15"` | `^se modifican las fechas del proyecto "([^"]*)" del "([^"]*)" al "([^"]*)"$` |
 | `Cuando se registra al integrante "Vergara" con rol "product_builder"` | `^se registra al integrante "([^"]*)" con rol "([^"]*)"$` |
+| `Cuando se registra al integrante "Vergara" con email "vergara@ejemplo.test" y rol "product_builder"` | `^se registra al integrante "([^"]*)" con email "([^"]*)" y rol "([^"]*)"$` |
 | `Cuando se crea la historia "Crear proyecto" con prioridad "must"` | `^se crea la historia "([^"]*)" con prioridad "([^"]*)"$` |
 | `Cuando se crea la historia "Crear proyecto" con prioridad "must", la descripción "Alta" y los criterios:` + tabla de una columna | `^se crea la historia "([^"]*)" con prioridad "([^"]*)", la descripción "([^"]*)" y los criterios:$` |
 | `Cuando se crea una historia con un título de 121 caracteres y prioridad "must"` | `^se crea una historia con un título de (\d+) caracteres y prioridad "([^"]*)"$` |
@@ -164,6 +173,9 @@ inexistente (CA-005-8, CA-008-10); con esa frase el escenario no lleva
 | `Cuando se consultan los story points completados del sprint "Sprint 1"` | `^se consultan los story points completados del sprint "([^"]*)"$` |
 | `Cuando se consulta la velocidad del equipo` | `^se consulta la velocidad del equipo$` |
 
+**Propuesta US-003:** `se registra al integrante "X" con email "..." y rol "Y"`
+es la variante con email de la frase anterior (ver la nota de Contexto). Un
+nombre de 100 o 101 caracteres no tiene frase: se prueba con tests unitarios.
 
 **Un solo `Cuando` por escenario.** Si necesitás dos acciones, la primera es
 contexto y va en un `Dado`. Un escenario con dos `Cuando` casi siempre está
