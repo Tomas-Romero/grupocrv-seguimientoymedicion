@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/integrante"
 )
@@ -31,10 +32,34 @@ func NuevoRegistrarIntegrante(repo RepositorioRegistrarIntegrante) *RegistrarInt
 	return &RegistrarIntegrante{repo: repo}
 }
 
-// Ejecutar registra al integrante.
+// Ejecutar sigue el orden de la spec (seccion 2): primero verifica que el
+// proyecto exista, despues valida los datos con el dominio y al final registra al
+// integrante.
 //
-// ESQUELETO DEL CICLO RED (US-003): todavia no hace nada. La implementacion real
-// llega en el commit GREEN.
-func (c *RegistrarIntegrante) Ejecutar(_ context.Context, _, _, _ string, _ integrante.Rol) (integrante.Integrante, error) {
-	return integrante.Integrante{}, nil
+// RN-003-6: si el proyecto no existe responde ErrProyectoInexistente sin mirar
+// los datos y sin unirlo con los errores de validacion. Los errores del dominio
+// se devuelven tal cual, sin prefijos: su mensaje es el que ve la persona. Los
+// del repositorio se envuelven con el proyecto sin perder el original, asi
+// errors.Is sigue reconociendo ErrProyectoInexistente y ErrEmailDuplicado.
+func (c *RegistrarIntegrante) Ejecutar(ctx context.Context, proyectoID, nombre, email string, rol integrante.Rol) (integrante.Integrante, error) {
+	existe, err := c.repo.ExisteProyecto(ctx, proyectoID)
+	if err != nil {
+		return integrante.Integrante{}, fmt.Errorf("registrar un integrante en el proyecto %s: %w", proyectoID, err)
+	}
+	if !existe {
+		return integrante.Integrante{}, fmt.Errorf("registrar un integrante en el proyecto %s: %w", proyectoID, ErrProyectoInexistente)
+	}
+
+	// RN-003-8: el dominio valida todo y devuelve los errores unidos.
+	nuevo, err := integrante.Nuevo(proyectoID, nombre, email, rol)
+	if err != nil {
+		return integrante.Integrante{}, err
+	}
+
+	// RN-003-9: todo o nada, lo garantiza el repositorio.
+	registrado, err := c.repo.RegistrarIntegrante(ctx, nuevo)
+	if err != nil {
+		return integrante.Integrante{}, fmt.Errorf("registrar un integrante en el proyecto %s: %w", proyectoID, err)
+	}
+	return registrado, nil
 }
