@@ -6,8 +6,8 @@
 | **Autor** | Angelo Conforti |
 | **Issue** | #6 |
 | **Escenarios BDD** | `features/US-003-registrar-integrantes.feature` |
-| **Código** | `internal/domain/integrante/`, caso de uso en `internal/app/`, repositorio en `internal/adapters/postgres/`, migración nueva en `migraciones/` |
-| **Última actualización** | 2026-10-07 |
+| **Código** | `internal/domain/integrante/`, caso de uso en `internal/app/`, repositorios en `internal/adapters/postgres/` y en `internal/adapters/memoria/` (la base de los escenarios), migración `migraciones/00005_integrantes_id_por_defecto.sql` |
+| **Última actualización** | 2026-10-17 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
 > implementación. Si durante la implementación descubrís que algo de acá está
@@ -211,16 +211,20 @@ la capa de aplicación antes de validar y no se une con los demás.
   formulario.
 - **`ErrEmailDuplicado` vive en `internal/app`.** Lo detecta la persistencia, no el
   dominio, igual que `ErrProyectoInexistente`.
-- **Frase de diccionario con email pendiente de acordar con el equipo.** Las frases
-  actuales (`el integrante "X" con rol "Y"` y `se registra al integrante "X" con
-  rol "Y"`) no reciben email. Se propone, por ejemplo,
-  `se registra al integrante "X" con email "..." y rol "Y"`. Hasta que se apruebe e
-  incorpore al diccionario, CA-003-4, CA-003-6 y CA-003-8 se verifican con tests
-  unitarios y de integración, y no tienen escenario BDD. No se inventa la frase en
-  el `.feature`.
-- **La migración del `DEFAULT` del ID es un archivo aparte.** Se numera cuando el
-  grupo confirme cuál sigue libre.
-
+- **Frases de diccionario con email, propuestas al equipo.** Las frases originales
+  (`el integrante "X" con rol "Y"` y `se registra al integrante "X" con rol "Y"`)
+  no reciben email, así que no alcanzan para los criterios que dependen de él. Se
+  agregaron a `docs/diccionario-steps.md`, marcadas como propuesta hasta que el
+  grupo las apruebe, `el integrante "X" con email "..." y rol "Y"` y
+  `se registra al integrante "X" con email "..." y rol "Y"`. Con ellas, CA-003-6
+  (email vacío o inválido), CA-003-8 (email repetido) y el email recortado y en
+  minúscula de CA-003-4 tienen escenario BDD. El nombre de 100 y de 101
+  caracteres de CA-003-4 se verifica con tests unitarios del dominio. Si el grupo
+  cambia la redacción, se actualizan el diccionario y los escenarios en el mismo PR.
+- **La migración del `DEFAULT` del ID es un archivo aparte.** Es
+  `00005_integrantes_id_por_defecto.sql`. Goose aplica una migración aunque llegue
+  con un número menor al último aplicado (T-012), así que no depende del orden en
+  que se mergeen las ramas.
 ## Uso de IA en esta especificación
 
 - [x] Use IA para: redacción del borrador de los apartados de la especificación
