@@ -24,3 +24,12 @@ var ErrProyectoInexistente = errors.New("el proyecto no existe")
 // US-019), y lo devuelven tambien los repositorios cuando el item desaparece
 // entre la lectura y la escritura.
 var ErrItemInexistente = errors.New("el item no existe")
+
+// ErrEmailDuplicado se devuelve cuando el email ya esta registrado en el
+// proyecto (US-003, RN-003-7). Lo detecta la persistencia, no el dominio: el
+// dominio no sabe que otros integrantes tiene el proyecto. En Postgres es la
+// restriccion UNIQUE (proyecto_id, email); la base en memoria la replica.
+//
+// Los repositorios lo devuelven envuelto indicando el email, y el caso de uso lo
+// vuelve a envolver con el proyecto: errors.Is lo sigue reconociendo.
+var ErrEmailDuplicado = errors.New("ya hay un integrante con ese email en el proyecto")
