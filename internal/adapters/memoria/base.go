@@ -43,6 +43,10 @@ type Base struct {
 	// esfuerzos guarda los registros de esfuerzo de cada proyecto, en orden de alta
 	// (US-019).
 	esfuerzos map[string][]esfuerzo.RegistroEsfuerzo
+
+	// asignaciones guarda las filas de la relacion entre cada item y sus sprints, en
+	// orden de alta (US-009). Un item tiene como mucho una pendiente.
+	asignaciones map[string][]asignacion
 }
 
 // NuevaBase devuelve una base vacia.
@@ -53,8 +57,8 @@ func NuevaBase() *Base {
 		datosProyectos: map[string]proyecto.Proyecto{},
 		integrantes:    map[string][]integrante.Integrante{},
 		sprints:        map[string][]sprint.Sprint{},
-
-		esfuerzos: map[string][]esfuerzo.RegistroEsfuerzo{},
+		esfuerzos:      map[string][]esfuerzo.RegistroEsfuerzo{},
+		asignaciones:   map[string][]asignacion{},
 	}
 }
 
