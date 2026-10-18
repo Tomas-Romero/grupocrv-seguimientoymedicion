@@ -11,7 +11,7 @@ import (
 // Registrar conecta todas las frases del diccionario con su implementacion.
 //
 // Cada area registra sus propias frases en su archivo (proyectos.go,
-// backlog.go, sprints.go, metricas.go). Si agregas un step, agregalo tambien a
+// backlog.go, sprints.go, metricas.go, esfuerzo.go). Si agregas un step, agregalo tambien a
 // docs/diccionario-steps.md en el mismo commit — un step sin documentar es un
 // step que nadie va a usar y que nadie va a borrar.
 func Registrar(sc *godog.ScenarioContext, nuevo Fabrica) {
@@ -31,6 +31,7 @@ func Registrar(sc *godog.ScenarioContext, nuevo Fabrica) {
 	registrarBacklog(sc, m)
 	registrarSprints(sc, m)
 	registrarMetricas(sc, m)
+	registrarEsfuerzo(sc, m)
 	registrarResultados(sc, m)
 }
 
