@@ -109,7 +109,7 @@ func (m *mundo) dadoHistoriaAsignada(titulo, sprint string) error {
 	if err != nil {
 		return err
 	}
-	if err = sprints.AsignarHistoriaASprint(titulo, sprint); err != nil {
+	if err = sprints.AsignarHistoriaASprint(m.proyectoActual, titulo, sprint); err != nil {
 		return fmt.Errorf("asignar la historia %q al sprint %q en el contexto: %w", titulo, sprint, err)
 	}
 	return nil
@@ -172,7 +172,7 @@ func (m *mundo) cuandoSeAsigna(titulo, sprint string) error {
 	if err != nil {
 		return err
 	}
-	return m.registrarAccion(sprints.AsignarHistoriaASprint(titulo, sprint))
+	return m.registrarAccion(sprints.AsignarHistoriaASprint(m.proyectoActual, titulo, sprint))
 }
 
 func (m *mundo) cuandoSeCompleta(titulo string) error {

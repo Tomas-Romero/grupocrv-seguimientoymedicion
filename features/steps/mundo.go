@@ -80,7 +80,10 @@ type Sprints interface {
 	// sus fechas, y devuelve el nombre que le asigno la aplicacion ("Sprint N"): la
 	// persona no lo escribe (RN-008-12).
 	CrearSprint(proyecto, objetivo string, inicio, fin time.Time) (nombre string, err error)
-	AsignarHistoriaASprint(titulo, sprint string) error
+	// AsignarHistoriaASprint asigna la historia (que se busca por titulo) al sprint del
+	// proyecto. Lo que no existe se manda con un ID que no esta en la base, asi el
+	// rechazo lo produce la aplicacion.
+	AsignarHistoriaASprint(proyecto, titulo, sprint string) error
 	CompletarHistoria(titulo string) error
 	CerrarSprint(nombre string) error
 	SprintDeHistoria(titulo string) (string, error)
