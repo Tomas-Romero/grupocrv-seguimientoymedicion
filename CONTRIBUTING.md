@@ -17,7 +17,7 @@ cd grupocrv-seguimientoymedicion
 
 # Requisitos: Go 1.23+, Docker, make y psql (ver README, "Para desarrollar").
 cp .env.example .env         # y exportá DATABASE_URL en tu shell
-make tools                   # instala templ, goose y air
+make tools                   # instala templ, goose, air, golangci-lint y el binario de Tailwind
 make up                      # levanta Postgres, migra y carga datos de ejemplo
 make check                   # tiene que dar todo verde antes de tocar nada
 make dev                     # http://localhost:8080
@@ -33,6 +33,7 @@ reporta como `DEF-NNN` antes de seguir. No lo arregles en tu rama de feature.
 - Después de `make tools`, agregá `~/go/bin` al `PATH` de Git Bash: `export PATH="$PATH:$HOME/go/bin"`.
 - El linter no soporta versiones de Go mucho más nuevas que la del CI. Si `make check` falla en lint con un error de "export data", corré `export GOTOOLCHAIN=go1.23.12`.
 - Si ya tenés un PostgreSQL local usando el puerto 5432, o lo frenás o ponés `DB_PORT=5433` en `.env` y cambiás el puerto en `DATABASE_URL`.
+- `make css` (y `make tools`) bajan `tailwindcss.exe` a `bin/` la primera vez, desde Git Bash y con internet. `bin/` no se versiona.
 
 ---
 
