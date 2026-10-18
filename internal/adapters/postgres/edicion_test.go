@@ -6,8 +6,6 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/jackc/pgx/v5/pgxpool"
-
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/adapters/postgres"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/app"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/backlog"
@@ -16,7 +14,7 @@ import (
 
 // registrarParaEditar registra un item con descripcion y criterios y lo
 // devuelve con su ID.
-func registrarParaEditar(ctx context.Context, t *testing.T, pool *pgxpool.Pool, repo *postgres.RepositorioBacklog, proyecto, titulo string) backlog.ItemBacklog {
+func registrarParaEditar(ctx context.Context, t *testing.T, repo *postgres.RepositorioBacklog, proyecto, titulo string) backlog.ItemBacklog {
 	t.Helper()
 	registrado, err := repo.RegistrarItem(ctx, proyecto, nuevoItem(t, backlog.DatosItem{
 		Titulo:      titulo,
@@ -54,8 +52,8 @@ func TestGuardarEdicion(t *testing.T) {
 	pool := dbprueba.BaseMigrada(ctx, t)
 	proyecto := crearProyecto(ctx, t, pool, "Demo")
 	repo := postgres.NuevoRepositorioBacklog(pool)
-	primero := registrarParaEditar(ctx, t, pool, repo, proyecto, "Crear proyecto")
-	segundo := registrarParaEditar(ctx, t, pool, repo, proyecto, "Listar proyectos")
+	primero := registrarParaEditar(ctx, t, repo, proyecto, "Crear proyecto")
+	segundo := registrarParaEditar(ctx, t, repo, proyecto, "Listar proyectos")
 	cinco, _ := backlog.NuevosStoryPoints(5)
 	if err := repo.GuardarEstimacion(ctx, primero.ID, cinco); err != nil {
 		t.Fatalf("GuardarEstimacion: %v", err)
@@ -90,7 +88,7 @@ func TestGuardarEdicion_CriteriosVacios(t *testing.T) {
 	ctx := contexto(t)
 	pool := dbprueba.BaseMigrada(ctx, t)
 	repo := postgres.NuevoRepositorioBacklog(pool)
-	registrado := registrarParaEditar(ctx, t, pool, repo, crearProyecto(ctx, t, pool, "Demo"), "Crear proyecto")
+	registrado := registrarParaEditar(ctx, t, repo, crearProyecto(ctx, t, pool, "Demo"), "Crear proyecto")
 
 	for _, criterios := range [][]string{{}, nil} {
 		editado := editarCon(t, registrado, "Crear proyecto")
@@ -111,7 +109,7 @@ func TestGuardarEdicion_ItemInexistente(t *testing.T) {
 	ctx := contexto(t)
 	pool := dbprueba.BaseMigrada(ctx, t)
 	repo := postgres.NuevoRepositorioBacklog(pool)
-	registrado := registrarParaEditar(ctx, t, pool, repo, crearProyecto(ctx, t, pool, "Demo"), "Crear proyecto")
+	registrado := registrarParaEditar(ctx, t, repo, crearProyecto(ctx, t, pool, "Demo"), "Crear proyecto")
 
 	for _, id := range []string{idQueNoEsDeNingunItem, "no-es-un-uuid"} {
 		editado := editarCon(t, registrado, "Otro titulo")
@@ -135,7 +133,7 @@ func TestGuardarEdicion_ItemCompletado(t *testing.T) {
 	ctx := contexto(t)
 	pool := dbprueba.BaseMigrada(ctx, t)
 	repo := postgres.NuevoRepositorioBacklog(pool)
-	registrado := registrarParaEditar(ctx, t, pool, repo, crearProyecto(ctx, t, pool, "Demo"), "Crear proyecto")
+	registrado := registrarParaEditar(ctx, t, repo, crearProyecto(ctx, t, pool, "Demo"), "Crear proyecto")
 	editado := editarCon(t, registrado, "Crear proyecto con integrantes")
 	if _, err := pool.Exec(ctx, `UPDATE items_backlog SET estado = 'completado' WHERE id = $1`, registrado.ID); err != nil {
 		t.Fatalf("completar el item: %v", err)
@@ -165,7 +163,7 @@ func TestGuardarEdicion_Concurrente(t *testing.T) {
 	ctx := contexto(t)
 	pool := dbprueba.BaseMigrada(ctx, t)
 	repo := postgres.NuevoRepositorioBacklog(pool)
-	registrado := registrarParaEditar(ctx, t, pool, repo, crearProyecto(ctx, t, pool, "Demo"), "Crear proyecto")
+	registrado := registrarParaEditar(ctx, t, repo, crearProyecto(ctx, t, pool, "Demo"), "Crear proyecto")
 
 	candado, err := pool.Begin(ctx)
 	if err != nil {
