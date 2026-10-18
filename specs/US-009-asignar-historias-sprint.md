@@ -7,7 +7,7 @@
 | **Issue** | #10 |
 | **Escenarios BDD** | `features/US-009-asignar-historias-sprint.feature` |
 | **Código** | `internal/domain/sprint/`, caso de uso en `internal/app/`, repositorio en `internal/adapters/postgres/`, migración nueva en `migraciones/` |
-| **Última actualización** | 2026-10-13 |
+| **Última actualización** | 2026-10-18 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
 > implementación. Si durante la implementación descubrís que algo de acá está
@@ -126,7 +126,7 @@ Entre paréntesis, la capa que la hace cumplir.
      `SELECT proyecto_id, estado FROM sprints WHERE id = $1 FOR SHARE`. Si no
      hay fila, el Sprint no existe (`ErrSprintInexistente`).
   2. Bloquea la fila del ítem y lee su proyecto, su estado, sus Story Points y
-     sus criterios, con `FOR UPDATE`. Si no hay fila, el ítem no existe
+     sus criterios, con `FOR NO KEY UPDATE`. Si no hay fila, el ítem no existe
      (`ErrItemInexistente`).
   3. Lee si el ítem ya está en el Sprint abierto: una fila de la relación con
      resultado `pendiente`.
@@ -364,13 +364,17 @@ se registra nada.
   verificadas fuera de la transacción podrían pasar las dos. Por eso el
   repositorio bloquea y vuelve a verificar con la misma función del dominio, sin
   duplicar la regla (mismo enfoque que RN-008-14).
-- **`FOR SHARE` en el Sprint y `FOR UPDATE` en el ítem.** `FOR SHARE` deja que
-  varias asignaciones al mismo Sprint avancen a la vez, y hace esperar a un
-  cierre (US-011), que modifica la fila. `FOR UPDATE` en el ítem serializa las
-  asignaciones del mismo ítem, de modo que la segunda ve a la primera y se
-  rechaza con `ErrItemYaAsignado` en vez de chocar con la clave primaria. Se
-  descartó bloquear el proyecto como en US-008: serializaría todas las altas de
-  sprints, ítems y asignaciones de un proyecto sin necesidad.
+- **`FOR SHARE` en el Sprint y `FOR NO KEY UPDATE` en el ítem.** `FOR SHARE`
+  deja que varias asignaciones al mismo Sprint avancen a la vez, y hace esperar a
+  un cierre (US-011), que modifica la fila. `FOR NO KEY UPDATE` en el ítem
+  serializa las asignaciones del mismo ítem, de modo que la segunda ve a la
+  primera y se rechaza con `ErrItemYaAsignado` en vez de chocar con la clave
+  primaria. Es `NO KEY UPDATE` y no `UPDATE` (cambio respecto de la primera
+  versión de la spec, resuelto al implementar) por el mismo motivo que en US-005
+  y US-008: no bloquea a quien inserta una fila que apunta al ítem, como un
+  registro de esfuerzo (US-019). Se descartó bloquear el proyecto como en
+  US-008: serializaría todas las altas de sprints, ítems y asignaciones de un
+  proyecto sin necesidad.
 - **Sin validar la capacidad del Sprint.** Superar la velocidad es una decisión
   de planificación del equipo, no una regla de negocio. Se descartó bloquear la
   asignación; la comparación contra la velocidad (US-026) se verá en el
@@ -400,21 +404,20 @@ se registra nada.
   era la versión anterior de esta spec. La clave es `(item_id, sprint_id)`: no
   hay ID propio ni `DEFAULT gen_random_uuid()`. Se descartó una clave sintética
   más una restricción de unicidad: guardaría dos veces la misma garantía.
-- **Frase de diccionario con criterios, pendiente de acordar con el equipo.**
+- **Frase de diccionario con criterios, aprobada en el PR de implementación.**
   Las frases actuales no dan criterios de aceptación y los escenarios de éxito
-  los necesitan. Se propone:
+  los necesitan. Se agregó, con la tilde de "aceptación" como el resto del
+  diccionario:
 
   | Frase | Expresión |
   |---|---|
-  | `Y una historia "X" con prioridad "must", 5 story points y 2 criterios de aceptacion` | `^una historia "([^"]*)" con prioridad "([^"]*)", (\d+) story points y (\d+) criterios? de aceptacion$` |
+  | `Y una historia "X" con prioridad "must", 5 story points y 2 criterios de aceptación` | `^una historia "([^"]*)" con prioridad "([^"]*)", (\d+) story points y (\d+) criterios? de aceptación$` |
 
   Como todas las expresiones van con ancla, no choca con
-  `una historia "X" con prioridad "must" y 5 story points`. Se aprueba con el
-  grupo antes de empezar la implementación y la agrega, en su PR, quien la usa
-  (esta historia). Si no se aprueba a tiempo, CA-009-1, CA-009-2, CA-009-3 y
-  CA-009-7 se verifican con tests unitarios y de integración y no tienen
-  escenario BDD, y el `.feature` queda sin caso normal ni alternativo. No se
-  inventa la frase en el `.feature`.
+  `una historia "X" con prioridad "must" y 5 story points`. Los criterios que
+  crea son genéricos ("Criterio 1", ...): al escenario solo le importa cuántos
+  hay. La dejó aprobada el PR de implementación, y con ella CA-009-1, CA-009-2,
+  CA-009-3 y CA-009-7 tienen escenario BDD.
 - **Los escenarios de CA-009-6 llegan con US-011.** Necesitan un Sprint
   cerrado, y el step `el sprint "X" cerrado` usa el cierre de US-011. Hasta
   entonces, CA-009-6 se cubre con tests unitarios (la función del dominio con el
