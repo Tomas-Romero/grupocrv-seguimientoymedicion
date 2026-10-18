@@ -99,6 +99,18 @@ type Metricas interface {
 	VelocidadDelEquipo() (float64, error)
 }
 
+// Esfuerzo es el area de US-019 (US-020 y US-021 la amplian).
+type Esfuerzo interface {
+	// RegistrarEsfuerzo registra las horas que un integrante dedico a una
+	// historia, todos nombrados como los conoce el escenario. Lo que no existe
+	// (un integrante o una historia que el escenario no creo en el proyecto) se
+	// manda con un ID que no esta en la base, asi el rechazo lo produce la
+	// aplicacion.
+	RegistrarEsfuerzo(proyecto, integrante, historia string, fecha time.Time, actividad string, horas float64) error
+	CantidadRegistros(proyecto string) (int, error)
+	HorasDeHistoria(proyecto, historia string) (float64, error)
+}
+
 // Servicios agrupa las areas conectadas para UN escenario. Un campo nil
 // significa "area todavia sin conectar": los steps que la necesiten fallan con
 // ErrAreaSinConectar.
@@ -107,6 +119,7 @@ type Servicios struct {
 	Backlog   Backlog
 	Sprints   Sprints
 	Metricas  Metricas
+	Esfuerzo  Esfuerzo
 }
 
 // Fabrica construye los Servicios de un escenario. Se llama antes de CADA
@@ -177,6 +190,13 @@ func (m *mundo) sprints() (Sprints, error) {
 		return nil, areaSinConectar("sprints")
 	}
 	return m.servicios.Sprints, nil
+}
+
+func (m *mundo) esfuerzo() (Esfuerzo, error) {
+	if m.servicios.Esfuerzo == nil {
+		return nil, areaSinConectar("esfuerzo")
+	}
+	return m.servicios.Esfuerzo, nil
 }
 
 func (m *mundo) metricas() (Metricas, error) {
