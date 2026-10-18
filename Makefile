@@ -6,7 +6,10 @@ TEMPL       ?= templ
 MIN_DOMAIN  ?= 85
 MIN_TOTAL   ?= 70
 
-.PHONY: help up down dev build run gen css test cover bdd lint fmt check migrate seed trace clean tools
+# Version del binario standalone de Tailwind. Mantenerla igual que ARG TAILWIND_VERSION del Dockerfile.
+TAILWIND_VERSION ?= v4.3.1
+
+.PHONY: help up down dev build run gen css test cover bdd lint fmt check migrate seed trace clean tools tailwind
 
 help: ## Muestra esta ayuda
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
@@ -16,6 +19,7 @@ tools: ## Instala las herramientas de desarrollo (correr una sola vez)
 	$(GO) install github.com/pressly/goose/v3/cmd/goose@v3.26.0
 	$(GO) install github.com/air-verse/air@v1.61.7
 	$(GO) install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.8
+	$(MAKE) tailwind
 
 up: ## Levanta Postgres, aplica migraciones y carga datos de ejemplo
 	docker compose up -d db
@@ -30,10 +34,28 @@ down: ## Baja los contenedores (los datos sobreviven en el volumen)
 gen: ## Genera el codigo Go de las plantillas templ
 	$(TEMPL) generate
 
-css: ## Compila Tailwind
+tailwind: ## Descarga el binario standalone de Tailwind a ./bin si falta o cambio la version
+	@mkdir -p bin
+	@if [ "$$(cat bin/.tailwind-version 2>/dev/null)" = "$(TAILWIND_VERSION)" ]; then exit 0; fi; \
+	os=$$(uname -s); arch=$$(uname -m); destino=bin/tailwindcss; \
+	case "$$os-$$arch" in \
+	  Linux-x86_64) asset=tailwindcss-linux-x64 ;; \
+	  Linux-aarch64|Linux-arm64) asset=tailwindcss-linux-arm64 ;; \
+	  Darwin-arm64) asset=tailwindcss-macos-arm64 ;; \
+	  Darwin-x86_64) asset=tailwindcss-macos-x64 ;; \
+	  MINGW*|MSYS*|CYGWIN*) asset=tailwindcss-windows-x64.exe; destino=bin/tailwindcss.exe ;; \
+	  *) echo "Sistema no soportado: $$os-$$arch"; exit 1 ;; \
+	esac; \
+	echo "Descargando Tailwind $(TAILWIND_VERSION) ($$asset)..."; \
+	rm -f bin/tailwindcss bin/tailwindcss.exe; \
+	curl -fsSL -o "$$destino" "https://github.com/tailwindlabs/tailwindcss/releases/download/$(TAILWIND_VERSION)/$$asset"; \
+	chmod +x "$$destino"; \
+	echo "$(TAILWIND_VERSION)" > bin/.tailwind-version
+
+css: tailwind ## Compila Tailwind (descarga el binario si falta)
 	./bin/tailwindcss -i web/static/css/input.css -o web/static/css/app.css --minify
 
-dev: ## Desarrollo con recarga automatica
+dev: css ## Desarrollo con recarga automatica
 	$(TEMPL) generate --watch --proxy=http://localhost:8080 --cmd="$(GO) run ./cmd/server"
 
 build: gen ## Compila el binario en ./bin/server
