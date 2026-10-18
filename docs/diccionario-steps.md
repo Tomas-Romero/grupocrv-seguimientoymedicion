@@ -108,6 +108,7 @@ conectada, falla con `area sin conectar a los steps: <área>`: es a propósito.
 | `Y una historia "Crear proyecto" con prioridad "must"` | `^una historia "([^"]*)" con prioridad "([^"]*)"$` |
 | `Y una historia "Crear proyecto" con prioridad "must" y 5 story points` | `^una historia "([^"]*)" con prioridad "([^"]*)" y (\d+) story points$` |
 | `Y un sprint "Sprint 1" con el objetivo "MVP navegable"` | `^un sprint "([^"]*)" con el objetivo "([^"]*)"$` |
+| `Y un sprint "Sprint 1" con el objetivo "MVP navegable" del "2026-10-06" al "2026-10-19"` | `^un sprint "([^"]*)" con el objetivo "([^"]*)" del "([^"]*)" al "([^"]*)"$` |
 | `Y la historia "Crear proyecto" asignada al sprint "Sprint 1"` | `^la historia "([^"]*)" asignada al sprint "([^"]*)"$` |
 | `Y la historia "Crear proyecto" completada` | `^la historia "([^"]*)" completada$` |
 | `Y el sprint "Sprint 1" cerrado` | `^el sprint "([^"]*)" cerrado$` |
@@ -166,6 +167,7 @@ inexistente (CA-005-8, CA-008-10); con esa frase el escenario no lleva
 | `Cuando se cambia la prioridad de la historia "Crear proyecto" a "should"` | `^se cambia la prioridad de la historia "([^"]*)" a "([^"]*)"$` |
 | `Cuando se estima la historia "Crear proyecto" en 5 story points` | `^se estima la historia "([^"]*)" en (\d+) story points$` |
 | `Cuando se crea el sprint "Sprint 1" con el objetivo "MVP navegable"` | `^se crea el sprint "([^"]*)" con el objetivo "([^"]*)"$` |
+| `Cuando se crea el sprint "Sprint 1" con el objetivo "MVP navegable" del "2026-10-06" al "2026-10-19"` | `^se crea el sprint "([^"]*)" con el objetivo "([^"]*)" del "([^"]*)" al "([^"]*)"$` |
 | `Cuando se asigna la historia "Crear proyecto" al sprint "Sprint 1"` | `^se asigna la historia "([^"]*)" al sprint "([^"]*)"$` |
 | `Cuando se marca la historia "Crear proyecto" como completada` | `^se marca la historia "([^"]*)" como completada$` |
 | `Cuando se cierra el sprint "Sprint 1"` | `^se cierra el sprint "([^"]*)"$` |
@@ -176,6 +178,19 @@ inexistente (CA-005-8, CA-008-10); con esa frase el escenario no lleva
 **Propuesta US-003:** `se registra al integrante "X" con email "..." y rol "Y"`
 es la variante con email de la frase anterior (ver la nota de Contexto). Un
 nombre de 100 o 101 caracteres no tiene frase: se prueba con tests unitarios.
+
+**Sprints (US-008):** el nombre entre comillas (`"Sprint 1"`) es el nombre
+**esperado**: la persona no lo escribe, lo asigna la aplicación (`Sprint N`, con N el
+número de sprint del proyecto). El step crea el sprint sin nombre y, si la creación
+sale bien, verifica que el nombre generado coincida; si no coincide, el step falla (no
+es un rechazo de la operación). Las frases sin fechas arman fechas válidas y
+consecutivas: el primer sprint de un proyecto empieza el día de inicio del proyecto,
+cada siguiente el día después de que termina el último sprint del escenario, y todos
+duran 14 días. Una creación rechazada no cuenta como último sprint. Como el último
+sprint tiene que estar cerrado para crear el siguiente (RN-008-17), un escenario que
+necesite dos sprints cierra el primero antes (`Y el sprint "Sprint 1" cerrado`, que
+llega con US-011). Un sprint que no entre en las fechas del proyecto tiene que usar la
+frase con fechas.
 
 **Un solo `Cuando` por escenario.** Si necesitás dos acciones, la primera es
 contexto y va en un `Dado`. Un escenario con dos `Cuando` casi siempre está
@@ -218,6 +233,7 @@ cuenta caracteres y no bytes.
 | `Y la historia "Crear proyecto" está en el sprint "Sprint 1"` | `^la historia "([^"]*)" está en el sprint "([^"]*)"$` |
 | `Y la historia "Crear proyecto" está en el backlog` | `^la historia "([^"]*)" está en el backlog$` |
 | `Y el sprint "Sprint 1" está cerrado` | `^el sprint "([^"]*)" está cerrado$` |
+| `Y el sprint "Sprint 1" está abierto` | `^el sprint "([^"]*)" está abierto$` |
 | `Y los story points planificados son 13` | `^los story points planificados son (\d+)$` |
 | `Y los story points completados son 8` | `^los story points completados son (\d+)$` |
 | `Y la velocidad del equipo es 25` | `^la velocidad del equipo es (\d+(?:[.,]\d+)?)$` |
