@@ -12,6 +12,7 @@ import (
 	"sync"
 
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/backlog"
+	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/esfuerzo"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/integrante"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/proyecto"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/sprint"
@@ -38,6 +39,10 @@ type Base struct {
 	// sprints guarda los sprints de cada proyecto, en orden de alta: el ultimo de la
 	// lista es el de numero mas alto (US-008).
 	sprints map[string][]sprint.Sprint
+
+	// esfuerzos guarda los registros de esfuerzo de cada proyecto, en orden de alta
+	// (US-019).
+	esfuerzos map[string][]esfuerzo.RegistroEsfuerzo
 }
 
 // NuevaBase devuelve una base vacia.
@@ -48,6 +53,8 @@ func NuevaBase() *Base {
 		datosProyectos: map[string]proyecto.Proyecto{},
 		integrantes:    map[string][]integrante.Integrante{},
 		sprints:        map[string][]sprint.Sprint{},
+
+		esfuerzos: map[string][]esfuerzo.RegistroEsfuerzo{},
 	}
 }
 
