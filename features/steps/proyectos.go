@@ -2,6 +2,8 @@ package steps
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/cucumber/godog"
 )
@@ -16,12 +18,16 @@ func registrarProyectos(sc *godog.ScenarioContext, m *mundo) {
 	sc.Step(`^un proyecto "([^"]*)"$`, m.dadoUnProyecto)
 	sc.Step(`^un proyecto "([^"]*)" con fechas del "([^"]*)" al "([^"]*)"$`, m.dadoUnProyectoConFechas)
 	sc.Step(`^el integrante "([^"]*)" con rol "([^"]*)"$`, m.dadoUnIntegrante)
+	// PROPUESTA US-003: se aprueba en el PR junto con docs/diccionario-steps.md.
+	sc.Step(`^el integrante "([^"]*)" con email "([^"]*)" y rol "([^"]*)"$`, m.dadoUnIntegranteConEmail)
 	sc.Step(`^ningún proyecto$`, m.dadoNingunProyecto)
 
 	sc.Step(`^se crea un proyecto "([^"]*)" con fechas del "([^"]*)" al "([^"]*)"$`, m.cuandoSeCreaProyecto)
 	sc.Step(`^se modifica el nombre del proyecto "([^"]*)" a "([^"]*)"$`, m.cuandoSeModificaNombre)
 	sc.Step(`^se modifican las fechas del proyecto "([^"]*)" del "([^"]*)" al "([^"]*)"$`, m.cuandoSeModificanFechas)
 	sc.Step(`^se registra al integrante "([^"]*)" con rol "([^"]*)"$`, m.cuandoSeRegistraIntegrante)
+	// PROPUESTA US-003: se aprueba en el PR junto con docs/diccionario-steps.md.
+	sc.Step(`^se registra al integrante "([^"]*)" con email "([^"]*)" y rol "([^"]*)"$`, m.cuandoSeRegistraIntegranteConEmail)
 
 	sc.Step(`^el proyecto "([^"]*)" existe con fechas del "([^"]*)" al "([^"]*)"$`, m.entoncesElProyectoExiste)
 	sc.Step(`^el proyecto "([^"]*)" tiene (\d+) integrantes?$`, m.entoncesCantidadIntegrantes)
@@ -72,12 +78,51 @@ func (m *mundo) dadoNingunProyecto() error {
 	return nil
 }
 
+// dominioDeEmails es el dominio reservado para pruebas (.test, RFC 2606): los
+// emails que arma el step a partir del nombre nunca apuntan a una casilla real.
+const dominioDeEmails = "ejemplo.test"
+
+// emailDeNombre arma el email de un integrante cuando la frase no lo nombra
+// (`el integrante "X" con rol "Y"`). Cumple dos cosas con CUALQUIER nombre,
+// incluso con espacios, tildes o vacio:
+//
+//   - es una direccion simple valida para net/mail;
+//   - es distinta para cada nombre distinto, porque el email es unico por
+//     proyecto (RN-003-7) y dos integrantes de un escenario no pueden chocar
+//     por accidente.
+//
+// Conserva solo las letras minusculas ASCII y los digitos, y codifica todo lo
+// demas (mayusculas, espacios, tildes, "_") como "_" + codigo Unicode en
+// hexadecimal + "_". El "_" final cierra el codigo y nunca aparece suelto, asi
+// que el resultado se puede decodificar y no hay dos nombres con el mismo email.
+// Ya sale en minuscula, por lo que la normalizacion del dominio no lo cambia.
+// Un nombre vacio da "_": el email sigue siendo valido y el unico error del
+// escenario es el del nombre.
+func emailDeNombre(nombre string) string {
+	var local strings.Builder
+	for _, r := range nombre {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+			local.WriteRune(r)
+			continue
+		}
+		local.WriteString("_" + strconv.FormatInt(int64(r), 16) + "_")
+	}
+	if local.Len() == 0 {
+		local.WriteString("_")
+	}
+	return local.String() + "@" + dominioDeEmails
+}
+
 func (m *mundo) dadoUnIntegrante(nombre, rol string) error {
+	return m.dadoUnIntegranteConEmail(nombre, emailDeNombre(nombre), rol)
+}
+
+func (m *mundo) dadoUnIntegranteConEmail(nombre, email, rol string) error {
 	proyectos, err := m.proyectos()
 	if err != nil {
 		return err
 	}
-	if err = proyectos.RegistrarIntegrante(m.proyectoActual, nombre, rol); err != nil {
+	if err = proyectos.RegistrarIntegrante(m.proyectoActual, nombre, email, rol); err != nil {
 		return fmt.Errorf("registrar al integrante %q del contexto: %w", nombre, err)
 	}
 	return nil
@@ -124,11 +169,15 @@ func (m *mundo) cuandoSeModificanFechas(nombre, inicio, fin string) error {
 }
 
 func (m *mundo) cuandoSeRegistraIntegrante(nombre, rol string) error {
+	return m.cuandoSeRegistraIntegranteConEmail(nombre, emailDeNombre(nombre), rol)
+}
+
+func (m *mundo) cuandoSeRegistraIntegranteConEmail(nombre, email, rol string) error {
 	proyectos, err := m.proyectos()
 	if err != nil {
 		return err
 	}
-	return m.registrarAccion(proyectos.RegistrarIntegrante(m.proyectoActual, nombre, rol))
+	return m.registrarAccion(proyectos.RegistrarIntegrante(m.proyectoActual, nombre, email, rol))
 }
 
 func (m *mundo) entoncesElProyectoExiste(nombre, inicio, fin string) error {

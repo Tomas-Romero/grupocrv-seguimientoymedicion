@@ -41,7 +41,7 @@ type Proyectos interface {
 	CrearProyecto(nombre string, inicio, fin time.Time) error
 	ModificarNombreProyecto(actual, nuevo string) error
 	ModificarFechasProyecto(nombre string, inicio, fin time.Time) error
-	RegistrarIntegrante(proyecto, nombre, rol string) error
+	RegistrarIntegrante(proyecto, nombre, email, rol string) error
 	ProyectoExiste(nombre string) (inicio, fin time.Time, err error)
 	CantidadIntegrantes(proyecto string) (int, error)
 }

@@ -12,6 +12,7 @@ import (
 	"sync"
 
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/backlog"
+	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/integrante"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/proyecto"
 )
 
@@ -28,6 +29,10 @@ type Base struct {
 	// RegistrarProyecto (US-001). Todo proyecto de esta tabla esta tambien en
 	// proyectos, que es el mapa donde busca ExisteProyecto.
 	datosProyectos map[string]proyecto.Proyecto
+
+	// integrantes guarda los integrantes de cada proyecto, en orden de alta
+	// (US-003).
+	integrantes map[string][]integrante.Integrante
 }
 
 // NuevaBase devuelve una base vacia.
@@ -36,6 +41,7 @@ func NuevaBase() *Base {
 		proyectos:      map[string]bool{},
 		items:          map[string][]backlog.ItemBacklog{},
 		datosProyectos: map[string]proyecto.Proyecto{},
+		integrantes:    map[string][]integrante.Integrante{},
 	}
 }
 

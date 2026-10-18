@@ -15,7 +15,8 @@ type RepositorioEstimacion interface {
 	ObtenerItem(ctx context.Context, itemID string) (backlog.ItemBacklog, bool, error)
 
 	// GuardarEstimacion guarda solo los Story Points del item (RN-013-7). Si el
-	// item ya no existe, devuelve ErrItemInexistente.
+	// item ya no existe, devuelve ErrItemInexistente; si se completo despues de
+	// leerlo, devuelve backlog.ErrItemCompletado y no lo cambia (RN-013-4).
 	GuardarEstimacion(ctx context.Context, itemID string, puntos backlog.StoryPoints) error
 }
 

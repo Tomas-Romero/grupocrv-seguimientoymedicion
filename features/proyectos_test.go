@@ -2,25 +2,23 @@ package features_test
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/features/steps"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/app"
+	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/integrante"
 )
 
-// errNoImplementado lo devuelven las operaciones que todavia no tienen caso de
-// uso (o calculo) conectado: si algun escenario las necesita, falla en voz alta.
-var errNoImplementado = errors.New("el doble en memoria no implementa esta operacion")
-
-// proyectosSobreApp conecta el area Proyectos con los casos de uso de US-001 y
-// US-002 sobre la base en memoria del escenario (ADR 0002). Los Entonces leen la
-// base directamente, porque todavia no hay un caso de uso de lectura.
+// proyectosSobreApp conecta el area Proyectos con los casos de uso de US-001,
+// US-002 y US-003 sobre la base en memoria del escenario (ADR 0002). Los
+// Entonces leen la base directamente, porque todavia no hay un caso de uso de
+// lectura.
 type proyectosSobreApp struct {
 	escenario *escenario
 	crear     *app.CrearProyecto
 	modificar *app.ModificarProyecto
+	registrar *app.RegistrarIntegrante
 }
 
 var _ steps.Proyectos = (*proyectosSobreApp)(nil)
@@ -30,6 +28,7 @@ func nuevosProyectosSobreApp(e *escenario) *proyectosSobreApp {
 		escenario: e,
 		crear:     app.NuevoCrearProyecto(e.base),
 		modificar: app.NuevoModificarProyecto(e.base),
+		registrar: app.NuevoRegistrarIntegrante(e.base),
 	}
 }
 
@@ -86,14 +85,24 @@ func (a *proyectosSobreApp) ModificarFechasProyecto(nombre string, inicio, fin t
 	return err
 }
 
-// RegistrarIntegrante es de US-003.
-func (a *proyectosSobreApp) RegistrarIntegrante(_, _, _ string) error {
-	return errNoImplementado
+// RegistrarIntegrante es de US-003. No valida nada: lo hacen el dominio y el caso
+// de uso. El rol se convierte a integrante.Rol sin normalizarlo (RN-003-5), asi
+// que un "PRODUCT_BUILDER" llega tal cual y el dominio lo rechaza. Si el escenario
+// nombra un proyecto que no creo, se llama con un ID que ningun proyecto tiene y
+// el rechazo (ErrProyectoInexistente, RN-003-6) lo produce la aplicacion.
+func (a *proyectosSobreApp) RegistrarIntegrante(proyecto, nombre, email, rol string) error {
+	_, err := a.registrar.Ejecutar(context.Background(), a.idDe(proyecto), nombre, email, integrante.Rol(rol))
+	return err
 }
 
-// CantidadIntegrantes es de US-003.
-func (a *proyectosSobreApp) CantidadIntegrantes(_ string) (int, error) {
-	return 0, errNoImplementado
+// CantidadIntegrantes es de US-003. Lee la base directamente, igual que
+// CantidadHistoriasEnBacklog: todavia no hay un caso de uso de lectura.
+func (a *proyectosSobreApp) CantidadIntegrantes(proyecto string) (int, error) {
+	id, ok := a.escenario.proyectos[proyecto]
+	if !ok {
+		return 0, fmt.Errorf("el proyecto %q no se creo en este escenario", proyecto)
+	}
+	return len(a.escenario.base.Integrantes(id)), nil
 }
 
 // idDe devuelve el ID del proyecto que el escenario creo con ese nombre. Si no lo

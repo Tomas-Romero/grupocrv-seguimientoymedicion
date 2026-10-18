@@ -28,17 +28,24 @@ func (b *Base) ObtenerItem(_ context.Context, itemID string) (backlog.ItemBacklo
 }
 
 // GuardarEstimacion cambia solo los Story Points del item. Si el item no esta en
-// la base, devuelve app.ErrItemInexistente y no cambia nada.
+// la base, devuelve app.ErrItemInexistente; si ya esta completado, devuelve
+// backlog.ErrItemCompletado (RN-013-4). En los dos casos no cambia nada.
 func (b *Base) GuardarEstimacion(_ context.Context, itemID string, puntos backlog.StoryPoints) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
 	for _, items := range b.items {
 		for i := range items {
-			if items[i].ID == itemID {
-				items[i].StoryPoints = puntos
-				return nil
+			if items[i].ID != itemID {
+				continue
 			}
+			// Igual que el UPDATE condicionado de Postgres: un item completado
+			// no se estima aunque se haya completado despues de leerlo.
+			if items[i].Estado == backlog.EstadoCompletado {
+				return fmt.Errorf("%w (id %s)", backlog.ErrItemCompletado, itemID)
+			}
+			items[i].StoryPoints = puntos
+			return nil
 		}
 	}
 	return fmt.Errorf("%w (id %s)", app.ErrItemInexistente, itemID)

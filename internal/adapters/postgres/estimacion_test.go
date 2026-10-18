@@ -199,3 +199,34 @@ func TestObtenerItem_EstimacionFueraDeEscalaEnLaBase(t *testing.T) {
 		t.Error("ObtenerItem informo que el item existe junto con un error")
 	}
 }
+
+// US-013 / RN-013-4, RN-013-7, #100: GuardarEstimacion no cambia un item que ya
+// esta completado: el UPDATE esta condicionado al estado, no actualiza ninguna
+// fila y el repositorio devuelve ErrItemCompletado. Cubre la ventana entre leer
+// el item y guardar la estimacion.
+func TestGuardarEstimacion_ItemCompletado(t *testing.T) {
+	ctx := contexto(t)
+	pool := dbprueba.BaseMigrada(ctx, t)
+	repo := postgres.NuevoRepositorioBacklog(pool)
+	registrado, err := repo.RegistrarItem(ctx, crearProyecto(ctx, t, pool, "Demo"), itemConTitulo(t, "Crear proyecto"))
+	if err != nil {
+		t.Fatalf("RegistrarItem: %v", err)
+	}
+	tres, _ := backlog.NuevosStoryPoints(3)
+	if err := repo.GuardarEstimacion(ctx, registrado.ID, tres); err != nil {
+		t.Fatalf("GuardarEstimacion(3): %v", err)
+	}
+	if _, err := pool.Exec(ctx, `UPDATE items_backlog SET estado = 'completado' WHERE id = $1`, registrado.ID); err != nil {
+		t.Fatalf("completar el item: %v", err)
+	}
+	ocho, _ := backlog.NuevosStoryPoints(8)
+
+	err = repo.GuardarEstimacion(ctx, registrado.ID, ocho)
+
+	if !errors.Is(err, backlog.ErrItemCompletado) {
+		t.Fatalf("error = %v, se esperaba ErrItemCompletado", err)
+	}
+	if guardado := leerFila(ctx, t, pool, registrado.ID); guardado.storyPoints == nil || *guardado.storyPoints != 3 {
+		t.Errorf("story_points = %v, se esperaba 3 (sin cambios)", guardado.storyPoints)
+	}
+}

@@ -7,7 +7,7 @@
 | **Issue** | #21 |
 | **Escenarios BDD** | `features/US-013-estimar-historia-fibonacci.feature` |
 | **Código** | `internal/domain/backlog/` (`StoryPoints`, `ItemBacklog.Estimar`), caso de uso en `internal/app/`, repositorio en `internal/adapters/postgres/` |
-| **Última actualización** | 2026-10-08 |
+| **Última actualización** | 2026-10-13 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
 > implementación. Si durante la implementación descubrís que algo de acá está
@@ -84,7 +84,12 @@ Entre paréntesis, la capa que la hace cumplir.
   `ErrItemInexistente` antes de llamar al dominio. Ese error no se une con los
   del dominio.
 - **RN-013-7** (persistencia) — La estimación se guarda con un único `UPDATE`
-  sobre el ítem. No hace falta bloquear filas: si dos personas estiman a la vez,
+  sobre el ítem, condicionado a que no esté completado:
+  `WHERE id = $1 AND estado <> 'completado'`. Si no actualiza ninguna fila, el
+  repositorio relee el ítem: si no existe, devuelve `ErrItemInexistente`; si
+  está completado, `ErrItemCompletado`. Así, un ítem que pasa a completado
+  (US-010) entre la lectura del caso de uso y el `UPDATE` no se re-estima
+  (RN-013-4). No hace falta bloquear filas: si dos personas estiman a la vez,
   gana la última escritura.
 - **RN-013-8** (aplicación) — Si cualquier validación falla, no se modifica
   nada.
@@ -136,6 +141,10 @@ Entre paréntesis, la capa que la hace cumplir.
   cambios.
 - **CL-013-11** — `Estimar` no modifica el ítem que recibe: devuelve una copia.
   Si la estimación falla, el ítem original queda intacto.
+- **CL-013-12** — El ítem pasa a completado entre la lectura del caso de uso y
+  el `UPDATE`: no se actualiza ninguna fila y se rechaza con
+  `ErrItemCompletado` (RN-013-7). Se verifica llamando al repositorio con un
+  ítem ya completado en la base.
 
 ## 7. Condiciones de error
 
@@ -146,7 +155,8 @@ Entre paréntesis, la capa que la hace cumplir.
 | El ítem no existe | `app.ErrItemInexistente`, envuelto indicando el ID recibido | "el item no existe" |
 
 Los dos primeros son del dominio, sin unirse entre sí (RN-013-5: solo se
-devuelve uno). El último lo detecta la capa de aplicación antes de llamar al
+devuelve uno). `ErrItemCompletado` lo devuelve también el repositorio cuando el
+ítem se completó entre la lectura y el guardado (RN-013-7). El último lo detecta la capa de aplicación antes de llamar al
 dominio. Todos son valores de paquete comparables con `errors.Is`, y en ningún
 caso se modifica el ítem. `app.ErrItemInexistente` lo define quien llegue
 primero a `main` (esta historia o US-019, que también lo usa); la otra lo
@@ -193,9 +203,13 @@ reutiliza.
 - **La escala vive en el dominio de `backlog`, no en `metricas`.** Es una regla
   de estimación, no de cálculo. `metricas` sigue aceptando cualquier entero no
   negativo.
-- **Última escritura gana.** No hay bloqueos ni versionado: dos estimaciones
-  simultáneas del mismo ítem son un caso raro y el resultado (la última)
-  es el esperable.
+- **Última escritura gana entre dos estimaciones, pero no contra un cierre.**
+  No hay bloqueos ni versionado: dos estimaciones simultáneas del mismo ítem
+  son un caso raro y el resultado (la última) es el esperable. En cambio, el
+  `UPDATE` sí se condiciona al estado: una estimación que llega después de
+  que el ítem se completó cambiaría hacia atrás un sprint medido. Salió de la
+  revisión del PR de implementación y la misma protección usa US-006
+  (RN-006-8).
 - **El escenario de ítem completado depende de US-010.** El paso `Dado la
   historia "X" completada` pertenece al área Sprints y no está conectado hasta
   que US-010 llegue a `main`. Hasta entonces CA-013-5 y CL-013-8/9 se cubren con
