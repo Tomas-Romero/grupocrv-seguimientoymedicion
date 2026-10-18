@@ -58,6 +58,9 @@ type DatosHistoria struct {
 // Backlog es el area de US-005, US-006 y US-013.
 type Backlog interface {
 	CrearHistoria(proyecto string, historia DatosHistoria) error
+	// EditarHistoria reemplaza los cuatro datos de la historia (US-006). Despues
+	// de editarla, los steps la nombran por su titulo nuevo.
+	EditarHistoria(titulo string, historia DatosHistoria) error
 	CambiarPrioridadHistoria(titulo, prioridad string) error
 	EstimarHistoria(titulo string, puntos int) error
 	CantidadHistoriasEnBacklog(proyecto string) (int, error)
