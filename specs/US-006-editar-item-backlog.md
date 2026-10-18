@@ -6,8 +6,8 @@
 | **Autor** | Juan Ignacio Vergara |
 | **Issue** | #8 |
 | **Escenarios BDD** | `features/US-006-editar-item-backlog.feature` |
-| **Código** | `internal/domain/backlog/` (`ItemBacklog.Editar`), caso de uso en `internal/app/`, repositorio en `internal/adapters/postgres/`. Sin migración nueva |
-| **Última actualización** | 2026-10-12 |
+| **Código** | `internal/domain/backlog/` (`ItemBacklog.Editar`), caso de uso `EditarItem` en `internal/app/`, `GuardarEdicion` en `internal/adapters/postgres/` y `internal/adapters/memoria/`. Sin migración nueva |
+| **Última actualización** | 2026-10-18 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
 > implementación. Si durante la implementación descubrís que algo de acá está
@@ -98,8 +98,8 @@ Entre paréntesis, la capa que la hace cumplir.
 
 - **Dominio puro y errores unidos:** igual que US-005 (sección 5).
 - **Validación compartida.** La validación de `NuevoItem` se extrae a una
-  función del paquete que usan `NuevoItem` y `Editar`. Es un refactor dentro
-  del PR de implementación, con los tests de US-005 en verde.
+  función del paquete, `validarDatos`, que usan `NuevoItem` y `Editar`. Es un
+  refactor dentro del PR de implementación, con los tests de US-005 en verde.
 - **Sin migración.** Se escriben columnas que ya crea la migración de US-005.
 - **Dependencia con US-010.** RN-006-8 es la protección de esta historia contra
   el marcado de US-010. El escenario de CA-006-6 necesita
@@ -108,9 +108,19 @@ Entre paréntesis, la capa que la hace cumplir.
   integración (el repositorio con un ítem completado armado en la base). Mismo
   criterio que US-008 y US-013.
 - **Dependencia con US-008 y US-009.** El escenario de CA-006-3 necesita crear
-  un sprint y asignarle la historia. Si esas historias no están en `main` cuando
-  se implemente esta, CA-006-3 se cubre con un test de integración y su
-  escenario llega con ellas.
+  un sprint y asignarle la historia. Cuando se implementó esta historia, US-008
+  y US-009 no estaban en `main` y no existía la tabla de la relación, así que
+  tampoco se puede armar un test de integración con un ítem asignado. CA-006-3
+  se cubre con lo que esta historia sí controla: el dominio edita sin mirar la
+  asignación ni la DoR (RN-006-6) y el repositorio escribe solo las cuatro
+  columnas de `items_backlog`, de modo que la relación, que vive en otra tabla,
+  no se toca. El escenario, y un test de integración con la relación real,
+  llegan con US-009.
+- **Lista de criterios vacía en BDD.** Una tabla de Gherkin no puede estar
+  vacía, así que la frase de edición no puede mandar una lista vacía ni
+  `la historia "X" tiene los criterios:` puede comprobarla. Esa parte de
+  CA-006-4 se cubre con tests unitarios (dominio y base en memoria) y de
+  integración (Postgres, que la guarda como arreglo vacío y no nulo).
 - **Frases BDD.** Se reutilizan
   `se cambia la prioridad de la historia "X" a "should"` (CA-006-2) y las de
   resultado de US-005. Se agrega una frase de edición completa:
@@ -157,7 +167,7 @@ Entre paréntesis, la capa que la hace cumplir.
 | Situación | Error devuelto | Mensaje del error (origen) |
 |---|---|---|
 | Datos inválidos | Los de US-005 (`ErrTituloVacio`, `ErrTituloMuyLargo`, `ErrPrioridadInvalida`, `ErrCriterioVacio`), unidos en el orden de RN-005-13 | Los de la sección 7 de US-005 |
-| El ítem está completado | `backlog.ErrItemCompletado` (el de US-013), envuelto indicando el ID | El mensaje general (cambio pedido en el #93) |
+| El ítem está completado | `backlog.ErrItemCompletado` (el de US-013), envuelto indicando el ID | "el item esta completado" |
 | El ítem no existe | `app.ErrItemInexistente` (el de US-013 y US-019), envuelto indicando el ID | "el item no existe" |
 
 Los errores de datos se unen entre sí como en US-005. `ErrItemCompletado` y
@@ -200,7 +210,8 @@ valores de paquete comparables con `errors.Is`, y en ningún caso se modifica el
   de un sprint medido (US-025 y US-026) y de sus reportes. Se descartó permitir
   editar solo el texto: dos reglas distintas para un mismo estado no aportan.
 - **Se reutiliza `ErrItemCompletado` de US-013.** La condición es la misma: el
-  ítem está completado. Usa el mensaje general (cambio pedido en el #93).
+  ítem está completado. Usa el mensaje general de US-013, "el item esta
+  completado".
 - **`UPDATE` condicionado en lugar de bloqueo.** Una sola sentencia atómica
   alcanza para no editar un ítem que se completó en el medio, sin bloquear
   filas ni abrir una transacción. Es la misma protección que necesita US-013
@@ -219,4 +230,7 @@ valores de paquete comparables con `errors.Is`, y en ningún caso se modifica el
 - [x] Use IA para: redacción de la especificación con Claude Code a partir de
   la historia y de las decisiones del equipo, usando las specs de US-005,
   US-002 y US-013 como modelo
-- Revisado y entendido por:
+- [x] Use IA para: el ajuste tras la implementación (cobertura de CA-006-3 y de
+  la lista de criterios vacía, mensaje de `ErrItemCompletado`, nombres del
+  código), redactado con Claude Code
+- Revisado y entendido por: Juan Ignacio Vergara

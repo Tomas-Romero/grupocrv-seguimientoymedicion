@@ -165,6 +165,7 @@ inexistente (CA-005-8, CA-008-10); con esa frase el escenario no lleva
 | `Cuando se crea la historia "Crear proyecto" con prioridad "must"` | `^se crea la historia "([^"]*)" con prioridad "([^"]*)"$` |
 | `Cuando se crea la historia "Crear proyecto" con prioridad "must", la descripción "Alta" y los criterios:` + tabla de una columna | `^se crea la historia "([^"]*)" con prioridad "([^"]*)", la descripción "([^"]*)" y los criterios:$` |
 | `Cuando se crea una historia con un título de 121 caracteres y prioridad "must"` | `^se crea una historia con un título de (\d+) caracteres y prioridad "([^"]*)"$` |
+| `Cuando se edita la historia "Crear proyecto" con el título "Alta de proyecto", la prioridad "must", la descripción "Alta" y los criterios:` + tabla de una columna | `^se edita la historia "([^"]*)" con el título "([^"]*)", la prioridad "([^"]*)", la descripción "([^"]*)" y los criterios:$` |
 | `Cuando se cambia la prioridad de la historia "Crear proyecto" a "should"` | `^se cambia la prioridad de la historia "([^"]*)" a "([^"]*)"$` |
 | `Cuando se estima la historia "Crear proyecto" en 5 story points` | `^se estima la historia "([^"]*)" en (\d+) story points$` |
 | `Cuando se crea el sprint "Sprint 1" con el objetivo "MVP navegable"` | `^se crea el sprint "([^"]*)" con el objetivo "([^"]*)"$` |
@@ -217,6 +218,11 @@ Cuando se crea la historia "Alta" con prioridad "must", la descripción "Alta de
 
 Gherkin recorta los espacios de cada celda, así que una celda con solo espacios
 llega vacía: un criterio "solo espacios" se prueba con tests unitarios, no acá.
+
+`se edita la historia "X" con el título "Y", ...` manda los cuatro datos a la
+vez, como el formulario de edición (US-006): los que no cambian se repiten. Desde
+ahí la historia se nombra por su título nuevo. `se cambia la prioridad ...` es la
+misma edición con los demás datos sin cambios.
 
 `se crea una historia con un título de N caracteres` arma el título con N letras
 `ñ`. Cada una ocupa dos bytes, así que el escenario también prueba que el límite
