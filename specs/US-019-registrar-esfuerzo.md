@@ -7,7 +7,7 @@
 | **Issue** | #22 |
 | **Escenarios BDD** | `features/US-019-registrar-esfuerzo.feature` |
 | **Código** | `internal/domain/esfuerzo/`, caso de uso en `internal/app/`, repositorio en `internal/adapters/postgres/`, migración nueva en `migraciones/` |
-| **Última actualización** | 2026-10-07 |
+| **Última actualización** | 2026-10-18 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
 > implementación. Si durante la implementación descubrís que algo de acá está
@@ -304,10 +304,14 @@ nada.
 - **La pantalla queda fuera de alcance.** Depende de T-004 (layout base y
   navegación). Esta historia entrega dominio, caso de uso, repositorio y
   migración.
-- **Frases nuevas del diccionario** (a aprobar en el PR de implementación):
-  `el integrante "X" registra N horas de "A" en la historia "H" el AAAA-MM-DD`,
-  `el proyecto "P" tiene N registros de esfuerzo` y `la historia "H" tiene N
-  horas registradas`. Las tres pertenecen al área nueva `Esfuerzo`.
+- **Frases nuevas del diccionario** (aprobadas en el PR de implementación).
+  Las cuatro pertenecen al área `Esfuerzo`:
+  - `el integrante "X" registra N horas de "A" en la historia "H" el AAAA-MM-DD`
+    (acción), y su variante de contexto `el integrante "X" ya registró N horas de
+    "A" en la historia "H" el AAAA-MM-DD`, que hace falta para los escenarios de
+    varios registros: el escenario tiene un solo `Cuando`;
+  - `el proyecto "P" tiene N registros de esfuerzo`;
+  - `la historia "H" tiene N horas registradas`.
 
 ## Uso de IA en esta especificación
 
