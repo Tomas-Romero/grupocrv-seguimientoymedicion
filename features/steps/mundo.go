@@ -58,6 +58,9 @@ type DatosHistoria struct {
 // Backlog es el area de US-005, US-006 y US-013.
 type Backlog interface {
 	CrearHistoria(proyecto string, historia DatosHistoria) error
+	// EditarHistoria reemplaza los cuatro datos de la historia (US-006). Despues
+	// de editarla, los steps la nombran por su titulo nuevo.
+	EditarHistoria(titulo string, historia DatosHistoria) error
 	CambiarPrioridadHistoria(titulo, prioridad string) error
 	EstimarHistoria(titulo string, puntos int) error
 	CantidadHistoriasEnBacklog(proyecto string) (int, error)
@@ -73,12 +76,15 @@ type Backlog interface {
 
 // Sprints es el area de US-008, US-009, US-010 y US-011.
 type Sprints interface {
-	CrearSprint(proyecto, nombre, objetivo string) error
+	// CrearSprint crea un sprint en el proyecto con su objetivo (el Sprint Goal) y
+	// sus fechas, y devuelve el nombre que le asigno la aplicacion ("Sprint N"): la
+	// persona no lo escribe (RN-008-12).
+	CrearSprint(proyecto, objetivo string, inicio, fin time.Time) (nombre string, err error)
 	AsignarHistoriaASprint(titulo, sprint string) error
 	CompletarHistoria(titulo string) error
 	CerrarSprint(nombre string) error
 	SprintDeHistoria(titulo string) (string, error)
-	SprintEstaCerrado(nombre string) (bool, error)
+	SprintEstaCerrado(proyecto, nombre string) (bool, error)
 }
 
 // Metricas es el area de US-025 y US-026.
@@ -132,6 +138,10 @@ type mundo struct {
 	// ultimoError es el error que dejo el ultimo step de accion (Cuando).
 	// Lo leen `la operacion es exitosa` y `la operacion se rechaza`.
 	ultimoError error
+
+	// finDelUltimoSprint es el fin del ultimo sprint creado en cada proyecto del
+	// escenario. Las frases de sprint sin fechas lo usan para armar las del siguiente.
+	finDelUltimoSprint map[string]time.Time
 
 	// resultados de las consultas de metricas
 	puntosPlanificados int

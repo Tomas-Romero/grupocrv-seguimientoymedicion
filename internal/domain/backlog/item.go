@@ -17,7 +17,7 @@ import (
 // LargoMaximoTitulo es el maximo de caracteres del titulo recortado (RN-005-3).
 const LargoMaximoTitulo = 120
 
-// DatosItem son los datos que carga la persona al crear un item.
+// DatosItem son los datos que carga la persona al crear o editar un item.
 type DatosItem struct {
 	Titulo      string
 	Descripcion string
@@ -44,11 +44,31 @@ type ItemBacklog struct {
 }
 
 // NuevoItem valida los datos y arma un item pendiente y sin estimar. Si algun
-// dato es invalido no devuelve item: devuelve todos los errores unidos con
-// errors.Join, en el orden de RN-005-13 (titulo, prioridad y criterios por
-// posicion), para que quien carga el item vea de una vez todo lo que tiene que
-// corregir.
+// dato es invalido no devuelve item: devuelve todos los errores unidos (ver
+// validarDatos).
 func NuevoItem(datos DatosItem, creadoEn time.Time) (ItemBacklog, error) {
+	validos, err := validarDatos(datos)
+	if err != nil {
+		return ItemBacklog{}, err
+	}
+	return ItemBacklog{
+		Titulo:      validos.Titulo,
+		Descripcion: validos.Descripcion,
+		Prioridad:   validos.Prioridad,
+		Estado:      EstadoPendiente,
+		StoryPoints: SinEstimar(),
+		Criterios:   validos.Criterios,
+		CreadoEn:    creadoEn,
+	}, nil
+}
+
+// validarDatos valida los datos que carga la persona y los devuelve recortados.
+// Es la unica validacion de los datos de un item: la usan crear (US-005) y
+// editar (US-006, RN-006-1). Si algun dato es invalido devuelve todos los
+// errores unidos con errors.Join, en el orden de RN-005-13 (titulo, prioridad y
+// criterios por posicion), para que quien carga el item vea de una vez todo lo
+// que tiene que corregir.
+func validarDatos(datos DatosItem) (DatosItem, error) {
 	var errs []error
 
 	// RN-005-1: se recorta antes de validar, y se guarda recortado.
@@ -63,17 +83,14 @@ func NuevoItem(datos DatosItem, creadoEn time.Time) (ItemBacklog, error) {
 	errs = append(errs, errsCriterios...)
 
 	if err := errors.Join(errs...); err != nil {
-		return ItemBacklog{}, err
+		return DatosItem{}, err
 	}
-	return ItemBacklog{
+	return DatosItem{
 		Titulo: titulo,
 		// RN-005-4: opcional y sin largo maximo; si queda vacia, es valida.
 		Descripcion: strings.TrimSpace(datos.Descripcion),
 		Prioridad:   datos.Prioridad,
-		Estado:      EstadoPendiente,
-		StoryPoints: SinEstimar(),
 		Criterios:   criterios,
-		CreadoEn:    creadoEn,
 	}, nil
 }
 

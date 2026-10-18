@@ -20,18 +20,19 @@ var errSinConectar = errors.New("la operacion todavia no esta conectada a la apl
 // que el rechazo lo produce la aplicacion (RN-005-9) y no este adaptador.
 const idDeProyectoInexistente = "00000000-0000-0000-0000-000000000000"
 
-// idDeItemInexistente es el ID con el que se llama a EstimarItem cuando el
+// idDeItemInexistente es el ID con el que se llama a EstimarItem y EditarItem cuando el
 // escenario nombra una historia que no creo. Igual que con el proyecto, el
 // rechazo (ErrItemInexistente) lo produce la aplicacion y no este adaptador.
 const idDeItemInexistente = "00000000-0000-0000-0000-000000000000"
 
-// backlogSobreApp conecta el area Backlog con los casos de uso de US-005 y US-013
+// backlogSobreApp conecta el area Backlog con los casos de uso de US-005, US-006 y US-013
 // sobre la base en memoria del escenario (ADR 0002). Las consultas de los Entonces leen
 // la base directamente, porque todavia no hay casos de uso de lectura (US-007).
 type backlogSobreApp struct {
 	escenario *escenario
 	crear     *app.CrearItemBacklog
 	estimar   *app.EstimarItem
+	editar    *app.EditarItem
 
 	// proyectoDe guarda en que proyecto quedo cada historia, por titulo. Los
 	// escenarios no repiten titulos (docs/diccionario-steps.md).
@@ -45,6 +46,7 @@ func nuevoBacklogSobreApp(e *escenario) *backlogSobreApp {
 		escenario:  e,
 		crear:      app.NuevoCrearItemBacklog(e.base, ahoraEnEscenarios),
 		estimar:    app.NuevoEstimarItem(e.base),
+		editar:     app.NuevoEditarItem(e.base),
 		proyectoDe: map[string]string{},
 	}
 }
@@ -105,9 +107,45 @@ func (b *backlogSobreApp) CriteriosDeHistoria(titulo string) ([]string, error) {
 	return item.Criterios, err
 }
 
-// CambiarPrioridadHistoria es de US-006.
-func (b *backlogSobreApp) CambiarPrioridadHistoria(_, _ string) error {
-	return errSinConectar
+// EditarHistoria edita la historia con el caso de uso de US-006. Si el
+// escenario nombra una historia que no creo, llama con un ID que no esta en la
+// base: el rechazo es de la aplicacion (RN-006-7). Si sale bien, la historia
+// pasa a nombrarse por su titulo nuevo, ya recortado.
+func (b *backlogSobreApp) EditarHistoria(titulo string, historia steps.DatosHistoria) error {
+	itemID := idDeItemInexistente
+	if item, err := b.historia(titulo); err == nil {
+		itemID = item.ID
+	}
+	editado, err := b.editar.Ejecutar(context.Background(), itemID, backlog.DatosItem{
+		Titulo:      historia.Titulo,
+		Descripcion: historia.Descripcion,
+		Prioridad:   backlog.Prioridad(historia.Prioridad),
+		Criterios:   historia.Criterios,
+	})
+	if err != nil {
+		return err
+	}
+	proyectoID := b.proyectoDe[titulo]
+	delete(b.proyectoDe, titulo)
+	b.proyectoDe[editado.Titulo] = proyectoID
+	return nil
+}
+
+// CambiarPrioridadHistoria es la misma edicion de US-006: lee los datos
+// actuales de la historia y manda los cuatro con la prioridad nueva. Una
+// historia que el escenario no creo se manda solo con la prioridad, y la
+// rechaza la aplicacion.
+func (b *backlogSobreApp) CambiarPrioridadHistoria(titulo, prioridad string) error {
+	historia := steps.DatosHistoria{Titulo: titulo, Prioridad: prioridad}
+	if item, err := b.historia(titulo); err == nil {
+		historia = steps.DatosHistoria{
+			Titulo:      item.Titulo,
+			Descripcion: item.Descripcion,
+			Prioridad:   prioridad,
+			Criterios:   item.Criterios,
+		}
+	}
+	return b.EditarHistoria(titulo, historia)
 }
 
 // EstimarHistoria estima la historia con el caso de uso de US-013. Si el

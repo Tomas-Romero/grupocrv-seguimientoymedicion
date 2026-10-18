@@ -40,8 +40,10 @@ func nuevosServicios() (steps.Servicios, error) {
 		// Los proyectos que crea quedan en la misma base donde los busca el caso de
 		// uso de US-005, y los integrantes se registran en esa misma base.
 		Proyectos: nuevosProyectosSobreApp(e),
-		// US-005: el caso de uso real sobre la base en memoria.
+		// US-005, US-006 y US-013: los casos de uso reales sobre la base en memoria.
 		Backlog: nuevoBacklogSobreApp(e),
+		// US-008: el caso de uso real sobre la base en memoria.
+		Sprints: nuevoSprintsSobreApp(e),
 		// US-025: calculo del dominio sobre los items que arma el escenario.
 		Metricas: nuevasMetricasEnMemoria(),
 	}, nil
