@@ -14,6 +14,7 @@ import (
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/backlog"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/integrante"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/proyecto"
+	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/sprint"
 )
 
 // Base es una base de datos en memoria. Se puede usar desde varias goroutines.
@@ -33,6 +34,10 @@ type Base struct {
 	// integrantes guarda los integrantes de cada proyecto, en orden de alta
 	// (US-003).
 	integrantes map[string][]integrante.Integrante
+
+	// sprints guarda los sprints de cada proyecto, en orden de alta: el ultimo de la
+	// lista es el de numero mas alto (US-008).
+	sprints map[string][]sprint.Sprint
 }
 
 // NuevaBase devuelve una base vacia.
@@ -42,6 +47,7 @@ func NuevaBase() *Base {
 		items:          map[string][]backlog.ItemBacklog{},
 		datosProyectos: map[string]proyecto.Proyecto{},
 		integrantes:    map[string][]integrante.Integrante{},
+		sprints:        map[string][]sprint.Sprint{},
 	}
 }
 
