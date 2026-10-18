@@ -10,19 +10,25 @@ import (
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/sprint"
 )
 
-// sprintsSobreApp conecta el area Sprints con el caso de uso de US-008 sobre la base
-// en memoria del escenario (ADR 0002). Los Entonces leen la base directamente,
+// idDeSprintInexistente es el ID con el que se llama a AsignarItemASprint cuando el
+// escenario nombra un sprint que no existe en el proyecto. Igual que con el proyecto y
+// la historia, el rechazo (ErrSprintInexistente) lo produce la aplicacion.
+const idDeSprintInexistente = "00000000-0000-0000-0000-000000000000"
+
+// sprintsSobreApp conecta el area Sprints con los casos de uso de US-008 y US-009 sobre
+// la base en memoria del escenario (ADR 0002). Los Entonces leen la base directamente,
 // porque todavia no hay casos de uso de lectura (US-012). Las demas operaciones del
-// area son de US-009, US-010 y US-011.
+// area son de US-010 y US-011.
 type sprintsSobreApp struct {
 	escenario *escenario
 	crear     *app.CrearSprint
+	asignar   *app.AsignarItemASprint
 }
 
 var _ steps.Sprints = (*sprintsSobreApp)(nil)
 
 func nuevoSprintsSobreApp(e *escenario) *sprintsSobreApp {
-	return &sprintsSobreApp{escenario: e, crear: app.NuevoCrearSprint(e.base)}
+	return &sprintsSobreApp{escenario: e, crear: app.NuevoCrearSprint(e.base), asignar: app.NuevoAsignarItemASprint(e.base)}
 }
 
 // CrearSprint no valida nada: lo hace el caso de uso. Si el escenario nombra un
@@ -56,14 +62,49 @@ func (a *sprintsSobreApp) SprintEstaCerrado(proyecto, nombre string) (bool, erro
 	return false, fmt.Errorf("el sprint %q no existe en el proyecto %q", nombre, proyecto)
 }
 
-// AsignarHistoriaASprint es de US-009.
-func (a *sprintsSobreApp) AsignarHistoriaASprint(_, _ string) error { return errSinConectar }
+// AsignarHistoriaASprint no valida nada: lo hace el caso de uso. Busca la historia por
+// titulo en todos los proyectos del escenario (una historia de otro proyecto tiene que
+// llegar a la aplicacion para que ella la rechace) y el sprint por nombre dentro del
+// proyecto actual. Lo que no encuentra lo manda con un ID que no existe.
+func (a *sprintsSobreApp) AsignarHistoriaASprint(proyecto, titulo, nombreDelSprint string) error {
+	sprintID := idDeSprintInexistente
+	if proyectoID, ok := a.escenario.proyectos[proyecto]; ok {
+		for _, s := range a.escenario.base.Sprints(proyectoID) {
+			if s.Nombre() == nombreDelSprint {
+				sprintID = s.ID
+			}
+		}
+	}
+	_, err := a.asignar.Ejecutar(context.Background(), a.idDeHistoria(titulo), sprintID)
+	return err
+}
+
+// SprintDeHistoria devuelve el nombre del sprint abierto en el que esta la historia.
+func (a *sprintsSobreApp) SprintDeHistoria(titulo string) (string, error) {
+	itemID := a.idDeHistoria(titulo)
+	actual, ok := a.escenario.base.SprintActualDelItem(itemID)
+	if !ok {
+		return "", fmt.Errorf("la historia %q no esta en ningun sprint", titulo)
+	}
+	return actual.Nombre(), nil
+}
+
+// idDeHistoria busca la historia por titulo en todos los proyectos del escenario: los
+// escenarios no repiten titulos (docs/diccionario-steps.md). Si no esta, devuelve un ID
+// que no existe.
+func (a *sprintsSobreApp) idDeHistoria(titulo string) string {
+	for _, proyectoID := range a.escenario.proyectos {
+		for _, item := range a.escenario.base.Items(proyectoID) {
+			if item.Titulo == titulo {
+				return item.ID
+			}
+		}
+	}
+	return idDeItemInexistente
+}
 
 // CompletarHistoria es de US-010.
 func (a *sprintsSobreApp) CompletarHistoria(_ string) error { return errSinConectar }
 
 // CerrarSprint es de US-011.
 func (a *sprintsSobreApp) CerrarSprint(_ string) error { return errSinConectar }
-
-// SprintDeHistoria depende de la asignacion (US-009).
-func (a *sprintsSobreApp) SprintDeHistoria(_ string) (string, error) { return "", errSinConectar }
