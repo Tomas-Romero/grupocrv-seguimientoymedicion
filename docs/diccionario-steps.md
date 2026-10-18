@@ -117,6 +117,7 @@ conectada, falla con `area sin conectar a los steps: <área>`: es a propósito.
 | `Y el sprint "Sprint 1" con una historia de 5 story points completada` | `^el sprint "([^"]*)" con una historia de (-?\d+) story points completada$` |
 | `Y el sprint "Sprint 1" con una historia de 3 story points sin completar` | `^el sprint "([^"]*)" con una historia de (-?\d+) story points sin completar$` |
 | `Y el sprint cerrado "Sprint 1" con 20 story points completados de 25 planificados` | `^el sprint cerrado "([^"]*)" con (\d+) story points completados de (\d+) planificados$` |
+| `Y el integrante "Ana" ya registró 3 horas de "Desarrollo" en la historia "Crear proyecto" el 2026-10-05` | `^el integrante "([^"]*)" ya registró (-?\d+(?:[.,]\d+)?) horas de "([^"]*)" en la historia "([^"]*)" el (\S+)$` |
 
 Un escenario **no repite títulos de historias**: el área Backlog las identifica
 por título, y la spec de US-005 permite repetirlos entre sí, así que dos historias
@@ -175,6 +176,7 @@ inexistente (CA-005-8, CA-008-10); con esa frase el escenario no lleva
 | `Cuando se consultan los story points planificados del sprint "Sprint 1"` | `^se consultan los story points planificados del sprint "([^"]*)"$` |
 | `Cuando se consultan los story points completados del sprint "Sprint 1"` | `^se consultan los story points completados del sprint "([^"]*)"$` |
 | `Cuando se consulta la velocidad del equipo` | `^se consulta la velocidad del equipo$` |
+| `Cuando el integrante "Ana" registra 2,5 horas de "Desarrollo" en la historia "Crear proyecto" el 2026-10-05` | `^el integrante "([^"]*)" registra (-?\d+(?:[.,]\d+)?) horas de "([^"]*)" en la historia "([^"]*)" el (\S+)$` |
 
 **Propuesta US-003:** `se registra al integrante "X" con email "..." y rol "Y"`
 es la variante con email de la frase anterior (ver la nota de Contexto). Un
@@ -192,6 +194,14 @@ sprint tiene que estar cerrado para crear el siguiente (RN-008-17), un escenario
 necesite dos sprints cierra el primero antes (`Y el sprint "Sprint 1" cerrado`, que
 llega con US-011). Un sprint que no entre en las fechas del proyecto tiene que usar la
 frase con fechas.
+
+**Esfuerzo (US-019):** `el integrante "X" registra N horas de "A" en la historia "H"
+el AAAA-MM-DD` y su variante de contexto `ya registró` registran las horas del
+integrante en el proyecto actual. Aceptan coma o punto decimal y un número negativo
+(es la única forma de escribir CA-019-6). En los escenarios "hoy" es el
+2026-10-06 (el reloj fijo): una fecha posterior se rechaza. El integrante y la
+historia se buscan por nombre dentro del proyecto actual: uno que no esté ahí se
+rechaza por la aplicación, no por los steps.
 
 **Un solo `Cuando` por escenario.** Si necesitás dos acciones, la primera es
 contexto y va en un `Dado`. Un escenario con dos `Cuando` casi siempre está
@@ -243,6 +253,8 @@ cuenta caracteres y no bytes.
 | `Y los story points planificados son 13` | `^los story points planificados son (\d+)$` |
 | `Y los story points completados son 8` | `^los story points completados son (\d+)$` |
 | `Y la velocidad del equipo es 25` | `^la velocidad del equipo es (\d+(?:[.,]\d+)?)$` |
+| `Y el proyecto "Demo" tiene 1 registro de esfuerzo` | `^el proyecto "([^"]*)" tiene (\d+) registros? de esfuerzo$` |
+| `Y la historia "Crear proyecto" tiene 2,5 horas registradas` | `^la historia "([^"]*)" tiene (\d+(?:[.,]\d+)?) horas registradas$` |
 
 `la operación es exitosa` y `la operación se rechaza` miran el error que dejó el
 último `Cuando`. Son los dos steps que más vas a usar: todo escenario de error
