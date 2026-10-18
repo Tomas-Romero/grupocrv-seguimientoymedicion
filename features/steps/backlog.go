@@ -13,6 +13,7 @@ import (
 func registrarBacklog(sc *godog.ScenarioContext, m *mundo) {
 	sc.Step(`^una historia "([^"]*)" con prioridad "([^"]*)"$`, m.dadoUnaHistoria)
 	sc.Step(`^una historia "([^"]*)" con prioridad "([^"]*)" y (\d+) story points$`, m.dadoUnaHistoriaEstimada)
+	sc.Step(`^una historia "([^"]*)" con prioridad "([^"]*)", (\d+) story points y (\d+) criterios? de aceptación$`, m.dadoUnaHistoriaLista)
 
 	sc.Step(`^se crea la historia "([^"]*)" con prioridad "([^"]*)"$`, m.cuandoSeCreaHistoria)
 	sc.Step(`^se crea la historia "([^"]*)" con prioridad "([^"]*)", la descripción "([^"]*)" y los criterios:$`, m.cuandoSeCreaHistoriaCompleta)
@@ -49,6 +50,27 @@ func (m *mundo) dadoUnaHistoriaEstimada(titulo, prioridad string, puntos int) er
 	backlog, err := m.backlog()
 	if err != nil {
 		return err
+	}
+	if err = backlog.EstimarHistoria(titulo, puntos); err != nil {
+		return fmt.Errorf("estimar la historia %q del contexto: %w", titulo, err)
+	}
+	return nil
+}
+
+// dadoUnaHistoriaLista crea una historia estimada y con la cantidad de criterios pedida:
+// la que cumple la Definition of Ready de US-009. Los criterios son genericos
+// ("Criterio 1", "Criterio 2", ...): al escenario solo le importa cuantos hay.
+func (m *mundo) dadoUnaHistoriaLista(titulo, prioridad string, puntos, criterios int) error {
+	backlog, err := m.backlog()
+	if err != nil {
+		return err
+	}
+	historia := DatosHistoria{Titulo: titulo, Prioridad: prioridad}
+	for i := 1; i <= criterios; i++ {
+		historia.Criterios = append(historia.Criterios, fmt.Sprintf("Criterio %d", i))
+	}
+	if err = backlog.CrearHistoria(m.proyectoActual, historia); err != nil {
+		return fmt.Errorf("crear la historia %q del contexto: %w", titulo, err)
 	}
 	if err = backlog.EstimarHistoria(titulo, puntos); err != nil {
 		return fmt.Errorf("estimar la historia %q del contexto: %w", titulo, err)
