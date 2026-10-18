@@ -233,4 +233,4 @@ valores de paquete comparables con `errors.Is`, y en ningún caso se modifica el
 - [x] Use IA para: el ajuste tras la implementación (cobertura de CA-006-3 y de
   la lista de criterios vacía, mensaje de `ErrItemCompletado`, nombres del
   código), redactado con Claude Code
-- Revisado y entendido por:
+- Revisado y entendido por: Juan Ignacio Vergara
