@@ -42,6 +42,8 @@ func nuevosServicios() (steps.Servicios, error) {
 		Proyectos: nuevosProyectosSobreApp(e),
 		// US-005: el caso de uso real sobre la base en memoria.
 		Backlog: nuevoBacklogSobreApp(e),
+		// US-008: el caso de uso real sobre la base en memoria.
+		Sprints: nuevoSprintsSobreApp(e),
 		// US-025: calculo del dominio sobre los items que arma el escenario.
 		Metricas: nuevasMetricasEnMemoria(),
 	}, nil
