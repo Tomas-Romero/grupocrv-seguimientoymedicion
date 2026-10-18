@@ -17,6 +17,7 @@ func registrarBacklog(sc *godog.ScenarioContext, m *mundo) {
 	sc.Step(`^se crea la historia "([^"]*)" con prioridad "([^"]*)"$`, m.cuandoSeCreaHistoria)
 	sc.Step(`^se crea la historia "([^"]*)" con prioridad "([^"]*)", la descripción "([^"]*)" y los criterios:$`, m.cuandoSeCreaHistoriaCompleta)
 	sc.Step(`^se crea una historia con un título de (\d+) caracteres y prioridad "([^"]*)"$`, m.cuandoSeCreaHistoriaConTituloDeLargo)
+	sc.Step(`^se edita la historia "([^"]*)" con el título "([^"]*)", la prioridad "([^"]*)", la descripción "([^"]*)" y los criterios:$`, m.cuandoSeEditaHistoria)
 	sc.Step(`^se cambia la prioridad de la historia "([^"]*)" a "([^"]*)"$`, m.cuandoSeCambiaPrioridad)
 	sc.Step(`^se estima la historia "([^"]*)" en (\d+) story points$`, m.cuandoSeEstima)
 
@@ -86,6 +87,21 @@ func (m *mundo) cuandoSeCreaHistoriaConTituloDeLargo(largo int, prioridad string
 	}
 	historia := DatosHistoria{Titulo: strings.Repeat("ñ", largo), Prioridad: prioridad}
 	return m.registrarAccion(backlog.CrearHistoria(m.proyectoActual, historia))
+}
+
+// cuandoSeEditaHistoria manda los cuatro datos a la vez, como el formulario de
+// edicion (RN-006-2). La historia se sigue nombrando por su titulo nuevo.
+func (m *mundo) cuandoSeEditaHistoria(titulo, nuevoTitulo, prioridad, descripcion string, tabla *godog.Table) error {
+	backlog, err := m.backlog()
+	if err != nil {
+		return err
+	}
+	criterios, err := columnaUnica(tabla)
+	if err != nil {
+		return err
+	}
+	historia := DatosHistoria{Titulo: nuevoTitulo, Descripcion: descripcion, Prioridad: prioridad, Criterios: criterios}
+	return m.registrarAccion(backlog.EditarHistoria(titulo, historia))
 }
 
 func (m *mundo) cuandoSeCambiaPrioridad(titulo, prioridad string) error {

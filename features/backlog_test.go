@@ -105,6 +105,11 @@ func (b *backlogSobreApp) CriteriosDeHistoria(titulo string) ([]string, error) {
 	return item.Criterios, err
 }
 
+// EditarHistoria es de US-006.
+func (b *backlogSobreApp) EditarHistoria(_ string, _ steps.DatosHistoria) error {
+	return errSinConectar
+}
+
 // CambiarPrioridadHistoria es de US-006.
 func (b *backlogSobreApp) CambiarPrioridadHistoria(_, _ string) error {
 	return errSinConectar
