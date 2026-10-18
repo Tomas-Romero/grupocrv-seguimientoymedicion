@@ -160,9 +160,15 @@ func (b *backlogSobreApp) EstimarHistoria(titulo string, puntos int) error {
 	return err
 }
 
-// HistoriaEstaEnBacklog depende de los sprints (US-009 y US-011).
-func (b *backlogSobreApp) HistoriaEstaEnBacklog(_ string) (bool, error) {
-	return false, errSinConectar
+// HistoriaEstaEnBacklog es verdadero si la historia no esta en un sprint abierto: una
+// historia esta en el backlog cuando no tiene sprint actual (US-009).
+func (b *backlogSobreApp) HistoriaEstaEnBacklog(titulo string) (bool, error) {
+	item, err := b.historia(titulo)
+	if err != nil {
+		return false, err
+	}
+	enSprint, err := b.escenario.base.ItemEnSprintAbierto(context.Background(), item.ID)
+	return !enSprint, err
 }
 
 // historia busca en la base el item que el escenario creo con ese titulo.
