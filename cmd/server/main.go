@@ -67,9 +67,14 @@ func run() error {
 		_, _ = w.Write([]byte("<h1>Software Metrics &amp; Estimation</h1><p>Sprint 0 — walking skeleton.</p>"))
 	})
 
+	// T-005: si un handler hace panic, la persona recibe el error interno uniforme y el
+	// servidor sigue atendiendo. Los handlers responden sus errores con
+	// manejadorDeErrores.ResponderError.
+	manejadorDeErrores := httpadapter.NuevoManejadorDeErrores(httpadapter.CatalogoDeErrores(), slog.Default())
+
 	srv := &http.Server{
 		Addr:              cfg.HTTPAddr,
-		Handler:           mux,
+		Handler:           manejadorDeErrores.Recuperar(mux),
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 
