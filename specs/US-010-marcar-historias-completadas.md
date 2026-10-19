@@ -258,4 +258,4 @@ modifica el ítem.
 - [x] Use IA para: la corrección de RN-010-4 (solo `ErrSprintCerrado` con el
   Sprint cerrado) y el ajuste tras la implementación (migración, cambio aplicado
   con el Sprint bloqueado, dependencia con US-013), redactados con Claude Code
-- Revisado y entendido por:
+- Revisado y entendido por: Juan Ignacio Vergara
