@@ -64,7 +64,7 @@ func TestObtenerItem_LeeElEstado(t *testing.T) {
 	if err != nil {
 		t.Fatalf("RegistrarItem: %v", err)
 	}
-	if _, err := pool.Exec(ctx, `UPDATE items_backlog SET estado = 'completado' WHERE id = $1`, registrado.ID); err != nil {
+	if _, err := pool.Exec(ctx, `UPDATE items_backlog SET estado = 'completado', completado_en = now() WHERE id = $1`, registrado.ID); err != nil {
 		t.Fatalf("completar el item: %v", err)
 	}
 
@@ -216,7 +216,7 @@ func TestGuardarEstimacion_ItemCompletado(t *testing.T) {
 	if err := repo.GuardarEstimacion(ctx, registrado.ID, tres); err != nil {
 		t.Fatalf("GuardarEstimacion(3): %v", err)
 	}
-	if _, err := pool.Exec(ctx, `UPDATE items_backlog SET estado = 'completado' WHERE id = $1`, registrado.ID); err != nil {
+	if _, err := pool.Exec(ctx, `UPDATE items_backlog SET estado = 'completado', completado_en = now() WHERE id = $1`, registrado.ID); err != nil {
 		t.Fatalf("completar el item: %v", err)
 	}
 	ocho, _ := backlog.NuevosStoryPoints(8)

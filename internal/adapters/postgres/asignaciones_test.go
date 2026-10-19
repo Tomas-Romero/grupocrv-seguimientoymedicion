@@ -287,7 +287,7 @@ func TestAsignarItemASprint_SprintCerrado(t *testing.T) {
 func TestAsignarItemASprint_ItemCompletado(t *testing.T) {
 	ctx := contexto(t)
 	e := nuevoEscenarioAsignaciones(ctx, t)
-	if _, err := e.pool.Exec(ctx, `UPDATE items_backlog SET estado = 'completado' WHERE id = $1`, e.item); err != nil {
+	if _, err := e.pool.Exec(ctx, `UPDATE items_backlog SET estado = 'completado', completado_en = now() WHERE id = $1`, e.item); err != nil {
 		t.Fatalf("completar el item: %v", err)
 	}
 	if _, err := e.pool.Exec(ctx, `INSERT INTO sprint_items (item_id, sprint_id, resultado) VALUES ($1, $2, 'completado')`, e.item, e.sprint); err != nil {
