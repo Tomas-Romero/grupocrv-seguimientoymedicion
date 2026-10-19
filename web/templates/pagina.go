@@ -13,6 +13,13 @@
 //	/proyectos/{id}/defectos       defectos
 package plantillas
 
+import (
+	"net/url"
+	"strings"
+)
+
+const nombreApp = "Software Metrics"
+
 // Seccion identifica el item del menu que corresponde a la pagina actual.
 type Seccion string
 
@@ -48,10 +55,33 @@ type Enlace struct {
 }
 
 // TituloCompleto es el texto de la pestana del navegador.
-func (p Pagina) TituloCompleto() string { return "" }
+func (p Pagina) TituloCompleto() string {
+	if titulo := strings.TrimSpace(p.Titulo); titulo != "" {
+		return titulo + " | " + nombreApp
+	}
+	return nombreApp
+}
 
 // EnlacesGlobales son los destinos que existen fuera de un proyecto.
-func (p Pagina) EnlacesGlobales() []Enlace { return nil }
+func (p Pagina) EnlacesGlobales() []Enlace {
+	return []Enlace{
+		{Texto: "Inicio", Href: "/", Activo: p.Activo == SeccionInicio},
+		{Texto: "Proyectos", Href: "/proyectos", Activo: p.Activo == SeccionProyectos},
+	}
+}
 
 // EnlacesProyecto son los destinos de un proyecto; vacio si la pagina no tiene proyecto.
-func (p Pagina) EnlacesProyecto() []Enlace { return nil }
+func (p Pagina) EnlacesProyecto() []Enlace {
+	if p.Proyecto == nil {
+		return nil
+	}
+	// El ID viaja en la ruta: se escapa para que una "/" o un espacio no la rompan.
+	base := "/proyectos/" + url.PathEscape(p.Proyecto.ID)
+	return []Enlace{
+		{Texto: "Resumen", Href: base, Activo: p.Activo == SeccionResumen},
+		{Texto: "Backlog", Href: base + "/backlog", Activo: p.Activo == SeccionBacklog},
+		{Texto: "Sprints", Href: base + "/sprints", Activo: p.Activo == SeccionSprints},
+		{Texto: "Métricas", Href: base + "/metricas", Activo: p.Activo == SeccionMetricas},
+		{Texto: "Defectos", Href: base + "/defectos", Activo: p.Activo == SeccionDefectos},
+	}
+}
