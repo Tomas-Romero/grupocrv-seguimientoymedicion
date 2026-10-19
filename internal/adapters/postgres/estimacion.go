@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 
@@ -17,17 +18,30 @@ var _ app.RepositorioEstimacion = (*RepositorioBacklog)(nil)
 // ObtenerItem lee el item completo. Un ID que ningun item tiene, o que no es un
 // UUID, es un item inexistente y no un error.
 func (r *RepositorioBacklog) ObtenerItem(ctx context.Context, itemID string) (backlog.ItemBacklog, bool, error) {
+	return leerItem(ctx, r.pool, itemID)
+}
+
+// consultor es lo que leerItem necesita: lo cumplen el pool y una transaccion.
+type consultor interface {
+	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
+}
+
+// leerItem lee el item completo con el pool o dentro de una transaccion (US-010 lo lee
+// con el sprint bloqueado). Un ID que ningun item tiene, o que no es un UUID, es un
+// item inexistente y no un error.
+func leerItem(ctx context.Context, q consultor, itemID string) (backlog.ItemBacklog, bool, error) {
 	const consulta = `
-SELECT id::text, proyecto_id::text, numero, titulo, descripcion, prioridad, estado, story_points, criterios, creado_en
+SELECT id::text, proyecto_id::text, numero, titulo, descripcion, prioridad, estado, story_points, criterios, creado_en, completado_en
 FROM items_backlog WHERE id = $1`
 	var (
-		item        backlog.ItemBacklog
-		prioridad   string
-		estado      string
-		storyPoints *int32
+		item         backlog.ItemBacklog
+		prioridad    string
+		estado       string
+		storyPoints  *int32
+		completadoEn *time.Time
 	)
-	err := r.pool.QueryRow(ctx, consulta, itemID).Scan(&item.ID, &item.ProyectoID, &item.Numero, &item.Titulo,
-		&item.Descripcion, &prioridad, &estado, &storyPoints, &item.Criterios, &item.CreadoEn)
+	err := q.QueryRow(ctx, consulta, itemID).Scan(&item.ID, &item.ProyectoID, &item.Numero, &item.Titulo,
+		&item.Descripcion, &prioridad, &estado, &storyPoints, &item.Criterios, &item.CreadoEn, &completadoEn)
 	if errors.Is(err, pgx.ErrNoRows) || esIDMalFormado(err) {
 		return backlog.ItemBacklog{}, false, nil
 	}
@@ -36,6 +50,10 @@ FROM items_backlog WHERE id = $1`
 	}
 	item.Prioridad = backlog.Prioridad(prioridad)
 	item.Estado = backlog.Estado(estado)
+	// El nulo es "sin fecha": solo un item completado la tiene (US-010).
+	if completadoEn != nil {
+		item.CompletadoEn = *completadoEn
+	}
 
 	// El nulo de la columna es "sin estimar" (RN-005-7). Un valor fuera de la
 	// escala es un dato corrupto: se informa, no se oculta.
