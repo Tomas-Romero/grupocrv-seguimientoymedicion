@@ -21,6 +21,7 @@ func registrarSprints(sc *godog.ScenarioContext, m *mundo) {
 	sc.Step(`^se crea el sprint "([^"]*)" con el objetivo "([^"]*)" del "([^"]*)" al "([^"]*)"$`, m.cuandoSeCreaSprintConFechas)
 	sc.Step(`^se asigna la historia "([^"]*)" al sprint "([^"]*)"$`, m.cuandoSeAsigna)
 	sc.Step(`^se marca la historia "([^"]*)" como completada$`, m.cuandoSeCompleta)
+	sc.Step(`^se desmarca la historia "([^"]*)"$`, m.cuandoSeDesmarca)
 	sc.Step(`^se cierra el sprint "([^"]*)"$`, m.cuandoSeCierraSprint)
 
 	sc.Step(`^la historia "([^"]*)" está en el sprint "([^"]*)"$`, m.entoncesHistoriaEnSprint)
@@ -181,6 +182,14 @@ func (m *mundo) cuandoSeCompleta(titulo string) error {
 		return err
 	}
 	return m.registrarAccion(sprints.CompletarHistoria(titulo))
+}
+
+func (m *mundo) cuandoSeDesmarca(titulo string) error {
+	sprints, err := m.sprints()
+	if err != nil {
+		return err
+	}
+	return m.registrarAccion(sprints.DesmarcarHistoria(titulo))
 }
 
 func (m *mundo) cuandoSeCierraSprint(nombre string) error {

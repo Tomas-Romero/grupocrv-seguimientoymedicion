@@ -84,7 +84,10 @@ type Sprints interface {
 	// proyecto. Lo que no existe se manda con un ID que no esta en la base, asi el
 	// rechazo lo produce la aplicacion.
 	AsignarHistoriaASprint(proyecto, titulo, sprint string) error
+	// CompletarHistoria y DesmarcarHistoria marcan y desmarcan la historia en el
+	// ultimo sprint de su proyecto, el unico que puede estar abierto (US-010).
 	CompletarHistoria(titulo string) error
+	DesmarcarHistoria(titulo string) error
 	CerrarSprint(nombre string) error
 	SprintDeHistoria(titulo string) (string, error)
 	SprintEstaCerrado(proyecto, nombre string) (bool, error)

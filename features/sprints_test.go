@@ -106,5 +106,8 @@ func (a *sprintsSobreApp) idDeHistoria(titulo string) string {
 // CompletarHistoria es de US-010.
 func (a *sprintsSobreApp) CompletarHistoria(_ string) error { return errSinConectar }
 
+// DesmarcarHistoria es de US-010.
+func (a *sprintsSobreApp) DesmarcarHistoria(_ string) error { return errSinConectar }
+
 // CerrarSprint es de US-011.
 func (a *sprintsSobreApp) CerrarSprint(_ string) error { return errSinConectar }

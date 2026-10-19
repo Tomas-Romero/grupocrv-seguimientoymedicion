@@ -173,6 +173,7 @@ inexistente (CA-005-8, CA-008-10); con esa frase el escenario no lleva
 | `Cuando se crea el sprint "Sprint 1" con el objetivo "MVP navegable" del "2026-10-06" al "2026-10-19"` | `^se crea el sprint "([^"]*)" con el objetivo "([^"]*)" del "([^"]*)" al "([^"]*)"$` |
 | `Cuando se asigna la historia "Crear proyecto" al sprint "Sprint 1"` | `^se asigna la historia "([^"]*)" al sprint "([^"]*)"$` |
 | `Cuando se marca la historia "Crear proyecto" como completada` | `^se marca la historia "([^"]*)" como completada$` |
+| `Cuando se desmarca la historia "Crear proyecto"` | `^se desmarca la historia "([^"]*)"$` |
 | `Cuando se cierra el sprint "Sprint 1"` | `^se cierra el sprint "([^"]*)"$` |
 | `Cuando se consultan los story points planificados del sprint "Sprint 1"` | `^se consultan los story points planificados del sprint "([^"]*)"$` |
 | `Cuando se consultan los story points completados del sprint "Sprint 1"` | `^se consultan los story points completados del sprint "([^"]*)"$` |
@@ -203,6 +204,13 @@ integrante en el proyecto actual. Aceptan coma o punto decimal y un número nega
 2026-10-06 (el reloj fijo): una fecha posterior se rechaza. El integrante y la
 historia se buscan por nombre dentro del proyecto actual: uno que no esté ahí se
 rechaza por la aplicación, no por los steps.
+
+**Marcar y desmarcar (US-010):** `la historia "X" completada`, `se marca la historia "X"
+como completada` y `se desmarca la historia "X"` operan sobre el último sprint del
+proyecto de la historia, que es el único que puede estar abierto (RN-008-17). Una
+historia que no está asignada a ese sprint se rechaza. El estado se verifica con
+`la historia "X" tiene estado "..."`; la fecha de completado no, porque el reloj de los
+escenarios es fijo.
 
 **Historia lista para un sprint (US-009):** `una historia "X" con prioridad "must", 5
 story points y 2 criterios de aceptación` crea una historia estimada y con esa cantidad
