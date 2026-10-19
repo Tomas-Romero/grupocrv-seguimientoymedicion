@@ -7,7 +7,7 @@
 | **Issue** | #15 |
 | **Escenarios BDD** | ninguno: es una tarea técnica (ver "Decisiones") |
 | **Código** | `internal/platform/errores/` y `internal/adapters/http/` |
-| **Última actualización** | 2026-10-18 |
+| **Última actualización** | 2026-10-19 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
 > implementación. Si durante la implementación descubrís que algo de acá está
@@ -77,78 +77,78 @@ puntero nulo dentro de la interfaz).
 
 **Tipos de error**
 
-- **RN-005-1** — Hay cuatro tipos y cada uno tiene su estado HTTP: `validacion`
+- **RN-T005-1** — Hay cuatro tipos y cada uno tiene su estado HTTP: `validacion`
   (422), `no_encontrado` (404), `conflicto` (409) e `interno` (500).
-- **RN-005-2** — Qué tipo es cada error se decide por esta regla, no caso por
+- **RN-T005-2** — Qué tipo es cada error se decide por esta regla, no caso por
   caso: es `validacion` si depende solo de los valores recibidos (y del reloj,
   como una fecha futura); es `conflicto` si depende del estado que ya hay
   guardado (un sprint cerrado, una historia ya asignada, un email repetido);
   es `no_encontrado` si apunta a algo que no existe; y es `interno` todo lo
   demás.
-- **RN-005-3** — Un error se reconoce con `errors.Is` contra un **catálogo**
+- **RN-T005-3** — Un error se reconoce con `errors.Is` contra un **catálogo**
   explícito. Nunca se mira el texto del mensaje.
 
 **Clasificar**
 
-- **RN-005-4** — Un error unido con `errors.Join` (o con varios `%w`) se separa
+- **RN-T005-4** — Un error unido con `errors.Join` (o con varios `%w`) se separa
   en sus partes, también si hay uniones anidadas. Cada parte se clasifica por
   separado y los mensajes salen en el mismo orden en que vinieron.
-- **RN-005-5** — El mensaje de cada parte es el mensaje del error del catálogo,
+- **RN-T005-5** — El mensaje de cada parte es el mensaje del error del catálogo,
   no el texto de las capas que lo envolvieron. Así el usuario no ve ids ni
   frases de contexto como "asignar el item X al sprint Y".
-- **RN-005-6** — El `Tipo` del `Problema` es el más grave de sus partes, en este
+- **RN-T005-6** — El `Tipo` del `Problema` es el más grave de sus partes, en este
   orden: `interno`, `no_encontrado`, `conflicto`, `validacion`. Si el tipo es
   `interno`, el problema lleva un único error general con un mensaje fijo y
   ninguno de los otros. En cualquier otro caso se conservan los mensajes de
   todas las partes.
-- **RN-005-7** — Una parte que no está en el catálogo es `interno`. El mensaje
+- **RN-T005-7** — Una parte que no está en el catálogo es `interno`. El mensaje
   fijo es `ocurrio un error inesperado: proba de nuevo en unos minutos`.
-- **RN-005-8** — Cada entrada del catálogo trae el nombre del campo del
+- **RN-T005-8** — Cada entrada del catálogo trae el nombre del campo del
   formulario al que pertenece, o ninguno si es un error general. Los nombres
   van en `snake_case` y en español, y son los que usan los formularios de
   T-011: `nombre`, `email`, `rol`, `titulo`, `prioridad`, `criterios`,
   `estimacion`, `sprint_goal`, `fecha_inicio`, `fecha_fin`, `fecha`,
   `actividad`, `horas`.
-- **RN-005-9** — Un `*ErrorDeValidacion` (lo que arma el formulario) se
+- **RN-T005-9** — Un `*ErrorDeValidacion` (lo que arma el formulario) se
   clasifica como `validacion` y conserva sus campos y mensajes tal cual.
   Puede venir solo o unido con errores del dominio.
 
 **Formulario**
 
-- **RN-005-10** — El formulario solo informa errores de **formato** (un texto
+- **RN-T005-10** — El formulario solo informa errores de **formato** (un texto
   donde iba un número). La obligatoriedad no se revisa acá: un valor vacío
   devuelve el cero del tipo y sin error, para que el dominio diga "es
   obligatorio" con su propio mensaje y no haya dos redacciones para lo mismo.
-- **RN-005-11** — Formatos aceptados, ignorando espacios al principio y al final:
+- **RN-T005-11** — Formatos aceptados, ignorando espacios al principio y al final:
   `Entero` acepta dígitos con signo opcional; `Decimal` acepta dígitos con
   signo opcional y, si hay parte decimal, coma **o** punto (igual que
   US-019); `Fecha` acepta `AAAA-MM-DD`, que es lo que envía un
   `<input type="date">`, y devuelve la fecha a medianoche UTC. Todo lo demás
   es un error de formato, incluidos `NaN`, `Inf` y la notación científica.
-- **RN-005-12** — Los errores del formulario se informan en el orden en que se
+- **RN-T005-12** — Los errores del formulario se informan en el orden en que se
   consultaron los campos, y un campo se informa una sola vez aunque se
   consulte más de una.
-- **RN-005-13** — El mensaje de formato nombra el campo con espacios en lugar
+- **RN-T005-13** — El mensaje de formato nombra el campo con espacios en lugar
   de guiones bajos, por ejemplo: `el campo story points tiene que ser un
   numero entero`.
 
 **Respuesta**
 
-- **RN-005-14** — `ResponderError` elige JSON si el `Accept` menciona
+- **RN-T005-14** — `ResponderError` elige JSON si el `Accept` menciona
   `application/json` y no menciona `text/html`; en cualquier otro caso (incluido
   un `Accept` vacío o `*/*`) responde el fragmento HTML.
-- **RN-005-15** — Siempre escribe el estado de su tipo, un `Content-Type` con
+- **RN-T005-15** — Siempre escribe el estado de su tipo, un `Content-Type` con
   `charset=utf-8` y el cuerpo de la sección 3. Escapa todo el texto que
   muestra.
-- **RN-005-16** — Solo los errores `interno` se registran, con `slog.Error`, e
+- **RN-T005-16** — Solo los errores `interno` se registran, con `slog.Error`, e
   incluyen el método, la ruta y el error completo con todas sus capas. El
   detalle nunca llega al cliente.
-- **RN-005-17** — `ResponderError(nil)` es un error de programación: responde
+- **RN-T005-17** — `ResponderError(nil)` es un error de programación: responde
   `interno` y lo registra.
 
 **Recuperar**
 
-- **RN-005-18** — Si el handler que sigue hace `panic`, `Recuperar` lo registra
+- **RN-T005-18** — Si el handler que sigue hace `panic`, `Recuperar` lo registra
   con el valor del `panic` y la pila, responde un `interno` uniforme y el
   servidor sigue atendiendo. Si la respuesta ya había empezado, solo registra.
   `http.ErrAbortHandler` se vuelve a lanzar, porque es la forma legítima de
@@ -156,7 +156,7 @@ puntero nulo dentro de la interfaz).
 
 **Catálogo**
 
-- **RN-005-19** — Todo error exportado `Err…` de `internal/domain` y de
+- **RN-T005-19** — Todo error exportado `Err…` de `internal/domain` y de
   `internal/app` está en el catálogo o en la lista de exclusiones, que lleva
   el motivo de cada una. Un test lo comprueba leyendo el código fuente, así
   que una historia nueva que agregue un error y no lo registre rompe el CI.
@@ -180,39 +180,39 @@ puntero nulo dentro de la interfaz).
 
 ## 6. Casos límite
 
-- **CL-005-1** — `Clasificar(nil)` devuelve un `Problema` vacío (sin tipo y sin
+- **CL-T005-1** — `Clasificar(nil)` devuelve un `Problema` vacío (sin tipo y sin
   errores). No es un error.
-- **CL-005-2** — Dos errores de validación del mismo campo, unidos: se
+- **CL-T005-2** — Dos errores de validación del mismo campo, unidos: se
   conservan los dos, en orden.
-- **CL-005-3** — Un error del catálogo envuelto en varias capas con `%w`: se
-  reconoce, y el mensaje es el del catálogo (RN-005-5), no el de las capas.
-- **CL-005-4** — Una unión dentro de otra unión: se aplana y el orden de los
+- **CL-T005-3** — Un error del catálogo envuelto en varias capas con `%w`: se
+  reconoce, y el mensaje es el del catálogo (RN-T005-5), no el de las capas.
+- **CL-T005-4** — Una unión dentro de otra unión: se aplana y el orden de los
   mensajes es el de lectura.
-- **CL-005-5** — Validación unida con un error que no está en el catálogo: el
+- **CL-T005-5** — Validación unida con un error que no está en el catálogo: el
   tipo es `interno` y solo sale el mensaje fijo. No se muestran los de
   validación.
-- **CL-005-6** — Validación unida con un conflicto: el tipo es `conflicto`
+- **CL-T005-6** — Validación unida con un conflicto: el tipo es `conflicto`
   (409) y salen los mensajes de los dos, en orden.
-- **CL-005-7** — Un `*ErrorDeValidacion` unido con errores del dominio: salen
+- **CL-T005-7** — Un `*ErrorDeValidacion` unido con errores del dominio: salen
   los campos del formulario y los del dominio, en el orden de la unión.
-- **CL-005-8** — Entero: `" 5 "` es 5; `"12.5"`, `"1e3"`, `"abc"` y un número
+- **CL-T005-8** — Entero: `" 5 "` es 5; `"12.5"`, `"1e3"`, `"abc"` y un número
   que no entra en un `int` son error de formato; `""` es 0 sin error.
-- **CL-005-9** — Decimal: `"1,5"` y `"1.5"` son 1,5; `"-2,25"` es −2,25 (el
+- **CL-T005-9** — Decimal: `"1,5"` y `"1.5"` son 1,5; `"-2,25"` es −2,25 (el
   dominio decide que no es válido); `"1,5,2"`, `"1.2.3"`, `"NaN"`, `"Inf"` y
   `"1e3"` son error de formato; `""` es 0 sin error.
-- **CL-005-10** — Fecha: `"2026-10-06"` es válida; `"2026-02-30"` (día que no
+- **CL-T005-10** — Fecha: `"2026-10-06"` es válida; `"2026-02-30"` (día que no
   existe), `"06/10/2026"` y `"2026-10-6"` son error de formato; `""` es la
   fecha cero sin error.
-- **CL-005-11** — Varios campos mal formados: se informan todos juntos. Si el
+- **CL-T005-11** — Varios campos mal formados: se informan todos juntos. Si el
   mismo campo se consulta dos veces, aparece una sola vez.
-- **CL-005-12** — `Accept: text/html,application/json;q=0.9` responde HTML
+- **CL-T005-12** — `Accept: text/html,application/json;q=0.9` responde HTML
   (menciona `text/html`). `Accept: application/json` responde JSON. Sin
   `Accept` responde HTML.
-- **CL-005-13** — Un `panic` con un valor que no es un `error` (por ejemplo un
+- **CL-T005-13** — Un `panic` con un valor que no es un `error` (por ejemplo un
   texto) también se responde como `interno`.
-- **CL-005-14** — `panic` después de que el handler escribió parte de la
+- **CL-T005-14** — `panic` después de que el handler escribió parte de la
   respuesta: no se intenta escribir otra, solo se registra.
-- **CL-005-15** — Un mensaje con caracteres de HTML (por ejemplo `<script>`)
+- **CL-T005-15** — Un mensaje con caracteres de HTML (por ejemplo `<script>`)
   sale escapado en el fragmento y como texto en el JSON.
 
 ## 7. Condiciones de error
@@ -277,28 +277,28 @@ registra cada una en su propio PR.
 
 ## 8. Criterios de aceptación
 
-- **CA-005-1** (normal) — Dado un error de validación del dominio (por
+- **CA-T005-1** (normal) — Dado un error de validación del dominio (por
   ejemplo `ErrTituloVacio`), la respuesta tiene estado 422, el tipo
   `validacion`, el campo `titulo` y el mensaje del catálogo.
-- **CA-005-2** (normal) — Dados varios errores unidos con `errors.Join`, la
+- **CA-T005-2** (normal) — Dados varios errores unidos con `errors.Join`, la
   respuesta los informa todos, en el mismo orden y cada uno con su campo.
-- **CA-005-3** (alternativo) — Un error de inexistencia responde 404, uno
+- **CA-T005-3** (alternativo) — Un error de inexistencia responde 404, uno
   de estado (por ejemplo un sprint cerrado) responde 409, y la misma
   petición con `Accept: application/json` recibe JSON mientras que una de
   HTMX recibe el fragmento HTML.
-- **CA-005-4** (alternativo) — Dado un formulario con un campo mal formado (un
+- **CA-T005-4** (alternativo) — Dado un formulario con un campo mal formado (un
   texto en las horas), la respuesta es 422 con el campo `horas`, en el mismo
   formato que un error del dominio, y se puede combinar con los errores del
   dominio de otros campos.
-- **CA-005-5** (límite) — Un error del catálogo envuelto en varias capas, o
+- **CA-T005-5** (límite) — Un error del catálogo envuelto en varias capas, o
   dentro de una unión anidada, se reconoce y muestra solo el mensaje del
   catálogo.
-- **CA-005-6** (error) — Dado un error que no está en el catálogo, la respuesta
+- **CA-T005-6** (error) — Dado un error que no está en el catálogo, la respuesta
   es 500 con el mensaje fijo, no incluye ninguna parte del error original y
   el error completo queda en el registro.
-- **CA-005-7** (error) — Dado un handler que hace `panic`, la respuesta es el 500
+- **CA-T005-7** (error) — Dado un handler que hace `panic`, la respuesta es el 500
   uniforme y el servidor atiende la petición siguiente.
-- **CA-005-8** (error) — Si un error exportado de `internal/domain` o
+- **CA-T005-8** (error) — Si un error exportado de `internal/domain` o
   `internal/app` no está en el catálogo ni en las exclusiones, el test del
   catálogo falla y nombra el error.
 
@@ -315,13 +315,13 @@ registra cada una en su propio PR.
   errores de 7 paquetes en tipos propios y metía conceptos de pantalla en el
   dominio, que hoy es puro. Tampoco se parsea el texto del mensaje: cualquier
   corrección de redacción rompería la clasificación sin avisar. El precio es
-  mantener una tabla, y por eso existe RN-005-19, que hace fallar el CI si se
+  mantener una tabla, y por eso existe RN-T005-19, que hace fallar el CI si se
   olvida.
 - **422 para validación y 409 para estado.** 400 queda para una petición que no
   se puede ni leer, y acá el servidor entiende la petición pero rechaza los
   valores. Separar lo que depende de lo escrito (se corrige en el formulario)
   de lo que depende del estado (puede que haya que ir a otra pantalla) lo
-  hace la regla RN-005-2, que se puede aplicar a los errores que lleguen.
+  hace la regla RN-T005-2, que se puede aplicar a los errores que lleguen.
 - **Se muestra el mensaje del catálogo, no el del error envuelto.** Los errores
   reales llevan ids y contexto (`el item no existe (id …)`), útil para el log
   y molesto para quien lo lee. Se descartó recortar el texto a mano.
@@ -344,6 +344,12 @@ registra cada una en su propio PR.
 - **No se registran los errores de `metricas`.** Si una velocidad no se puede
   calcular porque un resumen está corrupto, no hay nada que la persona pueda
   corregir en un formulario: es un fallo del sistema y se trata como tal.
+
+- **Los identificadores llevan `T005` (`RN-T005-k`, `CL-T005-k`, `CA-T005-k`), no `005`.**
+  Con `005` chocaban con los de US-005, y las etiquetas de los escenarios
+  (`@CA-005-k`) habrían mezclado la trazabilidad de las dos. Es lo que el
+  equipo habló para las tareas técnicas; se cambió a pedido de la revisión
+  del PR de esta spec.
 
 ## Uso de IA en esta especificación
 
