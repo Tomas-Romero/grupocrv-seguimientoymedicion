@@ -68,11 +68,17 @@ var entradasDelCatalogo = []entradaDelCatalogo{
 	{"sprint.ErrFueraDelProyecto", sprint.ErrFueraDelProyecto, errores.Conflicto, ""},
 	{"sprint.ErrUltimoSprintAbierto", sprint.ErrUltimoSprintAbierto, errores.Conflicto, ""},
 	{"sprint.ErrInicioNoPosteriorAlUltimo", sprint.ErrInicioNoPosteriorAlUltimo, errores.Conflicto, "fecha_inicio"},
+	{"sprint.ErrProyectoDistinto", sprint.ErrProyectoDistinto, errores.Conflicto, ""},
+	{"sprint.ErrSprintCerrado", sprint.ErrSprintCerrado, errores.Conflicto, ""},
+	{"sprint.ErrItemYaAsignado", sprint.ErrItemYaAsignado, errores.Conflicto, ""},
+	{"sprint.ErrItemSinEstimar", sprint.ErrItemSinEstimar, errores.Conflicto, ""},
+	{"sprint.ErrItemSinCriterios", sprint.ErrItemSinCriterios, errores.Conflicto, ""},
 
 	// app
 	{"app.ErrProyectoInexistente", app.ErrProyectoInexistente, errores.NoEncontrado, ""},
 	{"app.ErrItemInexistente", app.ErrItemInexistente, errores.NoEncontrado, ""},
 	{"app.ErrIntegranteInexistente", app.ErrIntegranteInexistente, errores.NoEncontrado, ""},
+	{"app.ErrSprintInexistente", app.ErrSprintInexistente, errores.NoEncontrado, ""},
 	{"app.ErrEmailDuplicado", app.ErrEmailDuplicado, errores.Conflicto, "email"},
 }
 
