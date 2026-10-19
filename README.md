@@ -29,7 +29,17 @@ La aplicación queda en **http://localhost:8080** con datos de ejemplo cargados.
 
 ### Para desarrollar
 
-Requisitos adicionales: Go 1.23 o superior.
+Requisitos adicionales:
+
+- Go 1.23 o superior.
+- `make` (GNU Make). En Linux y macOS viene con las herramientas de compilación. En
+  Windows, Git for Windows no lo trae: instalalo con `winget install ezwinports.make`
+  y abrí Git Bash de nuevo.
+- `psql` (el cliente de PostgreSQL), que usa `make seed` en tu máquina. En Windows,
+  el instalador oficial de PostgreSQL permite elegir solo "Command Line Tools".
+
+`make tools` instala las herramientas con la versión fija que usa el proyecto
+(templ, goose, air y golangci-lint), así que todos tienen las mismas.
 
 ```bash
 cp .env.example .env

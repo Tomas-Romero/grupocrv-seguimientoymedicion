@@ -41,7 +41,7 @@ type Proyectos interface {
 	CrearProyecto(nombre string, inicio, fin time.Time) error
 	ModificarNombreProyecto(actual, nuevo string) error
 	ModificarFechasProyecto(nombre string, inicio, fin time.Time) error
-	RegistrarIntegrante(proyecto, nombre, rol string) error
+	RegistrarIntegrante(proyecto, nombre, email, rol string) error
 	ProyectoExiste(nombre string) (inicio, fin time.Time, err error)
 	CantidadIntegrantes(proyecto string) (int, error)
 }
@@ -58,6 +58,9 @@ type DatosHistoria struct {
 // Backlog es el area de US-005, US-006 y US-013.
 type Backlog interface {
 	CrearHistoria(proyecto string, historia DatosHistoria) error
+	// EditarHistoria reemplaza los cuatro datos de la historia (US-006). Despues
+	// de editarla, los steps la nombran por su titulo nuevo.
+	EditarHistoria(titulo string, historia DatosHistoria) error
 	CambiarPrioridadHistoria(titulo, prioridad string) error
 	EstimarHistoria(titulo string, puntos int) error
 	CantidadHistoriasEnBacklog(proyecto string) (int, error)
@@ -73,12 +76,18 @@ type Backlog interface {
 
 // Sprints es el area de US-008, US-009, US-010 y US-011.
 type Sprints interface {
-	CrearSprint(proyecto, nombre, objetivo string) error
-	AsignarHistoriaASprint(titulo, sprint string) error
+	// CrearSprint crea un sprint en el proyecto con su objetivo (el Sprint Goal) y
+	// sus fechas, y devuelve el nombre que le asigno la aplicacion ("Sprint N"): la
+	// persona no lo escribe (RN-008-12).
+	CrearSprint(proyecto, objetivo string, inicio, fin time.Time) (nombre string, err error)
+	// AsignarHistoriaASprint asigna la historia (que se busca por titulo) al sprint del
+	// proyecto. Lo que no existe se manda con un ID que no esta en la base, asi el
+	// rechazo lo produce la aplicacion.
+	AsignarHistoriaASprint(proyecto, titulo, sprint string) error
 	CompletarHistoria(titulo string) error
 	CerrarSprint(nombre string) error
 	SprintDeHistoria(titulo string) (string, error)
-	SprintEstaCerrado(nombre string) (bool, error)
+	SprintEstaCerrado(proyecto, nombre string) (bool, error)
 }
 
 // Metricas es el area de US-025 y US-026.
@@ -96,6 +105,18 @@ type Metricas interface {
 	VelocidadDelEquipo() (float64, error)
 }
 
+// Esfuerzo es el area de US-019 (US-020 y US-021 la amplian).
+type Esfuerzo interface {
+	// RegistrarEsfuerzo registra las horas que un integrante dedico a una
+	// historia, todos nombrados como los conoce el escenario. Lo que no existe
+	// (un integrante o una historia que el escenario no creo en el proyecto) se
+	// manda con un ID que no esta en la base, asi el rechazo lo produce la
+	// aplicacion.
+	RegistrarEsfuerzo(proyecto, integrante, historia string, fecha time.Time, actividad string, horas float64) error
+	CantidadRegistros(proyecto string) (int, error)
+	HorasDeHistoria(proyecto, historia string) (float64, error)
+}
+
 // Servicios agrupa las areas conectadas para UN escenario. Un campo nil
 // significa "area todavia sin conectar": los steps que la necesiten fallan con
 // ErrAreaSinConectar.
@@ -104,6 +125,7 @@ type Servicios struct {
 	Backlog   Backlog
 	Sprints   Sprints
 	Metricas  Metricas
+	Esfuerzo  Esfuerzo
 }
 
 // Fabrica construye los Servicios de un escenario. Se llama antes de CADA
@@ -132,6 +154,10 @@ type mundo struct {
 	// ultimoError es el error que dejo el ultimo step de accion (Cuando).
 	// Lo leen `la operacion es exitosa` y `la operacion se rechaza`.
 	ultimoError error
+
+	// finDelUltimoSprint es el fin del ultimo sprint creado en cada proyecto del
+	// escenario. Las frases de sprint sin fechas lo usan para armar las del siguiente.
+	finDelUltimoSprint map[string]time.Time
 
 	// resultados de las consultas de metricas
 	puntosPlanificados int
@@ -170,6 +196,13 @@ func (m *mundo) sprints() (Sprints, error) {
 		return nil, areaSinConectar("sprints")
 	}
 	return m.servicios.Sprints, nil
+}
+
+func (m *mundo) esfuerzo() (Esfuerzo, error) {
+	if m.servicios.Esfuerzo == nil {
+		return nil, areaSinConectar("esfuerzo")
+	}
+	return m.servicios.Esfuerzo, nil
 }
 
 func (m *mundo) metricas() (Metricas, error) {

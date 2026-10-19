@@ -5,7 +5,8 @@
 // features/steps y las frases disponibles en docs/diccionario-steps.md.
 //
 // Correr con:  make bdd
-// Un escenario solo:  go test ./features/... -godog.tags=@US-026
+// Un escenario solo:  go test ./features/ -godog.tags=@US-026
+// (con ./features/... falla en el paquete features/steps, que no conoce el flag)
 package features_test
 
 import (

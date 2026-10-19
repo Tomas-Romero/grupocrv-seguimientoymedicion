@@ -30,19 +30,24 @@ func ahoraEnEscenarios() time.Time {
 //	Backlog:   US-005, US-006, US-013
 //	Sprints:   US-008, US-009, US-010, US-011
 //	Metricas:  US-025, US-026
+//	Esfuerzo:  US-019, US-020, US-021
 //
 // Un area sin conectar hace fallar con ErrAreaSinConectar a cualquier escenario
 // que la use: preferimos rojo explicito a verde falso.
 func nuevosServicios() (steps.Servicios, error) {
 	e := &escenario{base: memoria.NuevaBase(), proyectos: map[string]string{}}
 	return steps.Servicios{
-		// US-001 y US-002: los casos de uso reales sobre la base en memoria. Los
-		// proyectos que crea quedan en la misma base donde los busca el caso de uso
-		// de US-005.
+		// US-001, US-002 y US-003: los casos de uso reales sobre la base en memoria.
+		// Los proyectos que crea quedan en la misma base donde los busca el caso de
+		// uso de US-005, y los integrantes se registran en esa misma base.
 		Proyectos: nuevosProyectosSobreApp(e),
-		// US-005: el caso de uso real sobre la base en memoria.
+		// US-005, US-006 y US-013: los casos de uso reales sobre la base en memoria.
 		Backlog: nuevoBacklogSobreApp(e),
+		// US-008: el caso de uso real sobre la base en memoria.
+		Sprints: nuevoSprintsSobreApp(e),
 		// US-025: calculo del dominio sobre los items que arma el escenario.
 		Metricas: nuevasMetricasEnMemoria(),
+		// US-019: el caso de uso real sobre la base en memoria.
+		Esfuerzo: nuevoEsfuerzoSobreApp(e),
 	}, nil
 }

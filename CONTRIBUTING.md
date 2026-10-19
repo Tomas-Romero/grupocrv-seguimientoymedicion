@@ -15,6 +15,7 @@ silencio.
 git clone git@github.com:Tomas-Romero/grupocrv-seguimientoymedicion.git
 cd grupocrv-seguimientoymedicion
 
+# Requisitos: Go 1.23+, Docker, make y psql (ver README, "Para desarrollar").
 cp .env.example .env         # y exportá DATABASE_URL en tu shell
 make tools                   # instala templ, goose y air
 make up                      # levanta Postgres, migra y carga datos de ejemplo

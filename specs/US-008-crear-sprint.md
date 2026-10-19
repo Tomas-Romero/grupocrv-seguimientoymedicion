@@ -7,7 +7,7 @@
 | **Issue** | #9 |
 | **Escenarios BDD** | `features/US-008-crear-sprint.feature` |
 | **Código** | `internal/domain/sprint/`, caso de uso en `internal/app/`, repositorio en `internal/adapters/postgres/`, migración nueva en `migraciones/` |
-| **Última actualización** | 2026-10-13 |
+| **Última actualización** | 2026-10-18 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
 > implementación. Si durante la implementación descubrís que algo de acá está
