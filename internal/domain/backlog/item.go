@@ -41,6 +41,9 @@ type ItemBacklog struct {
 	StoryPoints StoryPoints
 	Criterios   []string
 	CreadoEn    time.Time
+	// CompletadoEn es cuando se marco como completado (US-010). El valor cero es "sin
+	// fecha": solo un item completado la tiene.
+	CompletadoEn time.Time
 }
 
 // NuevoItem valida los datos y arma un item pendiente y sin estimar. Si algun
