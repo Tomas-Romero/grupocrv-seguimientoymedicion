@@ -1,6 +1,35 @@
 package plantillas
 
-// Layout es la estructura comun de todas las paginas completas.
+// Layout es la estructura comun de todas las paginas completas: cabecera con
+// navegacion, un lugar para mensajes y el contenido de cada pagina en <main>.
 templ Layout(p Pagina) {
-	{ children... }
+	<!DOCTYPE html>
+	<html lang="es">
+		<head>
+			<meta charset="utf-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1"/>
+			<title>{ p.TituloCompleto() }</title>
+			<link rel="stylesheet" href="/static/css/app.css"/>
+			<script src="/static/js/htmx.min.js" defer></script>
+		</head>
+		<body class="min-h-screen bg-slate-50 text-slate-900 antialiased">
+			<a
+				href="#contenido"
+				class="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded focus:bg-white focus:px-4 focus:py-2 focus:text-indigo-700 focus:shadow"
+			>
+				Saltar al contenido
+			</a>
+			<header class="border-b border-slate-200 bg-white">
+				<div class="mx-auto flex max-w-5xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
+					<span class="text-lg font-semibold text-indigo-700">Software Metrics</span>
+					@Navegacion(p)
+				</div>
+				@NavegacionProyecto(p)
+			</header>
+			<main id="contenido" tabindex="-1" class="mx-auto max-w-5xl px-4 py-6 focus:outline-none">
+				<div id="mensajes" role="status" aria-live="polite"></div>
+				{ children... }
+			</main>
+		</body>
+	</html>
 }
