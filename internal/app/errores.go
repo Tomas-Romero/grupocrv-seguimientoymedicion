@@ -21,7 +21,7 @@ var ErrProyectoInexistente = errors.New("el proyecto no existe")
 // sobre los errores de validacion y nunca se une con ellos.
 //
 // Lo comparten los casos de uso que trabajan sobre un item existente (US-006,
-// US-013 y US-019), y lo devuelven tambien los repositorios cuando el item desaparece
+// US-009, US-010, US-013 y US-019), y lo devuelven tambien los repositorios cuando el item desaparece
 // entre la lectura y la escritura.
 var ErrItemInexistente = errors.New("el item no existe")
 
