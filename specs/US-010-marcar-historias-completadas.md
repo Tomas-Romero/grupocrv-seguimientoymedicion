@@ -7,7 +7,7 @@
 | **Issue** | #18 |
 | **Escenarios BDD** | `features/US-010-marcar-historias-completadas.feature` |
 | **Código** | `internal/domain/sprint/` (validación), `internal/domain/backlog/` (`ItemBacklog.Completar` y `Reabrir`), casos de uso en `internal/app/`, repositorio en `internal/adapters/postgres/`, migración nueva en `migraciones/` |
-| **Última actualización** | 2026-10-12 |
+| **Última actualización** | 2026-10-19 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
 > implementación. Si durante la implementación descubrís que algo de acá está
@@ -69,9 +69,12 @@ Entre paréntesis, la capa que la hace cumplir.
   Si no, `ErrItemFueraDelSprint`.
 - **RN-010-3** (dominio) — Solo con el Sprint `abierto`. Con el Sprint
   `cerrado` no se marca ni se desmarca: `ErrSprintCerrado` (el de US-009).
-- **RN-010-4** (dominio) — Los errores de RN-010-2 y RN-010-3 se devuelven
-  juntos con `errors.Join`, en este orden: Sprint cerrado, ítem fuera del
-  Sprint (mismo criterio que RN-009-8).
+- **RN-010-4** (dominio) — Con el Sprint `cerrado` se devuelve solo
+  `ErrSprintCerrado`, sin mirar si el ítem está en él. Al cerrar, ninguna fila
+  queda `pendiente` (US-011), así que unirlo con `ErrItemFueraDelSprint` diría
+  que no está asignada una historia que sí estuvo. Con el Sprint abierto, el
+  único error posible es `ErrItemFueraDelSprint`. Es una excepción a propósito
+  al criterio de RN-009-8.
 - **RN-010-5** (dominio) — Marcar deja el ítem `completado` con
   `completadoEn`. Vale desde `pendiente` o `en_progreso`.
 - **RN-010-6** (dominio) — Marcar un ítem que ya está `completado` no es un
@@ -156,12 +159,10 @@ Entre paréntesis, la capa que la hace cumplir.
   (aunque haya estado en Sprints cerrados) o en el Sprint de otro proyecto.
   Se rechaza con `ErrItemFueraDelSprint`.
 - **CL-010-6** — Sprint cerrado e ítem que quedó completado en él, desmarcado:
-  se rechaza. Como al cerrar ninguna fila queda `pendiente` (US-011), el ítem
-  tampoco está en el Sprint, y se devuelven `ErrSprintCerrado` y
-  `ErrItemFueraDelSprint` unidos, en el orden de RN-010-4. Lo medido no se
-  toca.
-- **CL-010-7** — Sprint cerrado e ítem que no está en él: se devuelven
-  `ErrSprintCerrado` y `ErrItemFueraDelSprint` unidos, en el orden de RN-010-4.
+  se rechaza solo con `ErrSprintCerrado` (RN-010-4), aunque al cerrar su fila
+  dejó de estar `pendiente`. Lo medido no se toca.
+- **CL-010-7** — Sprint cerrado e ítem que no está en él: solo
+  `ErrSprintCerrado` (RN-010-4).
 - **CL-010-8** — Ítem o Sprint inexistente, o con ID mal formado, aunque además
   haya otros problemas: solo el error de inexistencia (RN-010-1).
 - **CL-010-9** — El Sprint se cierra entre la lectura del caso de uso y la
@@ -182,9 +183,9 @@ Entre paréntesis, la capa que la hace cumplir.
 | El ítem no está en ese Sprint (no tiene una fila `pendiente` en él) | `sprint.ErrItemFueraDelSprint` | "la historia no esta asignada a este sprint" |
 
 Los dos primeros tienen prioridad y no se unen con los demás (RN-010-1). Los dos
-últimos son del dominio y se unen entre sí en el orden de RN-010-4; el
-repositorio puede devolverlos también, con la misma función, si el Sprint se
-cerró en el medio. Todos se comparan con `errors.Is`, y en ningún caso se
+últimos son del dominio y nunca se devuelven juntos: con el Sprint cerrado, solo
+`ErrSprintCerrado` (RN-010-4). El repositorio puede devolverlos también, con la
+misma función, si el Sprint se cerró en el medio. Todos se comparan con `errors.Is`, y en ningún caso se
 modifica el ítem.
 
 ## 8. Criterios de aceptación
@@ -231,6 +232,11 @@ modifica el ítem.
   `backlog`.** La regla (ítem en el Sprint, Sprint abierto) es del Sprint y usa
   datos mínimos, como US-009. El estado y la fecha son del ítem, como `Estimar`
   en US-013.
+- **Con el Sprint cerrado, solo `ErrSprintCerrado`.** Con la relación
+  histórica, en un Sprint cerrado ninguna historia tiene fila `pendiente`, así
+  que unir los dos errores, como hace US-009 (RN-009-8), agregaría siempre "la
+  historia no esta asignada a este sprint", también para las que sí estuvieron.
+  Se descartó unirlos, que era la versión anterior de RN-010-4.
 - **Se reutiliza `ErrSprintCerrado` de US-009.** La condición es la misma: el
   Sprint está cerrado. Usa el mensaje general (hecho en la corrección de
   US-009, #104).
