@@ -107,6 +107,7 @@ conectada, falla con `area sin conectar a los steps: <área>`: es a propósito.
 | `Y el integrante "Conforti" con email "conforti@ejemplo.test" y rol "product_builder"` | `^el integrante "([^"]*)" con email "([^"]*)" y rol "([^"]*)"$` |
 | `Y una historia "Crear proyecto" con prioridad "must"` | `^una historia "([^"]*)" con prioridad "([^"]*)"$` |
 | `Y una historia "Crear proyecto" con prioridad "must" y 5 story points` | `^una historia "([^"]*)" con prioridad "([^"]*)" y (\d+) story points$` |
+| `Y una historia "Crear proyecto" con prioridad "must", 5 story points y 2 criterios de aceptación` | `^una historia "([^"]*)" con prioridad "([^"]*)", (\d+) story points y (\d+) criterios? de aceptación$` |
 | `Y un sprint "Sprint 1" con el objetivo "MVP navegable"` | `^un sprint "([^"]*)" con el objetivo "([^"]*)"$` |
 | `Y un sprint "Sprint 1" con el objetivo "MVP navegable" del "2026-10-06" al "2026-10-19"` | `^un sprint "([^"]*)" con el objetivo "([^"]*)" del "([^"]*)" al "([^"]*)"$` |
 | `Y la historia "Crear proyecto" asignada al sprint "Sprint 1"` | `^la historia "([^"]*)" asignada al sprint "([^"]*)"$` |
@@ -202,6 +203,13 @@ integrante en el proyecto actual. Aceptan coma o punto decimal y un número nega
 2026-10-06 (el reloj fijo): una fecha posterior se rechaza. El integrante y la
 historia se buscan por nombre dentro del proyecto actual: uno que no esté ahí se
 rechaza por la aplicación, no por los steps.
+
+**Historia lista para un sprint (US-009):** `una historia "X" con prioridad "must", 5
+story points y 2 criterios de aceptación` crea una historia estimada y con esa cantidad
+de criterios, que son genéricos ("Criterio 1", "Criterio 2", ...). Es la que cumple la
+Definition of Ready, y la que necesita cualquier escenario que asigne una historia a un
+sprint con éxito. Con `una historia "X" con prioridad "must" y 5 story points` la
+historia está estimada pero no tiene criterios, así que la asignación se rechaza.
 
 **Un solo `Cuando` por escenario.** Si necesitás dos acciones, la primera es
 contexto y va en un `Dado`. Un escenario con dos `Cuando` casi siempre está
