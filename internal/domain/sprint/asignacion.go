@@ -16,7 +16,7 @@ var (
 	ErrProyectoDistinto = errors.New("la historia y el sprint son de proyectos distintos")
 	// ErrSprintCerrado: el sprint esta cerrado (RN-009-4). Se devuelve envuelto,
 	// indicando el nombre del sprint. El mensaje es general a proposito: lo reusan
-	// las otras operaciones sobre un sprint (US-010).
+	// las otras operaciones sobre un sprint (marcar y desmarcar en US-010).
 	ErrSprintCerrado = errors.New("el sprint esta cerrado")
 	// ErrItemYaAsignado: el item ya esta en el sprint abierto del proyecto (RN-009-6).
 	ErrItemYaAsignado = errors.New("la historia ya esta asignada a un sprint")
