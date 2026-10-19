@@ -6,7 +6,7 @@
 | **Autor** | Juan Ignacio Vergara |
 | **Issue** | #18 |
 | **Escenarios BDD** | `features/US-010-marcar-historias-completadas.feature` |
-| **Código** | `internal/domain/sprint/` (validación), `internal/domain/backlog/` (`ItemBacklog.Completar` y `Reabrir`), casos de uso en `internal/app/`, repositorio en `internal/adapters/postgres/`, migración nueva en `migraciones/` |
+| **Código** | `internal/domain/sprint/` (`VerificarMarcado`), `internal/domain/backlog/` (`ItemBacklog.Completar` y `Reabrir`), casos de uso `MarcarCompletado` y `DesmarcarCompletado` en `internal/app/`, `GuardarCambioDeEstado` en `internal/adapters/postgres/` y `internal/adapters/memoria/`, migración `migraciones/00008_items_completado_en.sql` |
 | **Última actualización** | 2026-10-19 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
@@ -108,20 +108,23 @@ Entre paréntesis, la capa que la hace cumplir.
 - **Dominio puro:** igual que US-005 y US-008 (sección 5).
 - **Migración nueva.** Agrega a `items_backlog` la columna `completado_en`
   (`TIMESTAMPTZ`, nula) y la red de seguridad
-  `CHECK ((estado = 'completado') = (completado_en IS NOT NULL))`. Se numera
-  después de la migración de la relación de US-009 y el número se avisa en el
-  grupo antes de crearla, como pide US-009.
+  `CHECK ((estado = 'completado') = (completado_en IS NOT NULL))`. Es la
+  `00008`, después de la `00007` de la relación de US-009. Un ítem que ya
+  estuviera completado al migrar recibe la fecha de la migración, para cumplir el
+  `CHECK`.
+- **El repositorio aplica el cambio con el Sprint bloqueado.** El caso de uso le
+  pasa a `GuardarCambioDeEstado` el cambio del dominio (`Completar(en)` o
+  `Reabrir()`), y el repositorio lo aplica al ítem que lee después de tomar el
+  candado, no al que leyó el caso de uso. Así un segundo marcado simultáneo ve
+  el ítem ya completado y conserva la fecha del primero (CL-010-10).
 - **Dependencia con US-009.** Necesita la relación histórica ítem-Sprint
   (RN-009-13, corregida en el #104): sin US-009 no hay ítems en un Sprint que
   marcar. Marcar y desmarcar cambian el estado del ítem, no el resultado de su
   fila, que completa US-011 al cerrar.
-- **Dependencia con US-013 (#100).** US-013 guarda la estimación con un
-  `UPDATE` sin condición (RN-013-7). Si un ítem se completa entre la lectura y
-  ese `UPDATE`, se re-estima un ítem completado y se rompe RN-013-4. US-013
-  tiene que condicionar su `UPDATE` a `estado <> 'completado'`, igual que
-  RN-006-8. Salió de la revisión del #93 y está abierto como #100: tiene que
-  estar en `main` antes que la implementación de esta historia, o en el mismo
-  PR.
+- **Dependencia con US-013 (#100).** US-013 guardaba la estimación con un
+  `UPDATE` sin condición (RN-013-7): si un ítem se completaba entre la lectura
+  y ese `UPDATE`, se re-estimaba un ítem completado. El #110 lo condicionó a
+  `estado <> 'completado'`, igual que RN-006-8, y ya está en `main`.
 - **Dependencia con US-011.** El escenario de CA-010-5 necesita un Sprint
   cerrado, y el cierre es US-011. Hasta entonces, CA-010-5 se cubre con tests
   unitarios (el dominio con el Sprint cerrado como dato) y de integración (el
@@ -240,8 +243,8 @@ modifica el ítem.
 - **Se reutiliza `ErrSprintCerrado` de US-009.** La condición es la misma: el
   Sprint está cerrado. Usa el mensaje general (hecho en la corrección de
   US-009, #104).
-- **US-013 tiene que condicionar su estimación.** Ver la dependencia con
-  US-013 en la sección 5 (#100).
+- **US-013 condiciona su estimación.** Ver la dependencia con US-013 en la
+  sección 5 (#100, resuelto en el #110).
 - **Las frases existentes operan sobre el Sprint abierto.** Evita una frase que
   nombre el Sprint en cada marcado, y alcanza porque un proyecto tiene como
   máximo un Sprint abierto (RN-008-17).
@@ -252,4 +255,7 @@ modifica el ítem.
 - [x] Use IA para: redacción de la especificación con Claude Code a partir de
   la historia y de las decisiones del equipo, usando las specs de US-005,
   US-008, US-009 y US-013 como modelo
+- [x] Use IA para: la corrección de RN-010-4 (solo `ErrSprintCerrado` con el
+  Sprint cerrado) y el ajuste tras la implementación (migración, cambio aplicado
+  con el Sprint bloqueado, dependencia con US-013), redactados con Claude Code
 - Revisado y entendido por:
