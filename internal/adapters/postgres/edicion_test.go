@@ -135,7 +135,7 @@ func TestGuardarEdicion_ItemCompletado(t *testing.T) {
 	repo := postgres.NuevoRepositorioBacklog(pool)
 	registrado := registrarParaEditar(ctx, t, repo, crearProyecto(ctx, t, pool, "Demo"), "Crear proyecto")
 	editado := editarCon(t, registrado, "Crear proyecto con integrantes")
-	if _, err := pool.Exec(ctx, `UPDATE items_backlog SET estado = 'completado' WHERE id = $1`, registrado.ID); err != nil {
+	if _, err := pool.Exec(ctx, `UPDATE items_backlog SET estado = 'completado', completado_en = now() WHERE id = $1`, registrado.ID); err != nil {
 		t.Fatalf("completar el item: %v", err)
 	}
 
