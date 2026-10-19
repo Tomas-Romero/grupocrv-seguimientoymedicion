@@ -15,20 +15,28 @@ import (
 // la historia, el rechazo (ErrSprintInexistente) lo produce la aplicacion.
 const idDeSprintInexistente = "00000000-0000-0000-0000-000000000000"
 
-// sprintsSobreApp conecta el area Sprints con los casos de uso de US-008 y US-009 sobre
-// la base en memoria del escenario (ADR 0002). Los Entonces leen la base directamente,
-// porque todavia no hay casos de uso de lectura (US-012). Las demas operaciones del
-// area son de US-010 y US-011.
+// sprintsSobreApp conecta el area Sprints con los casos de uso de US-008, US-009 y
+// US-010 sobre la base en memoria del escenario (ADR 0002). Los Entonces leen la base
+// directamente, porque todavia no hay casos de uso de lectura (US-012). Cerrar un
+// sprint es de US-011.
 type sprintsSobreApp struct {
 	escenario *escenario
 	crear     *app.CrearSprint
 	asignar   *app.AsignarItemASprint
+	marcar    *app.MarcarCompletado
+	desmarcar *app.DesmarcarCompletado
 }
 
 var _ steps.Sprints = (*sprintsSobreApp)(nil)
 
 func nuevoSprintsSobreApp(e *escenario) *sprintsSobreApp {
-	return &sprintsSobreApp{escenario: e, crear: app.NuevoCrearSprint(e.base), asignar: app.NuevoAsignarItemASprint(e.base)}
+	return &sprintsSobreApp{
+		escenario: e,
+		crear:     app.NuevoCrearSprint(e.base),
+		asignar:   app.NuevoAsignarItemASprint(e.base),
+		marcar:    app.NuevoMarcarCompletado(e.base, ahoraEnEscenarios),
+		desmarcar: app.NuevoDesmarcarCompletado(e.base),
+	}
 }
 
 // CrearSprint no valida nada: lo hace el caso de uso. Si el escenario nombra un
@@ -103,11 +111,42 @@ func (a *sprintsSobreApp) idDeHistoria(titulo string) string {
 	return idDeItemInexistente
 }
 
-// CompletarHistoria es de US-010.
-func (a *sprintsSobreApp) CompletarHistoria(_ string) error { return errSinConectar }
+// CompletarHistoria marca la historia como completada con el caso de uso de US-010, en
+// el ultimo sprint de su proyecto. No valida nada: lo hace el caso de uso.
+func (a *sprintsSobreApp) CompletarHistoria(titulo string) error {
+	itemID, sprintID := a.historiaYUltimoSprint(titulo)
+	_, err := a.marcar.Ejecutar(context.Background(), itemID, sprintID)
+	return err
+}
 
-// DesmarcarHistoria es de US-010.
-func (a *sprintsSobreApp) DesmarcarHistoria(_ string) error { return errSinConectar }
+// DesmarcarHistoria desmarca la historia con el caso de uso de US-010, en el ultimo
+// sprint de su proyecto.
+func (a *sprintsSobreApp) DesmarcarHistoria(titulo string) error {
+	itemID, sprintID := a.historiaYUltimoSprint(titulo)
+	_, err := a.desmarcar.Ejecutar(context.Background(), itemID, sprintID)
+	return err
+}
+
+// historiaYUltimoSprint busca la historia por titulo y el ultimo sprint de su proyecto,
+// que es el unico que puede estar abierto (RN-008-17). Una historia que el escenario no
+// creo, o un proyecto sin sprints, se mandan con un ID que no existe: el rechazo lo
+// produce la aplicacion (RN-010-1).
+func (a *sprintsSobreApp) historiaYUltimoSprint(titulo string) (itemID, sprintID string) {
+	itemID, sprintID = idDeItemInexistente, idDeSprintInexistente
+	for _, proyectoID := range a.escenario.proyectos {
+		for _, item := range a.escenario.base.Items(proyectoID) {
+			if item.Titulo != titulo {
+				continue
+			}
+			itemID = item.ID
+			if sprints := a.escenario.base.Sprints(proyectoID); len(sprints) > 0 {
+				sprintID = sprints[len(sprints)-1].ID
+			}
+			return itemID, sprintID
+		}
+	}
+	return itemID, sprintID
+}
 
 // CerrarSprint es de US-011.
 func (a *sprintsSobreApp) CerrarSprint(_ string) error { return errSinConectar }
