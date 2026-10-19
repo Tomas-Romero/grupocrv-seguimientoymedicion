@@ -14,7 +14,7 @@ help: ## Muestra esta ayuda
 tools: ## Instala las herramientas de desarrollo (correr una sola vez)
 	$(GO) install github.com/a-h/templ/cmd/templ@v0.2.793
 	$(GO) install github.com/pressly/goose/v3/cmd/goose@v3.26.0
-	$(GO) install github.com/air-verse/air@latest
+	$(GO) install github.com/air-verse/air@v1.61.7
 	$(GO) install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.8
 
 up: ## Levanta Postgres, aplica migraciones y carga datos de ejemplo

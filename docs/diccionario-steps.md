@@ -107,6 +107,7 @@ conectada, falla con `area sin conectar a los steps: <área>`: es a propósito.
 | `Y el integrante "Conforti" con email "conforti@ejemplo.test" y rol "product_builder"` | `^el integrante "([^"]*)" con email "([^"]*)" y rol "([^"]*)"$` |
 | `Y una historia "Crear proyecto" con prioridad "must"` | `^una historia "([^"]*)" con prioridad "([^"]*)"$` |
 | `Y una historia "Crear proyecto" con prioridad "must" y 5 story points` | `^una historia "([^"]*)" con prioridad "([^"]*)" y (\d+) story points$` |
+| `Y una historia "Crear proyecto" con prioridad "must", 5 story points y 2 criterios de aceptación` | `^una historia "([^"]*)" con prioridad "([^"]*)", (\d+) story points y (\d+) criterios? de aceptación$` |
 | `Y un sprint "Sprint 1" con el objetivo "MVP navegable"` | `^un sprint "([^"]*)" con el objetivo "([^"]*)"$` |
 | `Y un sprint "Sprint 1" con el objetivo "MVP navegable" del "2026-10-06" al "2026-10-19"` | `^un sprint "([^"]*)" con el objetivo "([^"]*)" del "([^"]*)" al "([^"]*)"$` |
 | `Y la historia "Crear proyecto" asignada al sprint "Sprint 1"` | `^la historia "([^"]*)" asignada al sprint "([^"]*)"$` |
@@ -117,6 +118,7 @@ conectada, falla con `area sin conectar a los steps: <área>`: es a propósito.
 | `Y el sprint "Sprint 1" con una historia de 5 story points completada` | `^el sprint "([^"]*)" con una historia de (-?\d+) story points completada$` |
 | `Y el sprint "Sprint 1" con una historia de 3 story points sin completar` | `^el sprint "([^"]*)" con una historia de (-?\d+) story points sin completar$` |
 | `Y el sprint cerrado "Sprint 1" con 20 story points completados de 25 planificados` | `^el sprint cerrado "([^"]*)" con (\d+) story points completados de (\d+) planificados$` |
+| `Y el integrante "Ana" ya registró 3 horas de "Desarrollo" en la historia "Crear proyecto" el 2026-10-05` | `^el integrante "([^"]*)" ya registró (-?\d+(?:[.,]\d+)?) horas de "([^"]*)" en la historia "([^"]*)" el (\S+)$` |
 
 Un escenario **no repite títulos de historias**: el área Backlog las identifica
 por título, y la spec de US-005 permite repetirlos entre sí, así que dos historias
@@ -164,6 +166,7 @@ inexistente (CA-005-8, CA-008-10); con esa frase el escenario no lleva
 | `Cuando se crea la historia "Crear proyecto" con prioridad "must"` | `^se crea la historia "([^"]*)" con prioridad "([^"]*)"$` |
 | `Cuando se crea la historia "Crear proyecto" con prioridad "must", la descripción "Alta" y los criterios:` + tabla de una columna | `^se crea la historia "([^"]*)" con prioridad "([^"]*)", la descripción "([^"]*)" y los criterios:$` |
 | `Cuando se crea una historia con un título de 121 caracteres y prioridad "must"` | `^se crea una historia con un título de (\d+) caracteres y prioridad "([^"]*)"$` |
+| `Cuando se edita la historia "Crear proyecto" con el título "Alta de proyecto", la prioridad "must", la descripción "Alta" y los criterios:` + tabla de una columna | `^se edita la historia "([^"]*)" con el título "([^"]*)", la prioridad "([^"]*)", la descripción "([^"]*)" y los criterios:$` |
 | `Cuando se cambia la prioridad de la historia "Crear proyecto" a "should"` | `^se cambia la prioridad de la historia "([^"]*)" a "([^"]*)"$` |
 | `Cuando se estima la historia "Crear proyecto" en 5 story points` | `^se estima la historia "([^"]*)" en (\d+) story points$` |
 | `Cuando se crea el sprint "Sprint 1" con el objetivo "MVP navegable"` | `^se crea el sprint "([^"]*)" con el objetivo "([^"]*)"$` |
@@ -174,6 +177,7 @@ inexistente (CA-005-8, CA-008-10); con esa frase el escenario no lleva
 | `Cuando se consultan los story points planificados del sprint "Sprint 1"` | `^se consultan los story points planificados del sprint "([^"]*)"$` |
 | `Cuando se consultan los story points completados del sprint "Sprint 1"` | `^se consultan los story points completados del sprint "([^"]*)"$` |
 | `Cuando se consulta la velocidad del equipo` | `^se consulta la velocidad del equipo$` |
+| `Cuando el integrante "Ana" registra 2,5 horas de "Desarrollo" en la historia "Crear proyecto" el 2026-10-05` | `^el integrante "([^"]*)" registra (-?\d+(?:[.,]\d+)?) horas de "([^"]*)" en la historia "([^"]*)" el (\S+)$` |
 
 **Propuesta US-003:** `se registra al integrante "X" con email "..." y rol "Y"`
 es la variante con email de la frase anterior (ver la nota de Contexto). Un
@@ -192,6 +196,21 @@ necesite dos sprints cierra el primero antes (`Y el sprint "Sprint 1" cerrado`, 
 llega con US-011). Un sprint que no entre en las fechas del proyecto tiene que usar la
 frase con fechas.
 
+**Esfuerzo (US-019):** `el integrante "X" registra N horas de "A" en la historia "H"
+el AAAA-MM-DD` y su variante de contexto `ya registró` registran las horas del
+integrante en el proyecto actual. Aceptan coma o punto decimal y un número negativo
+(es la única forma de escribir CA-019-6). En los escenarios "hoy" es el
+2026-10-06 (el reloj fijo): una fecha posterior se rechaza. El integrante y la
+historia se buscan por nombre dentro del proyecto actual: uno que no esté ahí se
+rechaza por la aplicación, no por los steps.
+
+**Historia lista para un sprint (US-009):** `una historia "X" con prioridad "must", 5
+story points y 2 criterios de aceptación` crea una historia estimada y con esa cantidad
+de criterios, que son genéricos ("Criterio 1", "Criterio 2", ...). Es la que cumple la
+Definition of Ready, y la que necesita cualquier escenario que asigne una historia a un
+sprint con éxito. Con `una historia "X" con prioridad "must" y 5 story points` la
+historia está estimada pero no tiene criterios, así que la asignación se rechaza.
+
 **Un solo `Cuando` por escenario.** Si necesitás dos acciones, la primera es
 contexto y va en un `Dado`. Un escenario con dos `Cuando` casi siempre está
 probando dos cosas y conviene partirlo.
@@ -207,6 +226,11 @@ Cuando se crea la historia "Alta" con prioridad "must", la descripción "Alta de
 
 Gherkin recorta los espacios de cada celda, así que una celda con solo espacios
 llega vacía: un criterio "solo espacios" se prueba con tests unitarios, no acá.
+
+`se edita la historia "X" con el título "Y", ...` manda los cuatro datos a la
+vez, como el formulario de edición (US-006): los que no cambian se repiten. Desde
+ahí la historia se nombra por su título nuevo. `se cambia la prioridad ...` es la
+misma edición con los demás datos sin cambios.
 
 `se crea una historia con un título de N caracteres` arma el título con N letras
 `ñ`. Cada una ocupa dos bytes, así que el escenario también prueba que el límite
@@ -237,6 +261,8 @@ cuenta caracteres y no bytes.
 | `Y los story points planificados son 13` | `^los story points planificados son (\d+)$` |
 | `Y los story points completados son 8` | `^los story points completados son (\d+)$` |
 | `Y la velocidad del equipo es 25` | `^la velocidad del equipo es (\d+(?:[.,]\d+)?)$` |
+| `Y el proyecto "Demo" tiene 1 registro de esfuerzo` | `^el proyecto "([^"]*)" tiene (\d+) registros? de esfuerzo$` |
+| `Y la historia "Crear proyecto" tiene 2,5 horas registradas` | `^la historia "([^"]*)" tiene (\d+(?:[.,]\d+)?) horas registradas$` |
 
 `la operación es exitosa` y `la operación se rechaza` miran el error que dejó el
 último `Cuando`. Son los dos steps que más vas a usar: todo escenario de error
