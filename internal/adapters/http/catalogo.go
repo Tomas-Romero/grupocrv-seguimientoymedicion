@@ -73,6 +73,7 @@ var entradasDelCatalogo = []entradaDelCatalogo{
 	{"sprint.ErrItemYaAsignado", sprint.ErrItemYaAsignado, errores.Conflicto, ""},
 	{"sprint.ErrItemSinEstimar", sprint.ErrItemSinEstimar, errores.Conflicto, ""},
 	{"sprint.ErrItemSinCriterios", sprint.ErrItemSinCriterios, errores.Conflicto, ""},
+	{"sprint.ErrItemFueraDelSprint", sprint.ErrItemFueraDelSprint, errores.Conflicto, ""},
 
 	// app
 	{"app.ErrProyectoInexistente", app.ErrProyectoInexistente, errores.NoEncontrado, ""},
