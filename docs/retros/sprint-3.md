@@ -49,8 +49,8 @@ objetivo estirado.
 
 US-008 y US-009 las tomo Tomas el 17/10 y el 18/10 para destrabar la cadena
 US-008 → US-009 → US-010: sin ellas, US-010 no podia empezar. T-004 se completo el
-19/10 sobre la rama de Conforti, que habia dejado el layout y las herramientas pero no
-llegaba al router ni a la spec.
+19/10 sobre la rama de Conforti, que habia dejado la spec (#129), el layout y las
+herramientas pero no llegaba a terminar el router ni las paginas.
 
 ### Trabajo que no estaba en el plan
 
