@@ -14,7 +14,7 @@ Sprint Planning y cualquier cambio se anota en el acta del sprint.
 | 0 | 14/09 – 20/09 | Repo, CI, tablero y walking skeleton | 16 | cerrado |
 | 1 | 21/09 – 05/10 | El MVP: proyectos, backlog, sprints y primeras métricas | 5 de 33 | cerrado, ver `docs/retros/sprint-1.md` |
 | 2 | 06/10 – 12/10 | Las cinco historias con spec mergeada, implementadas con TDD y BDD | 16 de 16 | cerrado, ver `docs/retros/sprint-2.md` |
-| 3 | 13/10 – 19/10 | El ciclo proyecto → backlog → sprint funciona en dominio y aplicación; layout base de la UI | 21 comprometidos, techo 36 | en curso, ver "Compromiso del Sprint 3" |
+| 3 | 13/10 – 19/10 | El ciclo proyecto → backlog → sprint funciona en dominio y aplicación; layout base de la UI | 31 de 21 comprometidos (techo 36) | cerrado, ver `docs/retros/sprint-3.md` |
 | 4 | 20/10 – 26/10 | Planning Poker, defectos, métricas completas y pantallas de alta, edición y listado | 44 | |
 | 5 | 27/10 – 02/11 | Cierre: dashboard, reporte PDF, documentación y ensayo de la presentación | 43 | |
 | — | 02/11 | **Presentación final** | — | |
