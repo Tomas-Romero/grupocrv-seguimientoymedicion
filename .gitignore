@@ -5,6 +5,7 @@ grupocrv-seguimientoymedicion
 
 # generados por templ
 *_templ.go
+*_templ.txt
 
 # tailwind compilado
 /web/static/css/app.css
