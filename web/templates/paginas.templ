@@ -1,0 +1,18 @@
+package plantillas
+
+// Inicio es el contenido de la pagina de inicio (GET /).
+templ Inicio() {
+	<h1 class="text-2xl font-semibold text-slate-900">Software Metrics &amp; Estimation</h1>
+	<p class="mt-2 text-slate-700">
+		Seguimiento, medicion y estimacion de proyectos de software.
+	</p>
+}
+
+// NoEncontrado es el contenido de la pagina de error cuando la ruta no existe (404).
+templ NoEncontrado() {
+	<h1 class="text-2xl font-semibold text-slate-900">Página no encontrada</h1>
+	<p class="mt-2 text-slate-700">
+		No hay nada en esta dirección.
+		<a href="/" class="text-indigo-700 underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Volver al inicio</a>
+	</p>
+}
