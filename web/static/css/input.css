@@ -1,0 +1,5 @@
+/* Entrada de Tailwind v4 (binario standalone, sin Node). */
+@import "tailwindcss";
+
+/* Escanea las plantillas templ en busca de clases. */
+@source "../../templates";

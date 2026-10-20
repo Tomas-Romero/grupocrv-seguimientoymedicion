@@ -1,0 +1,13 @@
+.git
+.github
+.idea
+.vscode
+bin
+tmp
+coverage.out
+domain.out
+coverage.html
+.env
+.env.local
+web/static/css/app.css
+**/*_templ.go
