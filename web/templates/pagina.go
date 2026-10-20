@@ -20,6 +20,19 @@ import (
 
 const nombreApp = "Software Metrics"
 
+// configuracionHtmx es el contenido de <meta name="htmx-config"> (RN-T004-10). HTMX no
+// intercambia las respuestas 4xx ni 5xx por defecto, y sin esto el fragmento de error de
+// T-005 no se veria. Los errores uniformes (404, 409, 422 y 500) se intercambian dentro
+// de #mensajes; el resto de las reglas son las que trae HTMX 2.x. La primera regla cuyo
+// code coincide con el estado es la que vale, por eso la de los errores va antes que la
+// de los demas 4xx y 5xx.
+const configuracionHtmx = `{"responseHandling":[` +
+	`{"code":"204","swap":false},` +
+	`{"code":"[23]..","swap":true},` +
+	`{"code":"^(404|409|422|500)$","swap":true,"error":true,"target":"#mensajes"},` +
+	`{"code":"[45]..","swap":false,"error":true}` +
+	`]}`
+
 // Seccion identifica el item del menu que corresponde a la pagina actual.
 type Seccion string
 
