@@ -4,9 +4,9 @@
 |---|---|
 | **Estado** | revision |
 | **Autor** | Angelo Conforti |
-| **Issue** | #N (spec) · tarea: #14 |
+| **Issue** | #128 (spec) · tarea: #14 |
 | **Escenarios BDD** | No aplica: tarea técnica sin regla de negocio (ver Restricciones) |
-| **Código** | `web/templates/`, `internal/adapters/http/` |
+| **Código** | `web/templates/`, `internal/adapters/http/`, `cmd/server/` |
 | **Última actualización** | 2026-10-19 |
 
 > Esta especificación se escribe y se mergea **antes** de mergear la
@@ -54,24 +54,28 @@ pantalla.
 
 No hay reglas de dominio. Son reglas de comportamiento de la interfaz:
 
-- **RN-004-1** — Una petición es de fragmento si y solo si trae
+- **RN-T004-1** — Una petición es de fragmento si y solo si trae
   `HX-Request: true` y no trae `HX-Boosted: true`.
-- **RN-004-2** — Toda respuesta de pantalla lleva `Vary: HX-Request`.
-- **RN-004-3** — El código HTTP lo decide quien llama a `Responder`, tanto en
+- **RN-T004-2** — Toda respuesta de pantalla lleva `Vary: HX-Request`.
+- **RN-T004-3** — El código HTTP lo decide quien llama a `Responder`, tanto en
   página completa como en fragmento.
-- **RN-004-4** — La navegación marca con `aria-current="page"` solo el ítem
+- **RN-T004-4** — La navegación marca con `aria-current="page"` solo el ítem
   activo; una página sin sección activa no marca ninguno.
-- **RN-004-5** — `GET /` muestra el inicio. Cualquier otra ruta no registrada
+- **RN-T004-5** — `GET /` muestra el inicio. Cualquier otra ruta no registrada
   responde 404 con la página de error y código 404 (no 200).
-- **RN-004-6** — `/static/` sirve archivos y nunca lista directorios.
-- **RN-004-7** — `/health` conserva su comportamiento (JSON, 200 o 503).
-- **RN-004-8** — Si el render falla, se responde 500 sin escribir contenido
+- **RN-T004-6** — `/static/` sirve archivos y nunca lista directorios.
+- **RN-T004-7** — `/health` conserva su comportamiento (JSON, 200 o 503).
+- **RN-T004-8** — Si el render falla, se responde 500 sin escribir contenido
   parcial, y el error se registra en el log.
-- **RN-004-9** — La página completa incluye los landmarks `header`, `nav` y
+- **RN-T004-9** — La página completa incluye los landmarks `header`, `nav` y
   `main` y un enlace "saltar al contenido".
-- **RN-004-10** — El layout reserva un contenedor para mensajes y errores
-  uniformes, sin depender del tipo de error de T-005.
-- **RN-004-11** — Las versiones de Tailwind y HTMX quedan fijadas en el
+- **RN-T004-10** — El layout reserva el contenedor `#mensajes` para los errores
+  uniformes de T-005 y configura HTMX (`<meta name="htmx-config">`, con
+  `responseHandling`) para que las respuestas 404, 409, 422 y 500 se
+  intercambien dentro de `#mensajes`. HTMX no intercambia 4xx ni 5xx por
+  defecto: sin esta regla, el fragmento de error de T-005 no se vería. Las
+  demás respuestas conservan el comportamiento por defecto de HTMX.
+- **RN-T004-11** — Las versiones de Tailwind y HTMX quedan fijadas en el
   repositorio y HTMX se sirve como archivo propio, sin CDN.
 
 ## 5. Restricciones
@@ -87,14 +91,14 @@ No hay reglas de dominio. Son reglas de comportamiento de la interfaz:
 
 ## 6. Casos límite
 
-- **CL-004-1** — `HX-Request: false` u otro valor cuenta como petición normal.
-- **CL-004-2** — `HX-Request: true` junto con `HX-Boosted: true` devuelve la
+- **CL-T004-1** — `HX-Request: false` u otro valor cuenta como petición normal.
+- **CL-T004-2** — `HX-Request: true` junto con `HX-Boosted: true` devuelve la
   página completa.
-- **CL-004-3** — `/static/` y `/static/css/` (directorios) dan 404, sin listado.
-- **CL-004-4** — Un estático inexistente da 404 sin pasar por la página 404
+- **CL-T004-3** — `/static/` y `/static/css/` (directorios) dan 404, sin listado.
+- **CL-T004-4** — Un estático inexistente da 404 sin pasar por la página 404
   con layout.
-- **CL-004-5** — El 404 por HTMX devuelve el fragmento con código 404.
-- **CL-004-6** — Una página sin sección activa (el 404) no marca ningún ítem.
+- **CL-T004-5** — El 404 por HTMX devuelve el fragmento con código 404.
+- **CL-T004-6** — Una página sin sección activa (el 404) no marca ningún ítem.
 
 ## 7. Condiciones de error
 
@@ -107,15 +111,17 @@ No hay reglas de dominio. Son reglas de comportamiento de la interfaz:
 
 ## 8. Criterios de aceptación
 
-- **CA-004-1** (normal) — `GET /` responde 200 con el inicio dentro del
+- **CA-T004-1** (normal) — `GET /` responde 200 con el inicio dentro del
   layout y con Inicio marcado como activo.
-- **CA-004-2** (alternativo) — Con `HX-Request: true`, la misma ruta responde
+- **CA-T004-2** (alternativo) — Con `HX-Request: true`, la misma ruta responde
   solo el fragmento y con `Vary: HX-Request`.
-- **CA-004-3** (límite) — Con `HX-Request` y `HX-Boosted`, responde la página
+- **CA-T004-3** (límite) — Con `HX-Request` y `HX-Boosted`, responde la página
   completa; `/static/` y sus directorios dan 404 sin listado.
-- **CA-004-4** (error) — Una ruta inexistente responde 404 con la página de
-  error; si el render falla, responde 500 limpio.
-- **CA-004-5** (plataforma) — Desde un clon limpio, `make gen`, `make css` y
+- **CA-T004-4** (error) — Una ruta inexistente responde 404 con la página de
+  error; si el render falla, responde 500 limpio; y el layout deja `#mensajes`
+  y la configuración de HTMX para mostrar los errores 404, 409, 422 y 500 de
+  T-005 (RN-T004-10).
+- **CA-T004-5** (plataforma) — Desde un clon limpio, `make gen`, `make css` y
   `make build` funcionan siguiendo el `README.md`, y el perfil `full` sirve la
   página con estilos y sin internet.
 
@@ -132,6 +138,13 @@ No hay reglas de dominio. Son reglas de comportamiento de la interfaz:
   un 500 limpio si el render falla.
 - **HTMX y CSS como archivos propios en `web/static/`**, para funcionar sin
   internet en la defensa.
+- **Los identificadores llevan `T004` (`RN-T004-k`, `CL-T004-k`, `CA-T004-k`),
+  no `004`**: con `004` chocaban con los de US-004 y las etiquetas de los
+  escenarios habrían mezclado la trazabilidad de las dos (mismo criterio que
+  en T-005).
+- **La configuración de HTMX para los errores va en la meta del layout, no en
+  un script propio**: es la forma que documenta HTMX 2.x y no agrega código
+  JavaScript al repositorio.
 - **Descartado:** caer a `html/template`. Solo se reconsidera si el spike
   supera el timebox de 4 horas (ADR 0001); el resultado se registra en un ADR.
 
