@@ -60,12 +60,9 @@ func run() error {
 		return err
 	}
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("GET /health", httpadapter.Health(pool, 2*time.Second))
-	mux.HandleFunc("GET /", func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		_, _ = w.Write([]byte("<h1>Software Metrics &amp; Estimation</h1><p>Sprint 0 — walking skeleton.</p>"))
-	})
+	// T-004: las rutas viven en NuevoRouter. Los archivos estaticos se sirven desde
+	// web/static (en la imagen de Docker esta junto al binario).
+	router := httpadapter.NuevoRouter(pool, 2*time.Second, http.Dir("web/static"))
 
 	// T-005: si un handler hace panic, la persona recibe el error interno uniforme y el
 	// servidor sigue atendiendo. Los handlers responden sus errores con
@@ -74,7 +71,7 @@ func run() error {
 
 	srv := &http.Server{
 		Addr:              cfg.HTTPAddr,
-		Handler:           manejadorDeErrores.Recuperar(mux),
+		Handler:           manejadorDeErrores.Recuperar(router),
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 
