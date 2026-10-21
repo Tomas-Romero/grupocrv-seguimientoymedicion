@@ -259,6 +259,18 @@ actualiza con el Planning):
 | T-011 y T-015 | Conforti (T-011) | Tomás | T-004 y T-005 las dejó Tomás, y las pantallas usan el layout, el router, `Responder` y el manejo de errores que construyó |
 | US-028 | Tomás | Conforti | Función pura con la spec ya escrita: trabajo acotado y fácil de verificar |
 
+**Migraciones del Sprint 4.** Siguen la numeración del Sprint 3 y se reservan por
+adelantado, como entonces:
+
+| Número | Historia | Qué crea |
+|---|---|---|
+| 00009 | US-014 | Tablas de sesiones de Planning Poker y de sus participantes |
+| 00010 | US-015 | Tabla de votos por ronda |
+| 00011 en adelante | US-022 y US-023 | Defectos; el número se reserva al escribir su spec (Sprint 5) |
+
+Según las specs actuales, US-011, US-016, US-017, US-018, US-027, US-028, US-029,
+T-011 y T-015 no llevan migración. Si alguna la necesita, lo avisa en el PR de su spec.
+
 Cada persona escribe las specs de lo que implementa, salvo US-027 y US-028, cuya
 spec ya está escrita y se publica como PR por Tomás. Las de US-014 y US-015 (Vergara)
 y la de T-011 (Tomás) tienen que estar mergeadas el **miércoles 21/10**; las de
