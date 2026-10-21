@@ -15,7 +15,7 @@ Sprint Planning y cualquier cambio se anota en el acta del sprint.
 | 1 | 21/09 – 05/10 | El MVP: proyectos, backlog, sprints y primeras métricas | 5 de 33 | cerrado, ver `docs/retros/sprint-1.md` |
 | 2 | 06/10 – 12/10 | Las cinco historias con spec mergeada, implementadas con TDD y BDD | 16 de 16 | cerrado, ver `docs/retros/sprint-2.md` |
 | 3 | 13/10 – 19/10 | El ciclo proyecto → backlog → sprint funciona en dominio y aplicación; layout base de la UI | 31 de 21 comprometidos (techo 36) | cerrado, ver `docs/retros/sprint-3.md` |
-| 4 | 20/10 – 26/10 | Planning Poker, defectos, métricas completas y pantallas de alta, edición y listado | 44 | |
+| 4 | 20/10 – 26/10 | El ciclo completo se usa desde el navegador, base de Planning Poker y métricas de esfuerzo y completitud | 35 comprometidos, techo 46 | en curso, ver "Compromiso del Sprint 4" |
 | 5 | 27/10 – 02/11 | Cierre: dashboard, reporte PDF, documentación y ensayo de la presentación | 43 | |
 | — | 02/11 | **Presentación final** | — | |
 
@@ -166,7 +166,8 @@ US-006, US-011 y US-013 no llevan migración.
 | T-011 | Pantallas de alta, edición y listado | 8 | Conforti |
 
 **Sprint 5 — 27/10 a 02/11 — 43 SP.** Carga: Tomás 15, Vergara 15, Conforti 13.
-**Congelamiento de funcionalidades: jueves 29/10.** De ahí a la presentación solo
+**Congelamiento de funcionalidades: sábado 31/10** (corrido desde el jueves 29/10 en el
+Planning del 20/10). De ahí a la presentación solo
 hay documentación, defectos y ensayo.
 
 | ID | Historia | SP | Responsable |
@@ -186,6 +187,116 @@ hay documentación, defectos y ensayo.
 medida de 5. Solo es posible si las specs ya están mergeadas, el trabajo se
 paraleliza y no se repiten los errores del Sprint 1. Por eso el punto de control
 del **12/10** es obligatorio.
+
+### Compromiso del Sprint 4 (Planning del 20/10)
+
+**Qué pide la guía y qué falta.** Se releyó la guía de la cátedra contra el backlog.
+Todo lo que quedó en el plan, salvo cinco ítems, responde a un requerimiento mínimo
+(Planning Poker incluido, sección 4, con "realizar nuevas rondas", que es US-017):
+
+| Requerimiento de la guía | Historias que faltan | SP |
+|---|---|---|
+| 3. Sprints: cerrar, consultar anteriores | US-011, US-012 | 7 |
+| 4. Planning Poker (votos ocultos, revelar, diferencias, rondas, estimación acordada) | US-014, US-015, US-016, US-017, US-018 | 21 |
+| 5. Esfuerzo: comparar estimado y real | US-020, US-021 | 6 |
+| 6. Defectos | US-022, US-023 | 8 |
+| 7. Métricas | US-027, US-028, US-029 | 10 |
+| 1. Estado de un proyecto | US-004 | 2 |
+| 8. Dashboard, 9. Reportes y PDF | US-030, US-033, US-034 | 18 |
+| Interfaz usable (criterio de evaluación) | T-011 | 8 |
+| Entregables: documentación, manual y presentación | T-008, T-009 | 10 |
+| **Total exigido por la guía** | | **90** |
+
+**No lo exige la guía** (extras, 21 SP): US-031 burndown (5), US-007 (3), US-024 (3),
+US-032 (5) y T-007 (5). US-031 sale de Sprint 5 y queda sin sprint como los otros
+cuatro. **US-017 vuelve al plan:** había quedado en el recorte del Sprint 2 y es el
+requerimiento "realizar nuevas rondas".
+
+**La cuenta no cierra con la velocidad medida.** Quedan 90 SP exigidos, 80 de
+funcionalidad (los 10 de documentación y presentación se hacen después del
+congelamiento). Con el congelamiento corrido al sábado 31/10 hay 12 días: a 31 SP
+por semana (el Sprint 3, con trabajo de rescate) son unos 53 SP, y a 16 SP por
+semana (el Sprint 2), unos 27. Falta capacidad por entre 27 y 53 SP, y las
+pantallas funcionales de cada requerimiento todavía no tienen SP propios. No se
+resuelve recortando requerimientos de la guía. En el Planning del 20/10 el equipo
+decidió:
+
+1. **Planning Poker se entrega con una sola pantalla de votación** como mínimo
+   defendible. Los otros requerimientos se definen igual en el Planning del Sprint 5.
+2. **El congelamiento se corre al sábado 31/10**, lo que suma dos días de
+   funcionalidad. La fecha de entrega podría extenderse más; el plan sigue hasta el
+   02/11 y se ajusta si la cátedra lo confirma.
+3. **Las pantallas no se simplifican:** cada requerimiento tiene que quedar
+   funcional de punta a punta en el navegador, y el diseño visual se mejora al
+   final. Las pantallas de Planning Poker, defectos, esfuerzo, métricas y dashboard
+   se estiman como tareas propias (T-015 en adelante) en el Planning del Sprint 5.
+
+**Compromiso del Sprint 4: 35 SP**: la velocidad del Sprint 3 (31) más T-015, que
+sale de partir T-011 en dos al descubrir que no existe ninguna lectura (listar
+proyectos, backlog o sprints). T-011 queda con proyectos, integrantes y backlog (8 SP) y
+T-015 con los sprints (5 SP). Se toma el camino que desbloquea al resto: cierre de
+sprint, pantallas y la base de Planning Poker.
+
+**Sprint Goal:** el ciclo proyecto → backlog → sprint → cierre se usa desde el
+navegador, se pueden iniciar sesiones de Planning Poker con votos ocultos, y el
+producto calcula horas estimadas, reales, desviación y porcentaje de completitud.
+
+| Persona | Compromiso | SP | Objetivo estirado | SP |
+|---|---|---|---|---|
+| Vergara | US-011, US-014, US-015 | 15 | US-018 | 3 |
+| Tomás | T-011, T-015, US-027 | 18 | US-016, US-029 | 8 |
+| Conforti | US-028 | 2 | — | — |
+
+US-016 espera a que Vergara mergee US-014 y US-015, así que es el primero del
+objetivo estirado de Tomás. Pasan al Sprint 5 con requerimiento pendiente: US-017,
+US-022 y US-023 (11 SP).
+
+**Cambios de responsable** (el campo *Assignees* del tablero y de cada issue se
+actualiza con el Planning):
+
+| ID | Antes | Ahora | Por qué |
+|---|---|---|---|
+| T-011 y T-015 | Conforti (T-011) | Tomás | T-004 y T-005 las dejó Tomás, y las pantallas usan el layout, el router, `Responder` y el manejo de errores que construyó |
+| US-028 | Tomás | Conforti | Función pura con la spec ya escrita: trabajo acotado y fácil de verificar |
+
+**Migraciones del Sprint 4.** Siguen la numeración del Sprint 3 y se reservan por
+adelantado, como entonces:
+
+| Número | Historia | Qué crea |
+|---|---|---|
+| 00009 | US-014 | Tablas de sesiones de Planning Poker y de sus participantes |
+| 00010 | US-015 | Tabla de votos por ronda |
+| 00011 en adelante | US-022 y US-023 | Defectos; el número se reserva al escribir su spec (Sprint 5) |
+
+Según las specs actuales, US-011, US-016, US-017, US-018, US-027, US-028, US-029,
+T-011 y T-015 no llevan migración. Si alguna la necesita, lo avisa en el PR de su spec.
+
+Cada persona escribe las specs de lo que implementa, salvo US-027 y US-028, cuya
+spec ya está escrita y se publica como PR por Tomás. Las de US-014 y US-015 (Vergara)
+y la de T-011 (Tomás) tienen que estar mergeadas el **miércoles 21/10**; las de
+US-016 y US-018, antes de empezarlas.
+
+Los identificadores de las reglas, casos y criterios de las tareas llevan la `T`
+(`RN-T011-k`, `CL-T011-k`, `CA-T011-k`), porque `RN-011-k` es de US-011 y las
+etiquetas `@CA-011-k` de los escenarios se mezclarían.
+
+**Acciones de la retro del Sprint 3** (tarea nueva T-014 y una regla de proceso):
+
+- **T-014 — chequeo de `[ID]` en todos los commits de un PR** (Tomás, revisa
+  Vergara, antes del 22/10). No cuenta en el compromiso.
+- **Borrador del jueves:** el jueves 22/10 a las 22:00 cada historia tiene su PR
+  en borrador con el RED a la vista. Quien no lo tiene pasa su historia a quien
+  tenga capacidad; decide Tomás en el momento. Lo mismo vale para una revisión sin
+  responder en 24 horas.
+
+| Día | Qué pasa |
+|---|---|
+| Martes 20/10 | Planning. Cambios de responsable. Se publican las specs de US-027 y US-028 |
+| Miércoles 21/10 | Specs de US-014, US-015, US-027, US-028 y T-011 mergeadas. Empieza el RED de US-011 |
+| Jueves 22/10 | Refinement. **Borradores con RED a las 22:00.** T-014 mergeada |
+| Viernes 23/10 | Revisión cruzada de todo lo abierto |
+| Fin de semana | Colchón: todo mergeado o replanificado |
+| Lunes 26/10 | Review con demo y Retro. El acta se commitea el mismo lunes. Planning del Sprint 5: estimación de las pantallas (T-015 en adelante) |
 
 ## Cómo se reparte y por qué
 
@@ -303,7 +414,8 @@ proyecto o sprint en pantalla y exportable a PDF, documentación y manual
 terminados, matriz de trazabilidad generada y una demo ensayada con nuestros
 propios datos cargados en la app.
 
-**Congelamiento de funcionalidades: jueves 29/10.** De ahí al lunes 02/11 es
+**Congelamiento de funcionalidades: sábado 31/10** (corrido desde el jueves 29/10 en el
+Planning del 20/10). De ahí al lunes 02/11 es
 solo documentación, corrección de defectos y ensayo de la presentación.
 
 | ID | Historia | SP | Responsable | Notas |
