@@ -14,14 +14,27 @@ import (
 //	GET /health       estado de la base (JSON)
 //	GET /static/...   archivos estaticos, sin listar directorios
 //	GET /             inicio
+//	/proyectos...     las pantallas, si se pasa ConPantallas
 //	cualquier otra    404 con la pagina de error
-func NuevoRouter(salud Verificador, espera time.Duration, estaticos http.FileSystem) http.Handler {
+func NuevoRouter(salud Verificador, espera time.Duration, estaticos http.FileSystem, opciones ...OpcionDeRouter) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", Health(salud, espera))
 	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(sinDirectorios{estaticos})))
 	mux.HandleFunc("GET /{$}", inicio)
+	for _, opcion := range opciones {
+		opcion(mux)
+	}
 	mux.HandleFunc("/", noEncontrado)
 	return mux
+}
+
+// OpcionDeRouter agrega rutas al router antes de la ruta que responde 404.
+type OpcionDeRouter func(mux *http.ServeMux)
+
+// ConPantallas agrega las pantallas de proyectos, integrantes y backlog (spec T-011). Sin
+// esta opcion el router tiene solo el inicio, /health y los estaticos.
+func ConPantallas(p *Pantallas) OpcionDeRouter {
+	return p.registrar
 }
 
 func inicio(w http.ResponseWriter, r *http.Request) {
