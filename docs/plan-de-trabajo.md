@@ -15,7 +15,7 @@ Sprint Planning y cualquier cambio se anota en el acta del sprint.
 | 1 | 21/09 – 05/10 | El MVP: proyectos, backlog, sprints y primeras métricas | 5 de 33 | cerrado, ver `docs/retros/sprint-1.md` |
 | 2 | 06/10 – 12/10 | Las cinco historias con spec mergeada, implementadas con TDD y BDD | 16 de 16 | cerrado, ver `docs/retros/sprint-2.md` |
 | 3 | 13/10 – 19/10 | El ciclo proyecto → backlog → sprint funciona en dominio y aplicación; layout base de la UI | 31 de 21 comprometidos (techo 36) | cerrado, ver `docs/retros/sprint-3.md` |
-| 4 | 20/10 – 26/10 | El ciclo completo se usa desde el navegador, base de Planning Poker y métricas de esfuerzo y completitud | 30 comprometidos, techo 41 | en curso, ver "Compromiso del Sprint 4" |
+| 4 | 20/10 – 26/10 | El ciclo completo se usa desde el navegador, base de Planning Poker y métricas de esfuerzo y completitud | 35 comprometidos, techo 46 | en curso, ver "Compromiso del Sprint 4" |
 | 5 | 27/10 – 02/11 | Cierre: dashboard, reporte PDF, documentación y ensayo de la presentación | 43 | |
 | — | 02/11 | **Presentación final** | — | |
 
@@ -231,9 +231,11 @@ decidió:
    final. Las pantallas de Planning Poker, defectos, esfuerzo, métricas y dashboard
    se estiman como tareas propias (T-015 en adelante) en el Planning del Sprint 5.
 
-**Compromiso del Sprint 4: 30 SP**, que es la velocidad del Sprint 3 (el techo del
-rango). Se toma el camino que desbloquea al resto: cierre de sprint, pantallas y la
-base de Planning Poker.
+**Compromiso del Sprint 4: 35 SP**: la velocidad del Sprint 3 (31) más T-015, que
+sale de partir T-011 en dos al descubrir que no existe ninguna lectura (listar
+proyectos, backlog o sprints). T-011 queda con proyectos, integrantes y backlog (8 SP) y
+T-015 con los sprints (5 SP). Se toma el camino que desbloquea al resto: cierre de
+sprint, pantallas y la base de Planning Poker.
 
 **Sprint Goal:** el ciclo proyecto → backlog → sprint → cierre se usa desde el
 navegador, se pueden iniciar sesiones de Planning Poker con votos ocultos, y el
@@ -242,7 +244,7 @@ producto calcula horas estimadas, reales, desviación y porcentaje de completitu
 | Persona | Compromiso | SP | Objetivo estirado | SP |
 |---|---|---|---|---|
 | Vergara | US-011, US-014, US-015 | 15 | US-018 | 3 |
-| Tomás | T-011, US-027 | 13 | US-016, US-029 | 8 |
+| Tomás | T-011, T-015, US-027 | 18 | US-016, US-029 | 8 |
 | Conforti | US-028 | 2 | — | — |
 
 US-016 espera a que Vergara mergee US-014 y US-015, así que es el primero del
@@ -254,7 +256,7 @@ actualiza con el Planning):
 
 | ID | Antes | Ahora | Por qué |
 |---|---|---|---|
-| T-011 | Conforti | Tomás | T-004 y T-005 las dejó Tomás, y T-011 usa el layout, el router, `Responder` y el manejo de errores que construyó |
+| T-011 y T-015 | Conforti (T-011) | Tomás | T-004 y T-005 las dejó Tomás, y las pantallas usan el layout, el router, `Responder` y el manejo de errores que construyó |
 | US-028 | Tomás | Conforti | Función pura con la spec ya escrita: trabajo acotado y fácil de verificar |
 
 Cada persona escribe las specs de lo que implementa, salvo US-027 y US-028, cuya
