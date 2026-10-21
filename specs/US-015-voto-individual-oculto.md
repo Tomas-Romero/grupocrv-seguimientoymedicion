@@ -274,4 +274,4 @@ cuenta propia:
   cuenta el último voto, votos por ronda, voto oculto garantizado por el
   dominio, cierre manual al revelar, concurrencia), usando las specs de US-013,
   US-014, US-010, US-019 y T-005 como modelo
-- Revisado y entendido por:
+- Revisado y entendido por: Juan Ignacio Vergara
