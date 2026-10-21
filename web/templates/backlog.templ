@@ -1,0 +1,89 @@
+package plantillas
+
+import "strconv"
+
+// BacklogDeProyecto es la pantalla /proyectos/{id}/backlog: la tabla de historias, con
+// estimar y editar en cada fila, y el formulario para crear una.
+templ BacklogDeProyecto(v VistaBacklog) {
+	<h1 class={ claseTitulo }>Backlog</h1>
+	if len(v.Items) == 0 {
+		<p class="mt-4 text-slate-700">El backlog está vacío. Creá la primera historia más abajo.</p>
+	} else {
+		<table class="mt-4 w-full border-collapse text-left text-sm">
+			<caption class="sr-only">Historias del Product Backlog, ordenadas por prioridad</caption>
+			<thead>
+				<tr class="border-b border-slate-300">
+					<th scope="col" class="py-2 pr-3 font-semibold">#</th>
+					<th scope="col" class="py-2 pr-3 font-semibold">Título</th>
+					<th scope="col" class="py-2 pr-3 font-semibold">Prioridad</th>
+					<th scope="col" class="py-2 pr-3 font-semibold">Estado</th>
+					<th scope="col" class="py-2 pr-3 font-semibold">Story Points</th>
+					<th scope="col" class="py-2 pr-3 font-semibold">Criterios</th>
+					<th scope="col" class="py-2 font-semibold">Acciones</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, i := range v.Items {
+					<tr class="border-b border-slate-200 align-top">
+						<td class="py-2 pr-3">{ strconv.Itoa(i.Numero) }</td>
+						<td class="py-2 pr-3">{ i.Titulo }</td>
+						<td class="py-2 pr-3">{ i.Prioridad }</td>
+						<td class="py-2 pr-3">{ i.Estado }</td>
+						<td class="py-2 pr-3">{ i.Puntos }</td>
+						<td class="py-2 pr-3">{ strconv.Itoa(i.Criterios) }</td>
+						<td class="py-2">
+							<form hx-post={ i.Estimar } class="flex items-center gap-2">
+								<select name="estimacion" aria-label={ "Estimación de " + i.Titulo } class="rounded border border-slate-300 bg-white px-2 py-1 text-xs">
+									for _, o := range i.Escala {
+										<option value={ o.Valor } selected?={ o.Elegida }>{ o.Texto }</option>
+									}
+								</select>
+								<button type="submit" aria-label={ "Estimar " + i.Titulo } class={ claseBotonChico }>Estimar</button>
+								<a href={ templ.URL(i.Editar) } aria-label={ "Editar " + i.Titulo } class={ claseEnlace }>Editar</a>
+							</form>
+						</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	}
+	<h2 class="mt-10 text-lg font-semibold text-slate-900">{ v.Alta.Encabezado }</h2>
+	@camposDeHistoria(v.Alta)
+}
+
+// FormularioDeItem es la pantalla de edicion de una historia.
+templ FormularioDeItem(f FormItem) {
+	<h1 class={ claseTitulo }>{ f.Encabezado }</h1>
+	@camposDeHistoria(f)
+}
+
+templ camposDeHistoria(f FormItem) {
+	<form hx-post={ f.Accion } class="mt-4 max-w-xl space-y-4">
+		<div>
+			<label for="titulo" class={ claseEtiqueta }>Título</label>
+			<input type="text" id="titulo" name="titulo" value={ f.Titulo } class={ claseCampo }/>
+		</div>
+		<div>
+			<label for="descripcion" class={ claseEtiqueta }>Descripción</label>
+			<textarea id="descripcion" name="descripcion" rows="3" class={ claseCampo }>{ f.Descripcion }</textarea>
+		</div>
+		<div>
+			<label for="prioridad" class={ claseEtiqueta }>Prioridad</label>
+			<select id="prioridad" name="prioridad" class={ claseCampo }>
+				for _, o := range f.Prioridades {
+					<option value={ o.Valor } selected?={ o.Elegida }>{ o.Texto }</option>
+				}
+			</select>
+		</div>
+		<div>
+			<label for="criterios" class={ claseEtiqueta }>Criterios de aceptación (uno por línea)</label>
+			<textarea id="criterios" name="criterios" rows="4" class={ claseCampo }>{ f.Criterios }</textarea>
+		</div>
+		<div class="flex items-center gap-4">
+			<button type="submit" class={ claseBoton }>Guardar</button>
+			if f.Volver != "" {
+				<a href={ templ.URL(f.Volver) } class={ claseEnlace }>Cancelar</a>
+			}
+		</div>
+	</form>
+}
