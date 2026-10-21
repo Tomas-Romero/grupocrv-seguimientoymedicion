@@ -280,4 +280,4 @@ cuenta propia:
   de dos, una sesión abierta por historia, estados y rondas, escala de US-013),
   usando las specs de US-005, US-009, US-010, US-011, US-013, US-019 y T-005
   como modelo
-- Revisado y entendido por:
+- Revisado y entendido por: Juan Ignacio Vergara
