@@ -21,6 +21,7 @@ type RepositorioProyectos struct {
 var (
 	_ app.RepositorioProyectos         = (*RepositorioProyectos)(nil)
 	_ app.RepositorioModificarProyecto = (*RepositorioProyectos)(nil)
+	_ app.RepositorioListarProyectos   = (*RepositorioProyectos)(nil)
 )
 
 // NuevoRepositorioProyectos arma el repositorio sobre el pool de conexiones.
@@ -84,4 +85,28 @@ WHERE id::text = $1`
 		return fmt.Errorf("%w (id %s)", app.ErrProyectoInexistente, p.ID)
 	}
 	return nil
+}
+
+// ListarProyectos devuelve todos los proyectos, sin orden: el orden lo pone el caso de
+// uso (T-011), asi la memoria y Postgres se comportan igual.
+func (r *RepositorioProyectos) ListarProyectos(ctx context.Context) ([]proyecto.Proyecto, error) {
+	const listar = `SELECT id::text, nombre, descripcion, fecha_inicio, fecha_fin FROM proyectos`
+	filas, err := r.pool.Query(ctx, listar)
+	if err != nil {
+		return nil, fmt.Errorf("listar los proyectos: %w", err)
+	}
+	defer filas.Close()
+
+	proyectos := []proyecto.Proyecto{}
+	for filas.Next() {
+		var p proyecto.Proyecto
+		if err := filas.Scan(&p.ID, &p.Nombre, &p.Descripcion, &p.FechaInicio, &p.FechaFin); err != nil {
+			return nil, fmt.Errorf("leer un proyecto: %w", err)
+		}
+		proyectos = append(proyectos, p)
+	}
+	if err := filas.Err(); err != nil {
+		return nil, fmt.Errorf("listar los proyectos: %w", err)
+	}
+	return proyectos, nil
 }

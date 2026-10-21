@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -31,8 +32,12 @@ type RepositorioBacklog struct {
 	pool *pgxpool.Pool
 }
 
-// RepositorioBacklog cumple el puerto del caso de uso de US-005.
-var _ app.RepositorioBacklog = (*RepositorioBacklog)(nil)
+// RepositorioBacklog cumple el puerto del caso de uso de US-005 y los de lectura de T-011.
+var (
+	_ app.RepositorioBacklog       = (*RepositorioBacklog)(nil)
+	_ app.RepositorioListarBacklog = (*RepositorioBacklog)(nil)
+	_ app.RepositorioConsultarItem = (*RepositorioBacklog)(nil)
+)
 
 // NuevoRepositorioBacklog arma el repositorio sobre el pool de conexiones.
 func NuevoRepositorioBacklog(pool *pgxpool.Pool) *RepositorioBacklog {
@@ -113,4 +118,48 @@ RETURNING id::text`
 	item.Numero = numero
 	item.ProyectoID = proyectoID
 	return item, nil
+}
+
+// ListarItems devuelve los items del proyecto, sin orden: el orden lo pone el caso de uso
+// (T-011). Un ID mal formado no puede ser de ningun proyecto: devuelve una lista vacia,
+// como un proyecto sin items. Quien lo llama ya verifico que el proyecto exista.
+func (r *RepositorioBacklog) ListarItems(ctx context.Context, proyectoID string) ([]backlog.ItemBacklog, error) {
+	const listar = `
+SELECT id::text, proyecto_id::text, numero, titulo, descripcion, prioridad, estado, story_points, criterios, creado_en, completado_en
+FROM items_backlog WHERE proyecto_id = $1`
+	filas, err := r.pool.Query(ctx, listar, proyectoID)
+	if esIDMalFormado(err) {
+		return []backlog.ItemBacklog{}, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("listar el backlog del proyecto %s: %w", proyectoID, err)
+	}
+	defer filas.Close()
+
+	items := []backlog.ItemBacklog{}
+	for filas.Next() {
+		var (
+			item         backlog.ItemBacklog
+			prioridad    string
+			estado       string
+			storyPoints  *int32
+			completadoEn *time.Time
+		)
+		if err := filas.Scan(&item.ID, &item.ProyectoID, &item.Numero, &item.Titulo, &item.Descripcion,
+			&prioridad, &estado, &storyPoints, &item.Criterios, &item.CreadoEn, &completadoEn); err != nil {
+			return nil, fmt.Errorf("leer un item: %w", err)
+		}
+		item, err := completarItem(item, prioridad, estado, storyPoints, completadoEn)
+		if err != nil {
+			return nil, fmt.Errorf("el item de numero %d: %w", item.Numero, err)
+		}
+		items = append(items, item)
+	}
+	if err := filas.Err(); err != nil {
+		if esIDMalFormado(err) {
+			return []backlog.ItemBacklog{}, nil
+		}
+		return nil, fmt.Errorf("listar el backlog del proyecto %s: %w", proyectoID, err)
+	}
+	return items, nil
 }
