@@ -14,6 +14,7 @@ import (
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/backlog"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/esfuerzo"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/integrante"
+	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/planningpoker"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/proyecto"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/sprint"
 )
@@ -49,6 +50,9 @@ type Base struct {
 	asignaciones map[string][]asignacion
 	// ultimaAsignacion es el numero de la ultima fila de la relacion dada de alta.
 	ultimaAsignacion int
+
+	// sesiones guarda las sesiones de Planning Poker, en orden de alta (US-014).
+	sesiones []planningpoker.SesionPlanningPoker
 }
 
 // NuevaBase devuelve una base vacia.
