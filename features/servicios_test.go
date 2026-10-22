@@ -30,6 +30,7 @@ func ahoraEnEscenarios() time.Time {
 //	Backlog:   US-005, US-006, US-013
 //	Sprints:   US-008, US-009, US-010, US-011
 //	Metricas:  US-025, US-026
+//	PlanningPoker: US-014 a US-018
 //	Esfuerzo:  US-019, US-020, US-021
 //
 // Un area sin conectar hace fallar con ErrAreaSinConectar a cualquier escenario
@@ -49,5 +50,7 @@ func nuevosServicios() (steps.Servicios, error) {
 		Metricas: nuevasMetricasEnMemoria(e),
 		// US-019: el caso de uso real sobre la base en memoria.
 		Esfuerzo: nuevoEsfuerzoSobreApp(e),
+		// US-014: el caso de uso real sobre la base en memoria.
+		PlanningPoker: nuevoPokerSobreApp(e),
 	}, nil
 }
