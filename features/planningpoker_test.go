@@ -2,6 +2,7 @@ package features_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/features/steps"
@@ -58,6 +59,21 @@ func (p *pokerSobreApp) ParticipantesDeLaSesion(titulo string) ([]string, error)
 	}
 	return participantes, nil
 }
+
+// Votar es de US-015.
+func (p *pokerSobreApp) Votar(_, _ string, _ int) error { return errVotoSinConectar }
+
+// QuienesVotaron es de US-015.
+func (p *pokerSobreApp) QuienesVotaron(_ string) ([]string, error) { return nil, errVotoSinConectar }
+
+// QuienesFaltan es de US-015.
+func (p *pokerSobreApp) QuienesFaltan(_ string) ([]string, error) { return nil, errVotoSinConectar }
+
+// VotosOcultos es de US-015.
+func (p *pokerSobreApp) VotosOcultos(_ string) (bool, error) { return false, errVotoSinConectar }
+
+// errVotoSinConectar lo devuelven las operaciones de votar mientras no estan conectadas.
+var errVotoSinConectar = errors.New("votar todavia no esta conectado a la aplicacion")
 
 // sesion devuelve la sesion abierta de la historia y el proyecto de la historia.
 func (p *pokerSobreApp) sesion(titulo string) (planningpoker.SesionPlanningPoker, string, error) {
