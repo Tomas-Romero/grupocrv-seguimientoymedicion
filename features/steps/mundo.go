@@ -133,6 +133,15 @@ type PlanningPoker interface {
 	// ParticipantesDeLaSesion devuelve los nombres de los participantes, en orden de
 	// alta en el proyecto.
 	ParticipantesDeLaSesion(titulo string) ([]string, error)
+	// Votar registra el voto del integrante, nombrado como lo conoce el escenario, en
+	// la sesion abierta de la historia (US-015). Lo que no existe se manda con un ID que
+	// no esta en la base, asi el rechazo lo produce la aplicacion.
+	Votar(integrante, titulo string, valor int) error
+	// QuienesVotaron y QuienesFaltan devuelven nombres, en el orden de los participantes.
+	QuienesVotaron(titulo string) ([]string, error)
+	QuienesFaltan(titulo string) ([]string, error)
+	// VotosOcultos dice si los valores de la ronda actual no se pueden leer (RN-015-7).
+	VotosOcultos(titulo string) (bool, error)
 }
 
 // Servicios agrupa las areas conectadas para UN escenario. Un campo nil
