@@ -9,6 +9,7 @@ import (
 	"io/fs"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"sort"
 	"strings"
 	"testing"
@@ -23,13 +24,30 @@ import (
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/platform/errores"
 )
 
+// directoriosConErrores devuelve internal/app y cada paquete de internal/domain. Los de
+// internal/domain se leen del disco y no de una lista fija: asi un paquete nuevo (por
+// ejemplo, planningpoker en US-014) no queda afuera del control de RN-T005-19.
+func directoriosConErrores(t *testing.T) []string {
+	t.Helper()
+	dirs := []string{"../../app"}
+	entradas, err := os.ReadDir("../../domain")
+	if err != nil {
+		t.Fatalf("leer internal/domain: %v", err)
+	}
+	for _, e := range entradas {
+		if e.IsDir() {
+			dirs = append(dirs, "../../domain/"+e.Name())
+		}
+	}
+	return dirs
+}
+
 // erroresDeCodigoFuente devuelve el nombre ("paquete.ErrAlgo") de cada error exportado de
 // internal/domain y de internal/app, leyendo el codigo fuente (RN-T005-19).
 func erroresDeCodigoFuente(t *testing.T) []string {
 	t.Helper()
 	var nombres []string
-	for _, dir := range []string{"../../app", "../../domain/backlog", "../../domain/esfuerzo", "../../domain/integrante",
-		"../../domain/metricas", "../../domain/proyecto", "../../domain/sprint"} {
+	for _, dir := range directoriosConErrores(t) {
 		paquetes, err := parser.ParseDir(token.NewFileSet(), dir, func(f fs.FileInfo) bool {
 			return !strings.HasSuffix(f.Name(), "_test.go")
 		}, 0)
