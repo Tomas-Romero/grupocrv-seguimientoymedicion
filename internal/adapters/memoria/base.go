@@ -53,6 +53,9 @@ type Base struct {
 
 	// sesiones guarda las sesiones de Planning Poker, en orden de alta (US-014).
 	sesiones []planningpoker.SesionPlanningPoker
+
+	// votos guarda el valor de cada voto, por sesion, ronda e integrante (US-015).
+	votos map[claveDeVoto]int
 }
 
 // NuevaBase devuelve una base vacia.
@@ -64,6 +67,7 @@ func NuevaBase() *Base {
 		integrantes:    map[string][]integrante.Integrante{},
 		sprints:        map[string][]sprint.Sprint{},
 		esfuerzos:      map[string][]esfuerzo.RegistroEsfuerzo{},
+		votos:          map[claveDeVoto]int{},
 		asignaciones:   map[string][]asignacion{},
 	}
 }

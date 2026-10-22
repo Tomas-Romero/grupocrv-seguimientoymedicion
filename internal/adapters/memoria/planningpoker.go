@@ -55,6 +55,7 @@ func (b *Base) RegistrarSesion(_ context.Context, proyectoID string, sesion plan
 	}
 
 	nueva.ID = b.nuevoID()
+	nueva.ProyectoID = proyectoID
 	b.sesiones = append(b.sesiones, nueva)
 	return copiaDeSesion(nueva), nil
 }
