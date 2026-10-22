@@ -87,6 +87,7 @@ var entradasDelCatalogo = []entradaDelCatalogo{
 	{"app.ErrItemInexistente", app.ErrItemInexistente, errores.NoEncontrado, ""},
 	{"app.ErrIntegranteInexistente", app.ErrIntegranteInexistente, errores.NoEncontrado, ""},
 	{"app.ErrSprintInexistente", app.ErrSprintInexistente, errores.NoEncontrado, ""},
+	{"app.ErrSesionInexistente", app.ErrSesionInexistente, errores.NoEncontrado, ""},
 	{"app.ErrEmailDuplicado", app.ErrEmailDuplicado, errores.Conflicto, "email"},
 }
 
