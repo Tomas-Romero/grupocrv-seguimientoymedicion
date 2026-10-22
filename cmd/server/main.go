@@ -19,6 +19,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	httpadapter "github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/adapters/http"
+	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/adapters/postgres"
+	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/app"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/platform/config"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/platform/db"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/migraciones"
@@ -60,14 +62,16 @@ func run() error {
 		return err
 	}
 
-	// T-004: las rutas viven en NuevoRouter. Los archivos estaticos se sirven desde
-	// web/static (en la imagen de Docker esta junto al binario).
-	router := httpadapter.NuevoRouter(pool, 2*time.Second, http.Dir("web/static"))
-
 	// T-005: si un handler hace panic, la persona recibe el error interno uniforme y el
 	// servidor sigue atendiendo. Los handlers responden sus errores con
 	// manejadorDeErrores.ResponderError.
 	manejadorDeErrores := httpadapter.NuevoManejadorDeErrores(httpadapter.CatalogoDeErrores(), slog.Default())
+
+	// T-004: las rutas viven en NuevoRouter. Los archivos estaticos se sirven desde
+	// web/static (en la imagen de Docker esta junto al binario). T-011: las pantallas de
+	// proyectos, integrantes y backlog.
+	pantallas := httpadapter.NuevasPantallas(casosDeUsoDePantallas(pool), manejadorDeErrores)
+	router := httpadapter.NuevoRouter(pool, 2*time.Second, http.Dir("web/static"), httpadapter.ConPantallas(pantallas))
 
 	srv := &http.Server{
 		Addr:              cfg.HTTPAddr,
@@ -117,4 +121,33 @@ func prepararBase(ctx context.Context, pool *pgxpool.Pool, cargarDatos bool) err
 	// ultima, asi que no hay un numero confiable para mostrar.
 	slog.Info("datos de ejemplo aplicados")
 	return nil
+}
+
+// lecturaDeProyecto junta las dos lecturas que necesita ConsultarProyecto: el proyecto y
+// sus integrantes. Cada una es de un repositorio distinto.
+type lecturaDeProyecto struct {
+	*postgres.RepositorioProyectos
+	*postgres.RepositorioIntegrantes
+}
+
+var _ app.RepositorioConsultarProyecto = lecturaDeProyecto{}
+
+// casosDeUsoDePantallas arma los casos de uso de las pantallas sobre los repositorios de
+// Postgres (T-011). Es el unico lugar donde se eligen los adaptadores.
+func casosDeUsoDePantallas(pool *pgxpool.Pool) httpadapter.CasosDeUso {
+	proyectos := postgres.NuevoRepositorioProyectos(pool)
+	integrantes := postgres.NuevoRepositorioIntegrantes(pool)
+	items := postgres.NuevoRepositorioBacklog(pool)
+	return httpadapter.CasosDeUso{
+		ListarProyectos:     app.NuevoListarProyectos(proyectos),
+		ConsultarProyecto:   app.NuevoConsultarProyecto(lecturaDeProyecto{proyectos, integrantes}),
+		CrearProyecto:       app.NuevoCrearProyecto(proyectos),
+		ModificarProyecto:   app.NuevoModificarProyecto(proyectos),
+		RegistrarIntegrante: app.NuevoRegistrarIntegrante(integrantes),
+		ListarBacklog:       app.NuevoListarBacklog(items),
+		CrearItem:           app.NuevoCrearItemBacklog(items, time.Now),
+		ConsultarItem:       app.NuevoConsultarItem(items),
+		EditarItem:          app.NuevoEditarItem(items),
+		EstimarItem:         app.NuevoEstimarItem(items),
+	}
 }

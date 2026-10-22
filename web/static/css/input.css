@@ -3,3 +3,13 @@
 
 /* Escanea las plantillas templ en busca de clases. */
 @source "../../templates";
+
+/* Los errores uniformes de T-005 llegan como un fragmento sin estilos y se muestran dentro
+   de #mensajes (RN-T004-10). Aca se les da forma de aviso. */
+#mensajes [role="alert"] {
+  @apply mb-4 rounded border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900;
+}
+
+#mensajes [role="alert"] ul {
+  @apply list-disc pl-5;
+}

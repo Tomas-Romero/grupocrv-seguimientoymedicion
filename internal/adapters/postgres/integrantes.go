@@ -85,3 +85,41 @@ RETURNING id::text`
 	i.ID = id
 	return i, nil
 }
+
+// ListarIntegrantes devuelve los integrantes del proyecto, sin orden (T-011). Un ID mal
+// formado no puede ser de ningun proyecto: devuelve una lista vacia, como un proyecto sin
+// integrantes. Quien lo llama ya verifico que el proyecto exista.
+func (r *RepositorioIntegrantes) ListarIntegrantes(ctx context.Context, proyectoID string) ([]integrante.Integrante, error) {
+	const listar = `
+SELECT id::text, proyecto_id::text, nombre, email, rol
+FROM integrantes
+WHERE proyecto_id = $1`
+	filas, err := r.pool.Query(ctx, listar, proyectoID)
+	if esIDMalFormado(err) {
+		return []integrante.Integrante{}, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("listar los integrantes del proyecto %s: %w", proyectoID, err)
+	}
+	defer filas.Close()
+
+	integrantes := []integrante.Integrante{}
+	for filas.Next() {
+		var (
+			i   integrante.Integrante
+			rol string
+		)
+		if err := filas.Scan(&i.ID, &i.ProyectoID, &i.Nombre, &i.Email, &rol); err != nil {
+			return nil, fmt.Errorf("leer un integrante: %w", err)
+		}
+		i.Rol = integrante.Rol(rol)
+		integrantes = append(integrantes, i)
+	}
+	if err := filas.Err(); err != nil {
+		if esIDMalFormado(err) {
+			return []integrante.Integrante{}, nil
+		}
+		return nil, fmt.Errorf("listar los integrantes del proyecto %s: %w", proyectoID, err)
+	}
+	return integrantes, nil
+}

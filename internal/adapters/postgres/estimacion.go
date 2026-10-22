@@ -48,6 +48,17 @@ FROM items_backlog WHERE id = $1`
 	if err != nil {
 		return backlog.ItemBacklog{}, false, fmt.Errorf("leer el item %s: %w", itemID, err)
 	}
+	item, err = completarItem(item, prioridad, estado, storyPoints, completadoEn)
+	if err != nil {
+		return backlog.ItemBacklog{}, false, fmt.Errorf("el item %s: %w", itemID, err)
+	}
+	return item, true, nil
+}
+
+// completarItem arma el item con lo que se leyo de la fila: convierte la prioridad, el
+// estado, la estimacion y la fecha de completado. Lo usan la lectura de un item y el
+// listado del backlog, para que los dos lo armen igual.
+func completarItem(item backlog.ItemBacklog, prioridad, estado string, storyPoints *int32, completadoEn *time.Time) (backlog.ItemBacklog, error) {
 	item.Prioridad = backlog.Prioridad(prioridad)
 	item.Estado = backlog.Estado(estado)
 	// El nulo es "sin fecha": solo un item completado la tiene (US-010).
@@ -59,12 +70,13 @@ FROM items_backlog WHERE id = $1`
 	// escala es un dato corrupto: se informa, no se oculta.
 	item.StoryPoints = backlog.SinEstimar()
 	if storyPoints != nil {
-		item.StoryPoints, err = backlog.NuevosStoryPoints(int(*storyPoints))
+		puntos, err := backlog.NuevosStoryPoints(int(*storyPoints))
 		if err != nil {
-			return backlog.ItemBacklog{}, false, fmt.Errorf("el item %s tiene una estimacion guardada invalida: %w", itemID, err)
+			return backlog.ItemBacklog{}, fmt.Errorf("tiene una estimacion guardada invalida: %w", err)
 		}
+		item.StoryPoints = puntos
 	}
-	return item, true, nil
+	return item, nil
 }
 
 // GuardarEstimacion escribe solo la columna story_points con un unico UPDATE
