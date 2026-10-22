@@ -32,6 +32,7 @@ func Registrar(sc *godog.ScenarioContext, nuevo Fabrica) {
 	registrarSprints(sc, m)
 	registrarMetricas(sc, m)
 	registrarEsfuerzo(sc, m)
+	registrarPlanningPoker(sc, m)
 	registrarResultados(sc, m)
 }
 
