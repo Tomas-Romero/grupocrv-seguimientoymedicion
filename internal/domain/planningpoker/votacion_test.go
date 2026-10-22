@@ -134,7 +134,9 @@ func TestVotacion_NoHayFormaDeLeerLosValoresMientrasSeVota(t *testing.T) {
 	for _, verbo := range []string{"%v", "%+v", "%#v", "%s"} {
 		textos[verbo] = fmt.Sprintf(verbo, v)
 	}
-	if j, err := json.Marshal(v); err == nil {
+	// Dentro de una respuesta, como llegaria si alguien la serializa: el campo se exporta,
+	// pero la votacion no aporta nada.
+	if j, err := json.Marshal(struct{ Votacion planningpoker.Votacion }{v}); err == nil {
 		textos["json"] = string(j)
 	}
 	for como, texto := range textos {
