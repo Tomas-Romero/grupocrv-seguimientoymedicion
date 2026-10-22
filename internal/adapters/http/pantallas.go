@@ -29,6 +29,14 @@ type CasosDeUso struct {
 	ConsultarItem       *app.ConsultarItem
 	EditarItem          *app.EditarItem
 	EstimarItem         *app.EstimarItem
+
+	// Pantallas de sprints (T-015).
+	ListarSprints       *app.ListarSprints
+	ConsultarSprint     *app.ConsultarSprint
+	CrearSprint         *app.CrearSprint
+	AsignarItem         *app.AsignarItemASprint
+	MarcarCompletado    *app.MarcarCompletado
+	DesmarcarCompletado *app.DesmarcarCompletado
 }
 
 // Pantallas son los handlers de las pantallas de proyectos, integrantes y backlog.
@@ -56,6 +64,14 @@ func (p *Pantallas) registrar(mux *http.ServeMux) {
 	mux.HandleFunc("GET /proyectos/{id}/backlog/{item}/editar", p.editarHistoria)
 	mux.HandleFunc("POST /proyectos/{id}/backlog/{item}", p.actualizarHistoria)
 	mux.HandleFunc("POST /proyectos/{id}/backlog/{item}/estimacion", p.estimarHistoria)
+
+	// Sprints (T-015).
+	mux.HandleFunc("GET /proyectos/{id}/sprints", p.listaDeSprints)
+	mux.HandleFunc("POST /proyectos/{id}/sprints", p.crearSprint)
+	mux.HandleFunc("GET /proyectos/{id}/sprints/{sprint}", p.verSprint)
+	mux.HandleFunc("POST /proyectos/{id}/sprints/{sprint}/historias", p.asignarHistoria)
+	mux.HandleFunc("POST /proyectos/{id}/sprints/{sprint}/historias/{item}/completar", p.completarHistoria)
+	mux.HandleFunc("POST /proyectos/{id}/sprints/{sprint}/historias/{item}/reabrir", p.reabrirHistoria)
 }
 
 // ---------------------------------------------------------------- proyectos
@@ -195,16 +211,12 @@ func (p *Pantallas) verBacklog(w http.ResponseWriter, r *http.Request) {
 	filas := make([]plantillas.FilaItem, len(items))
 	for i, item := range items {
 		puntos, estimado := item.StoryPoints.Valor()
-		texto := "—"
-		if estimado {
-			texto = strconv.Itoa(puntos)
-		}
 		filas[i] = plantillas.FilaItem{
 			Numero:    item.Numero,
 			Titulo:    item.Titulo,
 			Prioridad: textoDePrioridad(item.Prioridad),
 			Estado:    textoDeEstado(item.Estado),
-			Puntos:    texto,
+			Puntos:    textoDePuntos(item),
 			Criterios: len(item.Criterios),
 			Editar:    rutaDeHistoria(id, item.ID) + "/editar",
 			Estimar:   rutaDeHistoria(id, item.ID) + "/estimacion",
@@ -302,10 +314,10 @@ func (p *Pantallas) estimarHistoria(w http.ResponseWriter, r *http.Request) {
 
 // ------------------------------------------------------------------ ayudas
 
-// fallaDeLectura responde el error de un GET: un proyecto o una historia que no existen
-// son la pagina 404 con layout; lo demas, el error uniforme de T-005 (RN-T011-10).
+// fallaDeLectura responde el error de un GET: un proyecto, una historia o un sprint que no
+// existen son la pagina 404 con layout; lo demas, el error uniforme de T-005 (RN-T011-10).
 func (p *Pantallas) fallaDeLectura(w http.ResponseWriter, r *http.Request, err error) {
-	if errors.Is(err, app.ErrProyectoInexistente) || errors.Is(err, app.ErrItemInexistente) {
+	if errors.Is(err, app.ErrProyectoInexistente) || errors.Is(err, app.ErrItemInexistente) || errors.Is(err, app.ErrSprintInexistente) {
 		noEncontrado(w, r)
 		return
 	}
