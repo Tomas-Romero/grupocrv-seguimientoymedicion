@@ -133,11 +133,13 @@ type lecturaDeProyecto struct {
 var _ app.RepositorioConsultarProyecto = lecturaDeProyecto{}
 
 // casosDeUsoDePantallas arma los casos de uso de las pantallas sobre los repositorios de
-// Postgres (T-011). Es el unico lugar donde se eligen los adaptadores.
+// Postgres (T-011 y T-015). Es el unico lugar donde se eligen los adaptadores.
 func casosDeUsoDePantallas(pool *pgxpool.Pool) httpadapter.CasosDeUso {
 	proyectos := postgres.NuevoRepositorioProyectos(pool)
 	integrantes := postgres.NuevoRepositorioIntegrantes(pool)
 	items := postgres.NuevoRepositorioBacklog(pool)
+	sprints := postgres.NuevoRepositorioSprints(pool)
+	asignaciones := postgres.NuevoRepositorioAsignaciones(pool)
 	return httpadapter.CasosDeUso{
 		ListarProyectos:     app.NuevoListarProyectos(proyectos),
 		ConsultarProyecto:   app.NuevoConsultarProyecto(lecturaDeProyecto{proyectos, integrantes}),
@@ -149,5 +151,11 @@ func casosDeUsoDePantallas(pool *pgxpool.Pool) httpadapter.CasosDeUso {
 		ConsultarItem:       app.NuevoConsultarItem(items),
 		EditarItem:          app.NuevoEditarItem(items),
 		EstimarItem:         app.NuevoEstimarItem(items),
+		ListarSprints:       app.NuevoListarSprints(asignaciones),
+		ConsultarSprint:     app.NuevoConsultarSprint(asignaciones),
+		CrearSprint:         app.NuevoCrearSprint(sprints),
+		AsignarItem:         app.NuevoAsignarItemASprint(asignaciones),
+		MarcarCompletado:    app.NuevoMarcarCompletado(asignaciones, time.Now),
+		DesmarcarCompletado: app.NuevoDesmarcarCompletado(asignaciones),
 	}
 }
