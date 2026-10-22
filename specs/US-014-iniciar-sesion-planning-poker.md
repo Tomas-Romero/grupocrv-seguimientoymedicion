@@ -6,8 +6,8 @@
 | **Autor** | Juan Ignacio Vergara |
 | **Issue** | #25 |
 | **Escenarios BDD** | `features/US-014-iniciar-sesion-planning-poker.feature` |
-| **Código** | `internal/domain/planningpoker/` (`SesionPlanningPoker`), caso de uso en `internal/app/`, repositorio en `internal/adapters/postgres/`, migración `migraciones/00009_sesiones_planning_poker.sql` |
-| **Última actualización** | 2026-10-21 |
+| **Código** | `internal/domain/planningpoker/` (`SesionPlanningPoker`, `NuevaSesion`), caso de uso `IniciarSesionPlanningPoker` en `internal/app/`, `RepositorioPlanningPoker` en `internal/adapters/postgres/` y la base en memoria, migración `migraciones/00009_sesiones_planning_poker.sql` |
+| **Última actualización** | 2026-10-23 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
 > implementación. Si durante la implementación descubrís que algo de acá está
@@ -148,9 +148,14 @@ Entre paréntesis, la capa que la hace cumplir.
 - **Catálogo de errores (T-005).** Los dos errores nuevos se registran en
   `internal/adapters/http/catalogo.go` en el PR de implementación
   (RN-T005-19), como `conflicto`: dependen de lo que hay guardado (RN-T005-2).
+  El test de RN-T005-19 leía una lista fija de paquetes de dominio y no
+  incluía `planningpoker`; en el PR de implementación pasa a leer todos los
+  paquetes de `internal/domain`, para que un paquete nuevo no quede afuera.
 - **Frases BDD y área nueva.** No hay área de Planning Poker en
   `features/steps/mundo.go`. Se propone la interfaz `PlanningPoker`, con
-  `IniciarSesion(titulo string) error`,
+  `IniciarSesion(proyecto, titulo string) error` (con el proyecto, para poder
+  escribir el rechazo de un proyecto inexistente, como `CerrarSprint` en
+  US-011),
   `EstadoDeLaSesion(titulo string) (estado string, ronda int, err error)` y
   `ParticipantesDeLaSesion(titulo string) ([]string, error)`. La sesión se
   nombra por la historia: tiene como máximo una abierta (RN-014-7). Las
@@ -280,4 +285,7 @@ cuenta propia:
   de dos, una sesión abierta por historia, estados y rondas, escala de US-013),
   usando las specs de US-005, US-009, US-010, US-011, US-013, US-019 y T-005
   como modelo
+- [x] Use IA para: el ajuste tras la implementación (nombres del código,
+  `IniciarSesion` con el proyecto, el test del catálogo sobre todo
+  `internal/domain`), redactado con Claude Code
 - Revisado y entendido por: Juan Ignacio Vergara
