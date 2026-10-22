@@ -6,8 +6,8 @@
 | **Autor** | Juan Ignacio Vergara |
 | **Issue** | #19 |
 | **Escenarios BDD** | `features/US-011-cerrar-sprint.feature` |
-| **Código** | `internal/domain/sprint/` (cierre), caso de uso en `internal/app/`, repositorio en `internal/adapters/postgres/`. Sin migración nueva |
-| **Última actualización** | 2026-10-12 |
+| **Código** | `internal/domain/sprint/` (`Cerrar`, `Resultado`), caso de uso `CerrarSprint` en `internal/app/`, `HistoriasDelSprint` y `GuardarCierre` en `internal/adapters/postgres/` y `internal/adapters/memoria/`. Sin migración nueva |
+| **Última actualización** | 2026-10-22 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
 > implementación. Si durante la implementación descubrís que algo de acá está
@@ -131,7 +131,17 @@ Entre paréntesis, la capa que la hace cumplir.
 
   Las historias que se asignan necesitan criterios, por la DoR de US-009 (la
   frase con criterios que propone esa spec). La interfaz `Sprints` ya tiene
-  `CerrarSprint` y `SprintEstaCerrado`.
+  `CerrarSprint` y `SprintEstaCerrado`; `CerrarSprint` pasa a recibir el
+  proyecto, como `AsignarHistoriaASprint` en US-009, porque "Sprint 1" existe
+  en todos los proyectos.
+- **Métricas de los escenarios sobre Sprints cerrados.** Para CA-011-3, la base
+  en memoria suma `FilasDelSprint`, una lectura de las historias que estuvieron
+  en un Sprint con su resultado, que usan solo los escenarios (como
+  `SprintActualDelItem`). El área Métricas calcula con ella los planificados y
+  completados de los Sprints cerrados de la base, además de los que arma
+  `el sprint cerrado "S" con N story points completados de M`.
+- **Sin errores nuevos.** El cierre usa `ErrSprintInexistente` y
+  `ErrSprintCerrado`, que ya están en el catálogo de T-005.
 - **Fuera de alcance.** Reabrir o cancelar un Sprint, guardar la fecha de
   cierre, consultar los Sprints anteriores (US-012), el burndown (US-031) y la
   pantalla (T-011).
@@ -229,4 +239,7 @@ llegó antes. Los dos se comparan con `errors.Is`, y en ningún caso cambia nada
   la historia y de las decisiones del equipo (relación histórica, cierre en
   cualquier fecha, cierre atómico con el Sprint bloqueado), usando las specs de
   US-008, US-009 corregida, US-010, US-025 y US-026 como modelo
+- [x] Use IA para: el ajuste tras la implementación (nombres del código,
+  `CerrarSprint` con el proyecto, métricas de los escenarios sobre Sprints
+  cerrados, sin errores nuevos), redactado con Claude Code
 - Revisado y entendido por:
