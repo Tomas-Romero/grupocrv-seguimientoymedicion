@@ -5,6 +5,7 @@ import (
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/backlog"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/esfuerzo"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/integrante"
+	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/planningpoker"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/proyecto"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/sprint"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/platform/errores"
@@ -50,6 +51,10 @@ var entradasDelCatalogo = []entradaDelCatalogo{
 	{"integrante.ErrEmailVacio", integrante.ErrEmailVacio, errores.Validacion, "email"},
 	{"integrante.ErrEmailInvalido", integrante.ErrEmailInvalido, errores.Validacion, "email"},
 	{"integrante.ErrRolInvalido", integrante.ErrRolInvalido, errores.Validacion, "rol"},
+
+	// planningpoker
+	{"planningpoker.ErrSesionAbierta", planningpoker.ErrSesionAbierta, errores.Conflicto, ""},
+	{"planningpoker.ErrParticipantesInsuficientes", planningpoker.ErrParticipantesInsuficientes, errores.Conflicto, ""},
 
 	// proyecto
 	{"proyecto.ErrNombreVacio", proyecto.ErrNombreVacio, errores.Validacion, "nombre"},
