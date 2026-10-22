@@ -6,7 +6,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -124,9 +123,7 @@ RETURNING id::text`
 // (T-011). Un ID mal formado no puede ser de ningun proyecto: devuelve una lista vacia,
 // como un proyecto sin items. Quien lo llama ya verifico que el proyecto exista.
 func (r *RepositorioBacklog) ListarItems(ctx context.Context, proyectoID string) ([]backlog.ItemBacklog, error) {
-	const listar = `
-SELECT id::text, proyecto_id::text, numero, titulo, descripcion, prioridad, estado, story_points, criterios, creado_en, completado_en
-FROM items_backlog WHERE proyecto_id = $1`
+	const listar = `SELECT ` + columnasDeItem + ` FROM items_backlog i WHERE i.proyecto_id = $1`
 	filas, err := r.pool.Query(ctx, listar, proyectoID)
 	if esIDMalFormado(err) {
 		return []backlog.ItemBacklog{}, nil
@@ -138,20 +135,13 @@ FROM items_backlog WHERE proyecto_id = $1`
 
 	items := []backlog.ItemBacklog{}
 	for filas.Next() {
-		var (
-			item         backlog.ItemBacklog
-			prioridad    string
-			estado       string
-			storyPoints  *int32
-			completadoEn *time.Time
-		)
-		if err := filas.Scan(&item.ID, &item.ProyectoID, &item.Numero, &item.Titulo, &item.Descripcion,
-			&prioridad, &estado, &storyPoints, &item.Criterios, &item.CreadoEn, &completadoEn); err != nil {
+		var f filaDeItem
+		if err := filas.Scan(f.destinos()...); err != nil {
 			return nil, fmt.Errorf("leer un item: %w", err)
 		}
-		item, err := completarItem(item, prioridad, estado, storyPoints, completadoEn)
+		item, err := f.armar()
 		if err != nil {
-			return nil, fmt.Errorf("el item de numero %d: %w", item.Numero, err)
+			return nil, err
 		}
 		items = append(items, item)
 	}
