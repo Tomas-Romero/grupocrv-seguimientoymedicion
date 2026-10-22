@@ -47,6 +47,8 @@ type Base struct {
 	// asignaciones guarda las filas de la relacion entre cada item y sus sprints, en
 	// orden de alta (US-009). Un item tiene como mucho una pendiente.
 	asignaciones map[string][]asignacion
+	// ultimaAsignacion es el numero de la ultima fila de la relacion dada de alta.
+	ultimaAsignacion int
 }
 
 // NuevaBase devuelve una base vacia.
