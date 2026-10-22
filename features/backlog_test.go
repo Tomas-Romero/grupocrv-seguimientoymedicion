@@ -2,17 +2,12 @@ package features_test
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/features/steps"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/app"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/backlog"
 )
-
-// errSinConectar lo devuelven las operaciones del area Backlog que todavia no
-// tienen caso de uso: si un escenario las necesita, falla en voz alta.
-var errSinConectar = errors.New("la operacion todavia no esta conectada a la aplicacion")
 
 // idDeProyectoInexistente es el ID con el que se llama al caso de uso cuando el
 // escenario nombra un proyecto que no creo (por ejemplo, despues de
