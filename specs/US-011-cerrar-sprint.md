@@ -242,4 +242,4 @@ llegó antes. Los dos se comparan con `errors.Is`, y en ningún caso cambia nada
 - [x] Use IA para: el ajuste tras la implementación (nombres del código,
   `CerrarSprint` con el proyecto, métricas de los escenarios sobre Sprints
   cerrados, sin errores nuevos), redactado con Claude Code
-- Revisado y entendido por:
+- Revisado y entendido por: Juan Ignacio Vergara
