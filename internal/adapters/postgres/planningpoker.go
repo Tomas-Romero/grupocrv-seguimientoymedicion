@@ -122,6 +122,7 @@ func (r *RepositorioPlanningPoker) RegistrarSesion(ctx context.Context, proyecto
 		return planningpoker.SesionPlanningPoker{}, fmt.Errorf("insertar la sesion: %w", err)
 	}
 	nueva.Estado = planningpoker.Estado(estadoGuardado)
+	nueva.ProyectoID = proyectoID
 	const insertarParticipantes = `
 INSERT INTO participantes_planning_poker (sesion_id, integrante_id)
 SELECT $1, unnest($2::uuid[])`
