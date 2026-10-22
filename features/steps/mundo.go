@@ -88,7 +88,9 @@ type Sprints interface {
 	// ultimo sprint de su proyecto, el unico que puede estar abierto (US-010).
 	CompletarHistoria(titulo string) error
 	DesmarcarHistoria(titulo string) error
-	CerrarSprint(nombre string) error
+	// CerrarSprint cierra el sprint del proyecto (US-011): "Sprint 1" existe en todos
+	// los proyectos, porque la numeracion es por proyecto.
+	CerrarSprint(proyecto, nombre string) error
 	SprintDeHistoria(titulo string) (string, error)
 	SprintEstaCerrado(proyecto, nombre string) (bool, error)
 }

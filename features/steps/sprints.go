@@ -132,7 +132,7 @@ func (m *mundo) dadoSprintCerrado(nombre string) error {
 	if err != nil {
 		return err
 	}
-	if err = sprints.CerrarSprint(nombre); err != nil {
+	if err = sprints.CerrarSprint(m.proyectoActual, nombre); err != nil {
 		return fmt.Errorf("cerrar el sprint %q del contexto: %w", nombre, err)
 	}
 	return nil
@@ -197,7 +197,7 @@ func (m *mundo) cuandoSeCierraSprint(nombre string) error {
 	if err != nil {
 		return err
 	}
-	return m.registrarAccion(sprints.CerrarSprint(nombre))
+	return m.registrarAccion(sprints.CerrarSprint(m.proyectoActual, nombre))
 }
 
 func (m *mundo) entoncesHistoriaEnSprint(titulo, esperado string) error {

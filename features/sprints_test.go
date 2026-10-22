@@ -149,4 +149,4 @@ func (a *sprintsSobreApp) historiaYUltimoSprint(titulo string) (itemID, sprintID
 }
 
 // CerrarSprint es de US-011.
-func (a *sprintsSobreApp) CerrarSprint(_ string) error { return errSinConectar }
+func (a *sprintsSobreApp) CerrarSprint(_, _ string) error { return errSinConectar }
