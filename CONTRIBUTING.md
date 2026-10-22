@@ -267,7 +267,7 @@ tipo(alcance): descripcion en imperativo [ID]
 | `tipo` | `feat` `fix` `test` `refactor` `docs` `chore` `ci` `perf` |
 | `alcance` | el paquete o área tocada: `metricas`, `sprint`, `ui`, `db`, `workflows` |
 | `descripcion` | minúscula, imperativo, sin punto final, sin acentos, máximo ~70 caracteres |
-| `[ID]` | `[US-026]`, `[DEF-007]`, `[T-002]` — obligatorio |
+| `[ID]` | `[US-026]`, `[DEF-007]`, `[T-002]` — obligatorio en **todos** los commits del PR: con *Rebase and merge* entran a `main` tal cual, y el CI lo verifica (`scripts/verificar-ids-commits.sh`) |
 
 En los commits del ciclo TDD, agregá `RED` o `GREEN` al principio de la
 descripción. Es lo que convierte el historial en evidencia.

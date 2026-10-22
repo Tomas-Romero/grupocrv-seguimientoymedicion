@@ -5,6 +5,7 @@ on:
     types: [opened, edited, synchronize, reopened]
 
 permissions:
+  contents: read
   pull-requests: read
 
 jobs:
@@ -12,6 +13,8 @@ jobs:
     name: Titulo y rama
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
       - name: Validar el titulo del PR
         env:
           TITULO: ${{ github.event.pull_request.title }}
@@ -63,3 +66,16 @@ jobs:
             exit 1
           fi
           echo "Enlace al issue OK"
+
+      - name: Probar el verificador de IDs en los commits
+        run: ./scripts/test-verificar-ids-commits.sh
+
+      - name: Verificar que todo commit del PR lleve el ID
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Con Rebase and merge cada commit entra a main tal cual: todos tienen que llevar
+          # [US-NNN], [DEF-NNN] o [T-NNN] (T-014). Los commits de merge no se piden.
+          gh api --paginate "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits" \
+            --jq '.[] | select((.parents|length)==1) | "\(.sha[0:7])\t\(.commit.message|split("\n")[0])"' \
+            | ./scripts/verificar-ids-commits.sh
