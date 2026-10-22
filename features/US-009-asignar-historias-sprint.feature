@@ -2,8 +2,8 @@
 # Usa SOLO frases de docs/diccionario-steps.md. Despues de "Dado" no va "que".
 # La Definition of Ready (RN-009-7) pide una historia estimada y con al menos un criterio
 # de aceptacion: por eso las historias que se asignan con exito usan la frase con criterios.
-# CA-009-6 (asignar a un sprint cerrado) no tiene escenario todavia: necesita un sprint
-# cerrado y cerrar es US-011. Lo cubren los tests del dominio y de Postgres.
+# CA-009-6 (asignar a un sprint cerrado) necesita un sprint cerrado: llego con US-011,
+# que es la que cierra.
 @US-009
 Característica: Asignar historias del backlog a un Sprint
   Como integrante del equipo
@@ -74,6 +74,17 @@ Característica: Asignar historias del backlog a un Sprint
     Entonces la operación se rechaza
     Y el mensaje de error indica "la historia no esta estimada"
     Y el mensaje de error indica "la historia no tiene criterios de aceptacion"
+
+  @CA-009-6 @error
+  Escenario: Asignar a un sprint cerrado se rechaza y la historia sigue en el backlog
+    Dado un proyecto "Demo"
+    Y un sprint "Sprint 1" con el objetivo "MVP navegable"
+    Y una historia "Alta de proyectos" con prioridad "must", 5 story points y 2 criterios de aceptación
+    Y el sprint "Sprint 1" cerrado
+    Cuando se asigna la historia "Alta de proyectos" al sprint "Sprint 1"
+    Entonces la operación se rechaza
+    Y el mensaje de error indica "el sprint esta cerrado"
+    Y la historia "Alta de proyectos" está en el backlog
 
   @CA-009-7 @error
   Escenario: Una historia que ya está en un sprint no se asigna otra vez

@@ -2,9 +2,8 @@
 # Usa SOLO frases de docs/diccionario-steps.md. Despues de "Dado" no va "que".
 # El nombre entre comillas ("Sprint 1") es el nombre ESPERADO: el sprint lo nombra la
 # aplicacion y, si se crea con otro nombre, el step falla.
-# CA-008-4 y CA-008-9 (empezar despues o antes del fin del ultimo sprint) no tienen
-# escenario todavia: necesitan un sprint anterior cerrado y cerrar es US-011. Los
-# cubren los tests del dominio y de Postgres; sus escenarios llegan con US-011.
+# CA-008-4 y CA-008-9 (empezar despues o antes del fin del ultimo sprint) necesitan un
+# sprint anterior cerrado: llegaron con US-011, que es la que cierra.
 @US-008
 Característica: Crear un Sprint con Sprint Goal y fechas
   Como integrante del equipo
@@ -44,6 +43,19 @@ Característica: Crear un Sprint con Sprint Goal y fechas
       | 2026-11-02 | es exitosa |
       | 2026-11-03 | se rechaza |
 
+  @CA-008-4 @limite
+  Esquema del escenario: El sprint siguiente empieza después del fin del último
+    Dado un proyecto "Demo"
+    Y un sprint "Sprint 1" con el objetivo "MVP navegable" del "2026-10-06" al "2026-10-19"
+    Y el sprint "Sprint 1" cerrado
+    Cuando se crea el sprint "Sprint 2" con el objetivo "Segundo objetivo" del "<inicio>" al "2026-11-01"
+    Entonces la operación <resultado>
+
+    Ejemplos:
+      | inicio     | resultado  |
+      | 2026-10-20 | es exitosa |
+      | 2026-10-19 | se rechaza |
+
   @CA-008-5 @limite
   Escenario: Un sprint que ocupa exactamente las fechas del proyecto es válido
     Dado un proyecto "Corto" con fechas del "2026-10-06" al "2026-11-02"
@@ -80,6 +92,15 @@ Característica: Crear un Sprint con Sprint Goal y fechas
     Y el mensaje de error indica "el Sprint Goal es obligatorio"
     Y el mensaje de error indica "fecha de fin anterior a la de inicio"
     Y el mensaje de error indica "las fechas del sprint tienen que estar dentro de las del proyecto"
+
+  @CA-008-9 @error
+  Escenario: Empezar antes de que termine el último sprint se rechaza
+    Dado un proyecto "Demo"
+    Y un sprint "Sprint 1" con el objetivo "MVP navegable" del "2026-10-06" al "2026-10-19"
+    Y el sprint "Sprint 1" cerrado
+    Cuando se crea el sprint "Sprint 2" con el objetivo "Segundo objetivo" del "2026-10-12" al "2026-10-25"
+    Entonces la operación se rechaza
+    Y el mensaje de error indica "el sprint tiene que empezar despues de que termine el ultimo sprint del proyecto"
 
   @CA-008-10 @error
   Escenario: Crear un sprint en un proyecto que no existe se rechaza, sin mirar los demás datos
