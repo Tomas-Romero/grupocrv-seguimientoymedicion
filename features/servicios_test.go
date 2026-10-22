@@ -46,7 +46,7 @@ func nuevosServicios() (steps.Servicios, error) {
 		// US-008: el caso de uso real sobre la base en memoria.
 		Sprints: nuevoSprintsSobreApp(e),
 		// US-025: calculo del dominio sobre los items que arma el escenario.
-		Metricas: nuevasMetricasEnMemoria(),
+		Metricas: nuevasMetricasEnMemoria(e),
 		// US-019: el caso de uso real sobre la base en memoria.
 		Esfuerzo: nuevoEsfuerzoSobreApp(e),
 	}, nil
