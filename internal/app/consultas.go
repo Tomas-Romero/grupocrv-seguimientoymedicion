@@ -147,6 +147,13 @@ func (c *ListarBacklog) Ejecutar(ctx context.Context, proyectoID string) ([]back
 	if err != nil {
 		return nil, fmt.Errorf("listar el backlog del proyecto %s: %w", proyectoID, err)
 	}
+	ordenarPorPrioridad(items)
+	return items, nil
+}
+
+// ordenarPorPrioridad pone los items por prioridad (must, should, could, wont) y, dentro
+// de cada una, por numero. Lo usan el backlog y las historias de un sprint.
+func ordenarPorPrioridad(items []backlog.ItemBacklog) {
 	sort.SliceStable(items, func(i, j int) bool {
 		a, b := items[i], items[j]
 		if oa, ob := ordenDePrioridad(a.Prioridad), ordenDePrioridad(b.Prioridad); oa != ob {
@@ -154,7 +161,6 @@ func (c *ListarBacklog) Ejecutar(ctx context.Context, proyectoID string) ([]back
 		}
 		return a.Numero < b.Numero
 	})
-	return items, nil
 }
 
 // RepositorioConsultarItem es lo que ConsultarItem necesita de la persistencia.
