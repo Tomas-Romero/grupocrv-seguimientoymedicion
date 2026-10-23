@@ -28,6 +28,29 @@ type FormSprint struct {
 type VistaSprints struct {
 	Sprints []FilaSprint
 	Alta    FormSprint
+	// Anteriores es la URL del historial de sprints cerrados (US-012).
+	Anteriores string
+}
+
+// FilaSprintAnterior es un sprint cerrado del historial, con su resultado.
+type FilaSprintAnterior struct {
+	Nombre                 string
+	Goal                   string
+	Inicio                 string
+	Fin                    string
+	Planificados           int
+	Completados            int
+	HistoriasCompletadas   int
+	HistoriasNoCompletadas int
+	Detalle                string
+}
+
+// VistaSprintsAnteriores es la pantalla /proyectos/{id}/sprints/anteriores. Velocidad es el texto
+// de la velocidad del equipo, vacio si no hay sprints cerrados (RN-012-7).
+type VistaSprintsAnteriores struct {
+	Sprints   []FilaSprintAnterior
+	Velocidad string
+	Volver    string
 }
 
 // FilaHistoriaDeSprint es una historia asignada a un sprint.
