@@ -2,12 +2,14 @@ package steps
 
 import (
 	"fmt"
+	"slices"
+	"strconv"
 	"time"
 
 	"github.com/cucumber/godog"
 )
 
-// Steps del area Sprints (US-008, US-009, US-010 y US-011).
+// Steps del area Sprints (US-008, US-009, US-010, US-011 y US-012).
 
 func registrarSprints(sc *godog.ScenarioContext, m *mundo) {
 	sc.Step(`^un sprint "([^"]*)" con el objetivo "([^"]*)"$`, m.dadoUnSprint)
@@ -23,10 +25,14 @@ func registrarSprints(sc *godog.ScenarioContext, m *mundo) {
 	sc.Step(`^se marca la historia "([^"]*)" como completada$`, m.cuandoSeCompleta)
 	sc.Step(`^se desmarca la historia "([^"]*)"$`, m.cuandoSeDesmarca)
 	sc.Step(`^se cierra el sprint "([^"]*)"$`, m.cuandoSeCierraSprint)
+	sc.Step(`^se consultan los sprints anteriores$`, m.cuandoSeConsultanSprintsAnteriores)
 
 	sc.Step(`^la historia "([^"]*)" está en el sprint "([^"]*)"$`, m.entoncesHistoriaEnSprint)
 	sc.Step(`^el sprint "([^"]*)" está cerrado$`, m.entoncesSprintCerrado)
 	sc.Step(`^el sprint "([^"]*)" está abierto$`, m.entoncesSprintAbierto)
+	sc.Step(`^los sprints anteriores son:$`, m.entoncesSprintsAnterioresSon)
+	sc.Step(`^no hay sprints anteriores$`, m.entoncesNoHaySprintsAnteriores)
+	sc.Step(`^la velocidad de los sprints anteriores es (\d+(?:[.,]\d+)?)$`, m.entoncesVelocidadDeAnterioresEs)
 }
 
 // fechasPorDefectoDelSprint arma las fechas de un sprint cuando la frase no las
@@ -243,4 +249,54 @@ func (m *mundo) entoncesSprintAbierto(nombre string) error {
 		return fmt.Errorf("se esperaba que el sprint %q estuviera abierto, pero está cerrado", nombre)
 	}
 	return nil
+}
+
+func (m *mundo) cuandoSeConsultanSprintsAnteriores() error {
+	sprints, err := m.sprints()
+	if err != nil {
+		return err
+	}
+	anteriores, err := sprints.SprintsAnteriores(m.proyectoActual)
+	m.anteriores = anteriores
+	return m.registrarAccion(err)
+}
+
+// entoncesSprintsAnterioresSon compara el historial con la tabla, en orden y completo. La primera
+// fila es el encabezado: sprint | planificados | completados | historias completadas | historias no
+// completadas.
+func (m *mundo) entoncesSprintsAnterioresSon(tabla *godog.Table) error {
+	if len(tabla.Rows) == 0 {
+		return fmt.Errorf("la tabla de sprints anteriores no tiene encabezado")
+	}
+	esperados := make([]SprintAnterior, 0, len(tabla.Rows)-1)
+	for i, fila := range tabla.Rows[1:] {
+		if len(fila.Cells) != 5 {
+			return fmt.Errorf("la fila %d de la tabla tiene %d columnas, se esperaban cinco", i+2, len(fila.Cells))
+		}
+		numeros := make([]int, 4)
+		for j := range numeros {
+			n, err := strconv.Atoi(fila.Cells[j+1].Value)
+			if err != nil {
+				return fmt.Errorf("el valor %q de la fila %d no es un numero: %w", fila.Cells[j+1].Value, i+2, err)
+			}
+			numeros[j] = n
+		}
+		esperados = append(esperados, SprintAnterior{Nombre: fila.Cells[0].Value, Planificados: numeros[0], Completados: numeros[1],
+			HistoriasCompletadas: numeros[2], HistoriasNoCompletadas: numeros[3]})
+	}
+	if !slices.Equal(m.anteriores.Sprints, esperados) {
+		return fmt.Errorf("sprints anteriores: se esperaban %+v, son %+v", esperados, m.anteriores.Sprints)
+	}
+	return nil
+}
+
+func (m *mundo) entoncesNoHaySprintsAnteriores() error {
+	if len(m.anteriores.Sprints) != 0 {
+		return fmt.Errorf("se esperaba que no hubiera sprints anteriores, hay %d", len(m.anteriores.Sprints))
+	}
+	return nil
+}
+
+func (m *mundo) entoncesVelocidadDeAnterioresEs(esperada string) error {
+	return compararCifra("velocidad de los sprints anteriores", esperada, m.anteriores.Velocidad)
 }

@@ -87,7 +87,7 @@ definidas en `features/steps/mundo.go`. Cada área se conecta en
 |---|---|---|---|
 | Proyectos | `Proyectos` | US-001, US-002, US-003 | `features/steps/proyectos.go` |
 | Backlog | `Backlog` | US-005, US-006, US-013 | `features/steps/backlog.go` |
-| Sprints | `Sprints` | US-008, US-009, US-010, US-011 | `features/steps/sprints.go` |
+| Sprints | `Sprints` | US-008, US-009, US-010, US-011, US-012 | `features/steps/sprints.go` |
 | Métricas | `Metricas` | US-025, US-026, US-027 | `features/steps/metricas.go` |
 | Planning Poker | `PlanningPoker` | US-014 a US-018 | `features/steps/planningpoker.go` |
 
@@ -185,6 +185,7 @@ inexistente (CA-005-8, CA-008-10); con esa frase el escenario no lleva
 | `Cuando se marca la historia "Crear proyecto" como completada` | `^se marca la historia "([^"]*)" como completada$` |
 | `Cuando se desmarca la historia "Crear proyecto"` | `^se desmarca la historia "([^"]*)"$` |
 | `Cuando se cierra el sprint "Sprint 1"` | `^se cierra el sprint "([^"]*)"$` |
+| `Cuando se consultan los sprints anteriores` | `^se consultan los sprints anteriores$` |
 | `Cuando se consultan los story points planificados del sprint "Sprint 1"` | `^se consultan los story points planificados del sprint "([^"]*)"$` |
 | `Cuando se consultan los story points completados del sprint "Sprint 1"` | `^se consultan los story points completados del sprint "([^"]*)"$` |
 | `Cuando se consulta la velocidad del equipo` | `^se consulta la velocidad del equipo$` |
@@ -279,6 +280,9 @@ cuenta caracteres y no bytes.
 | `Y la historia "Crear proyecto" está en el backlog` | `^la historia "([^"]*)" está en el backlog$` |
 | `Y el sprint "Sprint 1" está cerrado` | `^el sprint "([^"]*)" está cerrado$` |
 | `Y el sprint "Sprint 1" está abierto` | `^el sprint "([^"]*)" está abierto$` |
+| `Y los sprints anteriores son:` + tabla `sprint \| planificados \| completados \| historias completadas \| historias no completadas` | `^los sprints anteriores son:$` |
+| `Y no hay sprints anteriores` | `^no hay sprints anteriores$` |
+| `Y la velocidad de los sprints anteriores es 6,5` | `^la velocidad de los sprints anteriores es (\d+(?:[.,]\d+)?)$` |
 | `Y los story points planificados son 13` | `^los story points planificados son (\d+)$` |
 | `Y los story points completados son 8` | `^los story points completados son (\d+)$` |
 | `Y la velocidad del equipo es 25` | `^la velocidad del equipo es (\d+(?:[.,]\d+)?)$` |
@@ -300,6 +304,14 @@ cuenta caracteres y no bytes.
 termina con `se rechaza` más `el mensaje de error indica`. Los mensajes de error
 del código van sin tildes, así que el escenario los escribe igual: "el titulo es
 obligatorio".
+
+**Sprints anteriores (US-012):** `se consultan los sprints anteriores` pide el historial del
+proyecto actual: solo los sprints cerrados, del más reciente al más antiguo. `los sprints
+anteriores son:` compara la lista completa y en orden con una tabla de cinco columnas (la primera
+fila es el encabezado), con las historias contadas por cantidad y los Story Points por suma; un
+sprint abierto no aparece. La velocidad es la de esos mismos sprints y, igual que
+`la velocidad del equipo es`, acepta coma o punto decimal. El contexto sale de las frases que ya
+existen: crear el sprint, asignar y completar historias, y `el sprint "X" cerrado`.
 
 **Planning Poker (US-014):** la sesión se nombra por su historia, que tiene como
 máximo una sesión abierta. `una sesión de Planning Poker sobre la historia "X"` y

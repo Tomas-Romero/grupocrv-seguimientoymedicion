@@ -93,6 +93,24 @@ type Sprints interface {
 	CerrarSprint(proyecto, nombre string) error
 	SprintDeHistoria(titulo string) (string, error)
 	SprintEstaCerrado(proyecto, nombre string) (bool, error)
+	// SprintsAnteriores devuelve el historial de sprints cerrados del proyecto, del mas
+	// reciente al mas antiguo, con su resultado (US-012).
+	SprintsAnteriores(proyecto string) (SprintsAnteriores, error)
+}
+
+// SprintAnterior es un sprint cerrado con su resultado, como lo muestra el historial (US-012).
+type SprintAnterior struct {
+	Nombre                 string
+	Planificados           int
+	Completados            int
+	HistoriasCompletadas   int
+	HistoriasNoCompletadas int
+}
+
+// SprintsAnteriores es el historial de sprints cerrados y la velocidad del equipo.
+type SprintsAnteriores struct {
+	Sprints   []SprintAnterior
+	Velocidad float64
 }
 
 // HorasDelSprint son las horas de un sprint tal como las muestra la consulta de
@@ -211,6 +229,7 @@ type mundo struct {
 	puntosCompletados  int
 	velocidad          float64
 	horas              HorasDelSprint
+	anteriores         SprintsAnteriores
 }
 
 // registrarAccion guarda el resultado de un step de accion.
