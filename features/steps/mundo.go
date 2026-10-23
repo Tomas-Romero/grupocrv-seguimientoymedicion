@@ -122,6 +122,28 @@ type Esfuerzo interface {
 	HorasDeHistoria(proyecto, historia string) (float64, error)
 }
 
+// PlanningPoker es el area de US-014 a US-018. La sesion se nombra por su historia,
+// que tiene como maximo una sesion abierta (RN-014-7).
+type PlanningPoker interface {
+	// IniciarSesion inicia una sesion sobre la historia del proyecto. Lo que no existe
+	// (el proyecto o la historia) se manda con un ID que no esta en la base, asi el
+	// rechazo lo produce la aplicacion.
+	IniciarSesion(proyecto, titulo string) error
+	EstadoDeLaSesion(titulo string) (estado string, ronda int, err error)
+	// ParticipantesDeLaSesion devuelve los nombres de los participantes, en orden de
+	// alta en el proyecto.
+	ParticipantesDeLaSesion(titulo string) ([]string, error)
+	// Votar registra el voto del integrante, nombrado como lo conoce el escenario, en
+	// la sesion abierta de la historia (US-015). Lo que no existe se manda con un ID que
+	// no esta en la base, asi el rechazo lo produce la aplicacion.
+	Votar(integrante, titulo string, valor int) error
+	// QuienesVotaron y QuienesFaltan devuelven nombres, en el orden de los participantes.
+	QuienesVotaron(titulo string) ([]string, error)
+	QuienesFaltan(titulo string) ([]string, error)
+	// VotosOcultos dice si los valores de la ronda actual no se pueden leer (RN-015-7).
+	VotosOcultos(titulo string) (bool, error)
+}
+
 // Servicios agrupa las areas conectadas para UN escenario. Un campo nil
 // significa "area todavia sin conectar": los steps que la necesiten fallan con
 // ErrAreaSinConectar.
@@ -131,6 +153,8 @@ type Servicios struct {
 	Sprints   Sprints
 	Metricas  Metricas
 	Esfuerzo  Esfuerzo
+	// PlanningPoker es de US-014 a US-018.
+	PlanningPoker PlanningPoker
 }
 
 // Fabrica construye los Servicios de un escenario. Se llama antes de CADA
@@ -208,6 +232,13 @@ func (m *mundo) esfuerzo() (Esfuerzo, error) {
 		return nil, areaSinConectar("esfuerzo")
 	}
 	return m.servicios.Esfuerzo, nil
+}
+
+func (m *mundo) planningPoker() (PlanningPoker, error) {
+	if m.servicios.PlanningPoker == nil {
+		return nil, areaSinConectar("planning poker")
+	}
+	return m.servicios.PlanningPoker, nil
 }
 
 func (m *mundo) metricas() (Metricas, error) {
