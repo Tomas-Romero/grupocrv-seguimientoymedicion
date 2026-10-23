@@ -7,7 +7,7 @@
 | **Issue** | #33 |
 | **Escenarios BDD** | `features/US-027-horas-estimadas-reales.feature` |
 | **Código** | `internal/domain/metricas/` |
-| **Última actualización** | 2026-10-18 |
+| **Última actualización** | 2026-10-22 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
 > implementación. Si durante la implementación descubrís que algo de acá está
@@ -54,6 +54,7 @@ ResumenHoras {
     Desviacion float64 // Reales − Estimadas
 }
 
+func CalcularHoras(storyPointsPlanificados int, horasRegistradas []float64) (ResumenHoras, error)
 func (r ResumenHoras) DesviacionPorcentual() (porcentaje float64, calculable bool)
 ```
 
@@ -112,6 +113,11 @@ pantalla pueda mostrar la equivalencia que se usó.
   (`el sprint "S" con una historia de N story points ...`); se agregan frases
   para las horas (ver Decisiones). Los mensajes se comprueban con
   `el mensaje de error indica "..."`.
+- **Catálogo de errores (T-005).** `metricas.ErrHorasInvalidas` va en las exclusiones
+  de `internal/adapters/http/catalogo.go`, con el motivo de los otros errores de
+  métricas: las horas ya entraron validadas por US-019, así que una inválida es un
+  dato del sistema que salió mal y no algo que la persona escribió. El test del
+  catálogo falla si no está.
 - **Fuera de alcance.** La pantalla, las horas por integrante o por historia
   (eso es US-020 y US-021), el desglose de la desviación y cualquier
   proyección hacia sprints futuros.
