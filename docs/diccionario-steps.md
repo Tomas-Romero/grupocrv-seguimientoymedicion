@@ -88,7 +88,7 @@ definidas en `features/steps/mundo.go`. Cada área se conecta en
 | Proyectos | `Proyectos` | US-001, US-002, US-003 | `features/steps/proyectos.go` |
 | Backlog | `Backlog` | US-005, US-006, US-013 | `features/steps/backlog.go` |
 | Sprints | `Sprints` | US-008, US-009, US-010, US-011 | `features/steps/sprints.go` |
-| Métricas | `Metricas` | US-025, US-026 | `features/steps/metricas.go` |
+| Métricas | `Metricas` | US-025, US-026, US-027 | `features/steps/metricas.go` |
 | Planning Poker | `PlanningPoker` | US-014 a US-018 | `features/steps/planningpoker.go` |
 
 Un escenario solo necesita las áreas que usa. Un `.feature` de proyectos no
@@ -121,6 +121,7 @@ conectada, falla con `area sin conectar a los steps: <área>`: es a propósito.
 | `Y el sprint cerrado "Sprint 1" con 20 story points completados de 25 planificados` | `^el sprint cerrado "([^"]*)" con (\d+) story points completados de (\d+) planificados$` |
 | `Y una sesión de Planning Poker sobre la historia "Crear proyecto"` | `^una sesión de Planning Poker sobre la historia "([^"]*)"$` |
 | `Y el integrante "Ana" ya votó 5 en la sesión de la historia "Crear proyecto"` | `^el integrante "([^"]*)" ya votó (-?\d+) en la sesión de la historia "([^"]*)"$` |
+| `Y el sprint "Sprint 1" con 8 horas registradas` | `^el sprint "([^"]*)" con (-?\d+(?:[.,]\d+)?) horas registradas$` |
 | `Y el integrante "Ana" ya registró 3 horas de "Desarrollo" en la historia "Crear proyecto" el 2026-10-05` | `^el integrante "([^"]*)" ya registró (-?\d+(?:[.,]\d+)?) horas de "([^"]*)" en la historia "([^"]*)" el (\S+)$` |
 
 Un escenario **no repite títulos de historias**: el área Backlog las identifica
@@ -138,6 +139,12 @@ Las dos frases `el sprint "S" con una historia de N story points ...` arman el s
 los escenarios de métricas (US-025 y US-026) sin pasar por el backlog ni por los sprints
 reales: cada línea suma una historia al sprint. Aceptan un número negativo a propósito,
 porque es la única forma de escribir el escenario de error de US-025 (CA-025-4).
+
+`el sprint "S" con N horas registradas` suma un registro de esfuerzo al sprint de un
+escenario de métricas (US-027), sin pasar por US-019. Los story points del sprint salen de las
+frases `el sprint "S" con una historia de N story points ...`. Acepta 0 y un número negativo a
+propósito, porque es la única forma de escribir el escenario de error de CA-027-5. Los números
+aceptan coma o punto decimal.
 
 `el sprint cerrado "S" con N story points completados de M planificados` arma un sprint
 ya cerrado para los escenarios de la velocidad (US-026). No valida nada: "8 completados de
@@ -183,6 +190,7 @@ inexistente (CA-005-8, CA-008-10); con esa frase el escenario no lleva
 | `Cuando se consulta la velocidad del equipo` | `^se consulta la velocidad del equipo$` |
 | `Cuando se inicia una sesión de Planning Poker sobre la historia "Crear proyecto"` | `^se inicia una sesión de Planning Poker sobre la historia "([^"]*)"$` |
 | `Cuando el integrante "Ana" vota 5 en la sesión de la historia "Crear proyecto"` | `^el integrante "([^"]*)" vota (-?\d+) en la sesión de la historia "([^"]*)"$` |
+| `Cuando se consultan las horas del sprint "Sprint 1"` | `^se consultan las horas del sprint "([^"]*)"$` |
 | `Cuando el integrante "Ana" registra 2,5 horas de "Desarrollo" en la historia "Crear proyecto" el 2026-10-05` | `^el integrante "([^"]*)" registra (-?\d+(?:[.,]\d+)?) horas de "([^"]*)" en la historia "([^"]*)" el (\S+)$` |
 
 **Propuesta US-003:** `se registra al integrante "X" con email "..." y rol "Y"`
@@ -274,6 +282,11 @@ cuenta caracteres y no bytes.
 | `Y los story points planificados son 13` | `^los story points planificados son (\d+)$` |
 | `Y los story points completados son 8` | `^los story points completados son (\d+)$` |
 | `Y la velocidad del equipo es 25` | `^la velocidad del equipo es (\d+(?:[.,]\d+)?)$` |
+| `Y las horas estimadas son 7,5` | `^las horas estimadas son (-?\d+(?:[.,]\d+)?)$` |
+| `Y las horas reales son 8` | `^las horas reales son (-?\d+(?:[.,]\d+)?)$` |
+| `Y la desviación de horas es -3` | `^la desviación de horas es (-?\d+(?:[.,]\d+)?)$` |
+| `Y la desviación porcentual es 6,7` | `^la desviación porcentual es (-?\d+(?:[.,]\d+)?)$` |
+| `Y la desviación porcentual no se puede calcular` | `^la desviación porcentual no se puede calcular$` |
 | `Y el proyecto "Demo" tiene 1 registro de esfuerzo` | `^el proyecto "([^"]*)" tiene (\d+) registros? de esfuerzo$` |
 | `Y la historia "Crear proyecto" tiene 2,5 horas registradas` | `^la historia "([^"]*)" tiene (\d+(?:[.,]\d+)?) horas registradas$` |
 | `Y la sesión de la historia "Crear proyecto" está "votando" en la ronda 1` | `^la sesión de la historia "([^"]*)" está "([^"]*)" en la ronda (\d+)$` |
