@@ -65,7 +65,7 @@ func TestBase_ListarSprintsConItems(t *testing.T) {
 	if len(got) != 1 || got[0].Sprint.ID != e.sprint.ID {
 		t.Fatalf("sprints = %+v, quiero el sprint del escenario", got)
 	}
-	if len(got[0].Items) != 1 || got[0].Items[0].ID != e.asignada.ID {
+	if len(got[0].Items) != 1 || got[0].Items[0].Item.ID != e.asignada.ID {
 		t.Errorf("historias del sprint = %+v, quiero solo la asignada", got[0].Items)
 	}
 
@@ -80,7 +80,7 @@ func TestBase_ItemsDelSprint(t *testing.T) {
 	e := nuevoEscenarioDeSprints(t)
 
 	got, err := e.base.ItemsDelSprint(context.Background(), e.sprint.ID)
-	if err != nil || len(got) != 1 || got[0].ID != e.asignada.ID {
+	if err != nil || len(got) != 1 || got[0].Item.ID != e.asignada.ID || got[0].Resultado != sprint.ResultadoPendiente {
 		t.Errorf("ItemsDelSprint = %+v, %v; quiero la historia asignada", got, err)
 	}
 	vacio, err := e.base.ItemsDelSprint(context.Background(), "no-existe")
@@ -88,8 +88,8 @@ func TestBase_ItemsDelSprint(t *testing.T) {
 		t.Errorf("sprint inexistente: %v, %v; quiero lista vacia y sin error", vacio, err)
 	}
 
-	got[0].Criterios[0] = "cambiado"
-	if guardados, _ := e.base.ItemsDelSprint(context.Background(), e.sprint.ID); guardados[0].Criterios[0] != "un criterio" {
+	got[0].Item.Criterios[0] = "cambiado"
+	if guardados, _ := e.base.ItemsDelSprint(context.Background(), e.sprint.ID); guardados[0].Item.Criterios[0] != "un criterio" {
 		t.Error("cambiar lo devuelto cambio lo guardado")
 	}
 }
@@ -122,3 +122,55 @@ var (
 	_ app.RepositorioListarSprints   = (*memoria.Base)(nil)
 	_ app.RepositorioConsultarSprint = (*memoria.Base)(nil)
 )
+
+// DEF-007: las lecturas traen el resultado de la fila de cada sprint. La "libre" no se completo en el
+// primer sprint, volvio al backlog y se completo en el segundo: sigue siendo "no completada" en el primero,
+// aunque su estado actual sea completado.
+func TestBase_LecturasDeSprints_TraenElResultadoDeLaFila(t *testing.T) {
+	e := nuevoEscenarioDeSprints(t)
+	ctx := context.Background()
+	if err := e.base.AsignarItemASprint(ctx, e.libre.ID, e.sprint.ID); err != nil {
+		t.Fatalf("AsignarItemASprint: %v", err)
+	}
+	if _, err := e.base.GuardarCambioDeEstado(ctx, e.asignada.ID, e.sprint.ID, func(i backlog.ItemBacklog) backlog.ItemBacklog { return i.Completar(time.Now()) }); err != nil {
+		t.Fatalf("completar la asignada: %v", err)
+	}
+	if _, err := e.base.GuardarCierre(ctx, e.sprint.ID); err != nil {
+		t.Fatalf("GuardarCierre: %v", err)
+	}
+	inicio := e.sprint.FechaFin.AddDate(0, 0, 1)
+	segundo, err := e.base.RegistrarSprint(ctx, sprint.Sprint{ProyectoID: e.proyectoID, SprintGoal: "Otra meta", FechaInicio: inicio, FechaFin: inicio.AddDate(0, 0, 13), Estado: sprint.EstadoAbierto})
+	if err != nil {
+		t.Fatalf("RegistrarSprint del segundo: %v", err)
+	}
+	if err := e.base.AsignarItemASprint(ctx, e.libre.ID, segundo.ID); err != nil {
+		t.Fatalf("asignar la devuelta al segundo: %v", err)
+	}
+	if _, err := e.base.GuardarCambioDeEstado(ctx, e.libre.ID, segundo.ID, func(i backlog.ItemBacklog) backlog.ItemBacklog { return i.Completar(time.Now()) }); err != nil {
+		t.Fatalf("completar la devuelta en el segundo: %v", err)
+	}
+
+	resultados := func(historias []app.HistoriaAsignada) map[string]sprint.Resultado {
+		m := map[string]sprint.Resultado{}
+		for _, h := range historias {
+			m[h.Item.ID] = h.Resultado
+		}
+		return m
+	}
+	primero, _ := e.base.ItemsDelSprint(ctx, e.sprint.ID)
+	if got := resultados(primero); got[e.asignada.ID] != sprint.ResultadoCompletado || got[e.libre.ID] != sprint.ResultadoNoCompletado {
+		t.Errorf("resultados del primer sprint = %v, quiero completado y no_completado", got)
+	}
+	enElSegundo, _ := e.base.ItemsDelSprint(ctx, segundo.ID)
+	if got := resultados(enElSegundo); got[e.libre.ID] != sprint.ResultadoPendiente {
+		t.Errorf("resultado en el sprint abierto = %v, quiero pendiente", got)
+	}
+	todos, _ := e.base.ListarSprintsConItems(ctx, e.proyectoID)
+	for _, s := range todos {
+		if s.Sprint.ID == e.sprint.ID {
+			if got := resultados(s.Items); got[e.libre.ID] != sprint.ResultadoNoCompletado {
+				t.Errorf("ListarSprintsConItems, primer sprint = %v, quiero no_completado para la devuelta", got)
+			}
+		}
+	}
+}
