@@ -78,6 +78,13 @@ templ DetalleDeSprint(v VistaSprint) {
 		<dt class="font-semibold text-slate-700">Story Points</dt>
 		<dd>Planificados: { strconv.Itoa(v.Planificados) } · Completados: { strconv.Itoa(v.Completados) }</dd>
 	</dl>
+	if v.Abierto {
+		<form hx-post={ v.AccionCerrar } hx-confirm={ v.ConfirmaCierre } class="mt-4">
+			<button type="submit" aria-label={ "Cerrar " + v.Nombre } class={ claseBoton }>Cerrar sprint</button>
+		</form>
+	} else if v.TextoDevueltas != "" {
+		<p class="mt-4 text-sm font-semibold text-slate-900">Volvieron al backlog: { v.TextoDevueltas }</p>
+	}
 	<h2 class="mt-8 text-lg font-semibold text-slate-900">Historias del sprint</h2>
 	if len(v.Historias) == 0 {
 		<p class="mt-2 text-slate-700">El sprint todavía no tiene historias.</p>
@@ -90,9 +97,11 @@ templ DetalleDeSprint(v VistaSprint) {
 					<th scope="col" class="py-2 pr-3 font-semibold">Título</th>
 					<th scope="col" class="py-2 pr-3 font-semibold">Prioridad</th>
 					<th scope="col" class="py-2 pr-3 font-semibold">Story Points</th>
-					<th scope="col" class="py-2 pr-3 font-semibold">Estado</th>
 					if v.Abierto {
+						<th scope="col" class="py-2 pr-3 font-semibold">Estado</th>
 						<th scope="col" class="py-2 font-semibold">Acciones</th>
+					} else {
+						<th scope="col" class="py-2 font-semibold">Resultado</th>
 					}
 				</tr>
 			</thead>
@@ -103,13 +112,15 @@ templ DetalleDeSprint(v VistaSprint) {
 						<td class="py-2 pr-3">{ h.Titulo }</td>
 						<td class="py-2 pr-3">{ h.Prioridad }</td>
 						<td class="py-2 pr-3">{ h.Puntos }</td>
-						<td class="py-2 pr-3">{ h.Estado }</td>
 						if v.Abierto {
+							<td class="py-2 pr-3">{ h.Estado }</td>
 							<td class="py-2">
 								<form hx-post={ h.Accion }>
 									<button type="submit" aria-label={ h.TextoAccion + ": " + h.Titulo } class={ claseBotonChico }>{ h.TextoAccion }</button>
 								</form>
 							</td>
+						} else {
+							<td class="py-2">{ h.Resultado }</td>
 						}
 					</tr>
 				}
