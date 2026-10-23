@@ -38,6 +38,9 @@ type FilaHistoriaDeSprint struct {
 	Puntos     string
 	Estado     string
 	Completada bool
+	// Resultado es el texto que se muestra en un sprint cerrado: si la historia se completo o
+	// volvio al backlog (RN-T016-4).
+	Resultado string
 	// Accion es la URL de marcar o desmarcar; TextoAccion, lo que dice el boton.
 	Accion      string
 	TextoAccion string
@@ -54,6 +57,13 @@ type VistaSprint struct {
 	Planificados int
 	Completados  int
 	Historias    []FilaHistoriaDeSprint
+	// AccionCerrar es la URL del formulario de cierre y ConfirmaCierre, el texto que se muestra
+	// antes de enviarlo. Solo se usan con el sprint abierto (RN-T016-2).
+	AccionCerrar   string
+	ConfirmaCierre string
+	// TextoDevueltas dice cuantas historias volvieron al backlog ("1 historia"); vacio si ninguna
+	// (RN-T016-5). Solo se muestra con el sprint cerrado.
+	TextoDevueltas string
 	// AccionAsignar es la URL del formulario de asignacion y Disponibles, sus opciones. Con el
 	// sprint cerrado no se muestran.
 	AccionAsignar string
