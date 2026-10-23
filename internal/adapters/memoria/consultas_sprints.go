@@ -5,6 +5,7 @@ import (
 
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/app"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/backlog"
+	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/sprint"
 )
 
 // Base cumple los puertos de lectura de las pantallas de sprints (T-015). ObtenerSprint y
@@ -15,13 +16,14 @@ var (
 )
 
 // itemsAsignados devuelve copias de las historias del proyecto que tienen una fila de la
-// relacion con ese sprint, sin importar su resultado. Se llama con mu tomado.
-func (b *Base) itemsAsignados(proyectoID, sprintID string) []backlog.ItemBacklog {
-	items := []backlog.ItemBacklog{}
+// relacion con ese sprint, sin importar su resultado, cada una con el resultado de su fila. Se
+// llama con mu tomado.
+func (b *Base) itemsAsignados(proyectoID, sprintID string) []app.HistoriaAsignada {
+	items := []app.HistoriaAsignada{}
 	for _, item := range b.items[proyectoID] {
 		for _, a := range b.asignaciones[item.ID] {
 			if a.sprintID == sprintID {
-				items = append(items, copiaDe(item))
+				items = append(items, app.HistoriaAsignada{Item: copiaDe(item), Resultado: sprint.Resultado(a.resultado)})
 				break
 			}
 		}
@@ -44,13 +46,13 @@ func (b *Base) ListarSprintsConItems(_ context.Context, proyectoID string) ([]ap
 
 // ItemsDelSprint devuelve las historias que se asignaron al sprint, sin orden. Un sprint que
 // no existe devuelve una lista vacia.
-func (b *Base) ItemsDelSprint(_ context.Context, sprintID string) ([]backlog.ItemBacklog, error) {
+func (b *Base) ItemsDelSprint(_ context.Context, sprintID string) ([]app.HistoriaAsignada, error) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
 	s, ok := b.sprintPorID(sprintID)
 	if !ok {
-		return []backlog.ItemBacklog{}, nil
+		return []app.HistoriaAsignada{}, nil
 	}
 	return b.itemsAsignados(s.ProyectoID, s.ID), nil
 }

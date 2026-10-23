@@ -13,19 +13,42 @@ import (
 // Lecturas de las pantallas de sprints (spec T-015). Igual que las de T-011, los
 // repositorios devuelven los datos sin ordenar y el orden lo pone el caso de uso.
 
+// HistoriaAsignada es una historia que se asigno a un sprint, con el resultado que quedo en la
+// fila de la relacion entre ambos (RN-009-13).
+type HistoriaAsignada struct {
+	Item      backlog.ItemBacklog
+	Resultado sprint.Resultado
+}
+
+// Completada dice si la historia quedo completada en ese sprint. En un sprint cerrado manda el
+// resultado de la fila: una historia que no se completo y volvio al backlog sigue siendo "no
+// completada" en ese sprint aunque despues se complete en otro. Mientras el sprint esta abierto
+// la fila sigue pendiente y manda el estado de la historia, porque marcarla (US-010) no cambia la
+// fila hasta el cierre.
+func (h HistoriaAsignada) Completada() bool {
+	switch h.Resultado {
+	case sprint.ResultadoCompletado:
+		return true
+	case sprint.ResultadoNoCompletado:
+		return false
+	default:
+		return h.Item.Estado == backlog.EstadoCompletado
+	}
+}
+
 // SprintConItems es un sprint con las historias que alguna vez se le asignaron.
 type SprintConItems struct {
 	Sprint sprint.Sprint
-	Items  []backlog.ItemBacklog
+	Items  []HistoriaAsignada
 }
 
 // resumenDeItems calcula los Story Points planificados y completados con metricas (US-025).
 // Una historia sin estimar cuenta como 0 (RN-T015-8).
-func resumenDeItems(items []backlog.ItemBacklog) (metricas.ResumenSprint, error) {
+func resumenDeItems(items []HistoriaAsignada) (metricas.ResumenSprint, error) {
 	datos := make([]metricas.ItemDelSprint, len(items))
-	for i, item := range items {
-		puntos, _ := item.StoryPoints.Valor()
-		datos[i] = metricas.ItemDelSprint{StoryPoints: puntos, Completado: item.Estado == backlog.EstadoCompletado}
+	for i, h := range items {
+		puntos, _ := h.Item.StoryPoints.Valor()
+		datos[i] = metricas.ItemDelSprint{StoryPoints: puntos, Completado: h.Completada()}
 	}
 	return metricas.CalcularResumenSprint(datos)
 }
@@ -94,8 +117,9 @@ func (c *ListarSprints) Ejecutar(ctx context.Context, proyectoID string) ([]Resu
 type RepositorioConsultarSprint interface {
 	// ObtenerSprint devuelve el sprint y si existe (es la lectura de US-009).
 	ObtenerSprint(ctx context.Context, sprintID string) (sprint.Sprint, bool, error)
-	// ItemsDelSprint devuelve las historias que se asignaron al sprint, en cualquier orden.
-	ItemsDelSprint(ctx context.Context, sprintID string) ([]backlog.ItemBacklog, error)
+	// ItemsDelSprint devuelve las historias que se asignaron al sprint, cada una con el resultado
+	// de su fila, en cualquier orden.
+	ItemsDelSprint(ctx context.Context, sprintID string) ([]HistoriaAsignada, error)
 	// ListarItemsDisponibles devuelve las historias del proyecto que se pueden asignar: no
 	// estan completadas y no estan en ningun sprint abierto. Incluye las que todavia no
 	// estan listas (sin estimar o sin criterios): lo decide el dominio al asignar.
@@ -106,6 +130,8 @@ type RepositorioConsultarSprint interface {
 type HistoriaDelSprint struct {
 	Item       backlog.ItemBacklog
 	Completada bool
+	// Resultado es el de la fila de la historia en este sprint: pendiente mientras esta abierto.
+	Resultado sprint.Resultado
 }
 
 // DetalleDeSprint es un sprint con sus historias, sus totales y las historias que se le
@@ -144,14 +170,14 @@ func (c *ConsultarSprint) Ejecutar(ctx context.Context, proyectoID, sprintID str
 	if err != nil {
 		return DetalleDeSprint{}, fmt.Errorf("listar las historias del sprint %s: %w", sprintID, err)
 	}
-	ordenarPorPrioridad(items)
+	sort.SliceStable(items, func(i, j int) bool { return antesPorPrioridad(items[i].Item, items[j].Item) })
 	totales, err := resumenDeItems(items)
 	if err != nil {
 		return DetalleDeSprint{}, fmt.Errorf("calcular los Story Points del %s: %w", s.Nombre(), err)
 	}
 	historias := make([]HistoriaDelSprint, len(items))
-	for i, item := range items {
-		historias[i] = HistoriaDelSprint{Item: item, Completada: item.Estado == backlog.EstadoCompletado}
+	for i, h := range items {
+		historias[i] = HistoriaDelSprint{Item: h.Item, Completada: h.Completada(), Resultado: h.Resultado}
 	}
 
 	disponibles, err := c.repo.ListarItemsDisponibles(ctx, proyectoID)

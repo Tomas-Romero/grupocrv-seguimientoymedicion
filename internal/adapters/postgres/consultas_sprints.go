@@ -47,34 +47,56 @@ func (f *filaDeItem) armar() (backlog.ItemBacklog, error) {
 // leerItems lee todas las filas de una consulta que devuelve columnasDeItem. Un ID mal formado
 // es una lista vacia, no un error: no puede ser de ningun proyecto ni sprint.
 func (r *RepositorioAsignaciones) leerItems(ctx context.Context, consulta, id, que string) ([]backlog.ItemBacklog, error) {
+	filas, err := r.leerHistorias(ctx, consulta, id, que, false)
+	if err != nil {
+		return nil, err
+	}
+	items := make([]backlog.ItemBacklog, len(filas))
+	for i, h := range filas {
+		items[i] = h.Item
+	}
+	return items, nil
+}
+
+// leerHistorias lee todas las filas de una consulta que devuelve columnasDeItem y, si conResultado,
+// el resultado de la fila de la relacion como primera columna. Un ID mal formado es una lista vacia,
+// no un error.
+func (r *RepositorioAsignaciones) leerHistorias(ctx context.Context, consulta, id, que string, conResultado bool) ([]app.HistoriaAsignada, error) {
 	filas, err := r.pool.Query(ctx, consulta, id)
 	if esIDMalFormado(err) {
-		return []backlog.ItemBacklog{}, nil
+		return []app.HistoriaAsignada{}, nil
 	}
 	if err != nil {
 		return nil, fmt.Errorf("%s %s: %w", que, id, err)
 	}
 	defer filas.Close()
 
-	items := []backlog.ItemBacklog{}
+	historias := []app.HistoriaAsignada{}
 	for filas.Next() {
-		var f filaDeItem
-		if err := filas.Scan(f.destinos()...); err != nil {
+		var (
+			f         filaDeItem
+			resultado string
+		)
+		destinos := f.destinos()
+		if conResultado {
+			destinos = append([]any{&resultado}, destinos...)
+		}
+		if err := filas.Scan(destinos...); err != nil {
 			return nil, fmt.Errorf("leer un item: %w", err)
 		}
 		item, err := f.armar()
 		if err != nil {
 			return nil, err
 		}
-		items = append(items, item)
+		historias = append(historias, app.HistoriaAsignada{Item: item, Resultado: sprint.Resultado(resultado)})
 	}
 	if err := filas.Err(); err != nil {
 		if esIDMalFormado(err) {
-			return []backlog.ItemBacklog{}, nil
+			return []app.HistoriaAsignada{}, nil
 		}
 		return nil, fmt.Errorf("%s %s: %w", que, id, err)
 	}
-	return items, nil
+	return historias, nil
 }
 
 // ListarSprintsConItems devuelve los sprints del proyecto con las historias que se les
@@ -106,7 +128,7 @@ FROM sprints WHERE proyecto_id = $1`
 		}
 		s.Estado = sprint.Estado(estado)
 		posicion[s.ID] = len(sprints)
-		sprints = append(sprints, app.SprintConItems{Sprint: s, Items: []backlog.ItemBacklog{}})
+		sprints = append(sprints, app.SprintConItems{Sprint: s, Items: []app.HistoriaAsignada{}})
 	}
 	filas.Close()
 	if err := filas.Err(); err != nil {
@@ -120,7 +142,7 @@ FROM sprints WHERE proyecto_id = $1`
 	}
 
 	const listarItems = `
-SELECT si.sprint_id::text, ` + columnasDeItem + `
+SELECT si.sprint_id::text, si.resultado, ` + columnasDeItem + `
 FROM sprint_items si
 JOIN items_backlog i ON i.id = si.item_id
 JOIN sprints s ON s.id = si.sprint_id
@@ -132,10 +154,11 @@ WHERE s.proyecto_id = $1`
 	defer asignadas.Close()
 	for asignadas.Next() {
 		var (
-			sprintID string
-			f        filaDeItem
+			sprintID  string
+			resultado string
+			f         filaDeItem
 		)
-		if err := asignadas.Scan(append([]any{&sprintID}, f.destinos()...)...); err != nil {
+		if err := asignadas.Scan(append([]any{&sprintID, &resultado}, f.destinos()...)...); err != nil {
 			return nil, fmt.Errorf("leer una historia de un sprint: %w", err)
 		}
 		item, err := f.armar()
@@ -143,7 +166,7 @@ WHERE s.proyecto_id = $1`
 			return nil, err
 		}
 		i := posicion[sprintID]
-		sprints[i].Items = append(sprints[i].Items, item)
+		sprints[i].Items = append(sprints[i].Items, app.HistoriaAsignada{Item: item, Resultado: sprint.Resultado(resultado)})
 	}
 	if err := asignadas.Err(); err != nil {
 		return nil, fmt.Errorf("listar las historias de los sprints del proyecto %s: %w", proyectoID, err)
@@ -151,15 +174,16 @@ WHERE s.proyecto_id = $1`
 	return sprints, nil
 }
 
-// ItemsDelSprint devuelve las historias que se asignaron al sprint, sin orden y sin importar
-// el resultado de la fila. Un ID mal formado, o un sprint sin historias, devuelve una lista vacia.
-func (r *RepositorioAsignaciones) ItemsDelSprint(ctx context.Context, sprintID string) ([]backlog.ItemBacklog, error) {
+// ItemsDelSprint devuelve las historias que se asignaron al sprint, sin orden y sin importar el
+// resultado de la fila, cada una con ese resultado. Un ID mal formado, o un sprint sin historias,
+// devuelve una lista vacia.
+func (r *RepositorioAsignaciones) ItemsDelSprint(ctx context.Context, sprintID string) ([]app.HistoriaAsignada, error) {
 	const consulta = `
-SELECT ` + columnasDeItem + `
+SELECT si.resultado, ` + columnasDeItem + `
 FROM sprint_items si
 JOIN items_backlog i ON i.id = si.item_id
 WHERE si.sprint_id = $1`
-	return r.leerItems(ctx, consulta, sprintID, "listar las historias del sprint")
+	return r.leerHistorias(ctx, consulta, sprintID, "listar las historias del sprint", true)
 }
 
 // ListarItemsDisponibles devuelve las historias del proyecto que no estan completadas y no

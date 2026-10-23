@@ -20,12 +20,13 @@ type metricasEnMemoria struct {
 	escenario *escenario
 	items     map[string][]metricas.ItemDelSprint
 	cerrados  []metricas.SprintCerrado
+	horas     map[string][]float64
 }
 
 var _ steps.Metricas = (*metricasEnMemoria)(nil)
 
 func nuevasMetricasEnMemoria(e *escenario) *metricasEnMemoria {
-	return &metricasEnMemoria{escenario: e, items: map[string][]metricas.ItemDelSprint{}}
+	return &metricasEnMemoria{escenario: e, items: map[string][]metricas.ItemDelSprint{}, horas: map[string][]float64{}}
 }
 
 // sprintsCerradosDeLaBase devuelve los sprints cerrados de la base del escenario, con
@@ -112,4 +113,31 @@ func (m *metricasEnMemoria) VelocidadDelEquipo() (float64, error) {
 		return 0, fmt.Errorf("velocidad del equipo: %w", err)
 	}
 	return velocidad, nil
+}
+
+// RegistrarHorasDelSprint suma al sprint un registro de esfuerzo, en el orden en que llega.
+func (m *metricasEnMemoria) RegistrarHorasDelSprint(sprint string, horas float64) error {
+	m.horas[sprint] = append(m.horas[sprint], horas)
+	return nil
+}
+
+// HorasDelSprint calcula las horas con los story points planificados del sprint (los
+// mismos de US-025) y con las horas que armo el contexto.
+func (m *metricasEnMemoria) HorasDelSprint(sprint string) (steps.HorasDelSprint, error) {
+	resumen, err := m.resumen(sprint)
+	if err != nil {
+		return steps.HorasDelSprint{}, err
+	}
+	horas, err := metricas.CalcularHoras(resumen.Planificados, m.horas[sprint])
+	if err != nil {
+		return steps.HorasDelSprint{}, fmt.Errorf("horas del sprint %q: %w", sprint, err)
+	}
+	porcentaje, calculable := horas.DesviacionPorcentual()
+	return steps.HorasDelSprint{
+		Estimadas:            horas.Estimadas,
+		Reales:               horas.Reales,
+		Desviacion:           horas.Desviacion,
+		Porcentaje:           porcentaje,
+		PorcentajeCalculable: calculable,
+	}, nil
 }

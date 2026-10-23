@@ -6,8 +6,8 @@
 | **Autor** | Juan Ignacio Vergara |
 | **Issue** | #26 |
 | **Escenarios BDD** | `features/US-015-voto-individual-oculto.feature` |
-| **Código** | `internal/domain/planningpoker/` (votación de una ronda), caso de uso en `internal/app/`, repositorio en `internal/adapters/postgres/`, migración `migraciones/00010_votos_planning_poker.sql` |
-| **Última actualización** | 2026-10-21 |
+| **Código** | `internal/domain/planningpoker/` (`VerificarVoto`, `Votacion`), caso de uso `VotarEnSesion` en `internal/app/`, `RegistrarVoto` en `internal/adapters/postgres/` y la base en memoria, migración `migraciones/00010_votos_planning_poker.sql` |
+| **Última actualización** | 2026-10-23 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
 > implementación. Si durante la implementación descubrís que algo de acá está
@@ -125,6 +125,12 @@ Entre paréntesis, la capa que la hace cumplir.
 - **Depende de US-014.** Usa `SesionPlanningPoker`, sus estados, su ronda y la
   lista de participantes (RN-014-4, RN-014-8 y RN-014-13). Esta spec cita la
   de US-014, que se revisa en paralelo; conviene mergear la de US-014 primero.
+- **Cómo se garantiza el voto oculto.** `Votacion` no exporta campos, sus
+  únicos métodos exportados son `Votaron`, `Faltan`, `Valores`, `String` y
+  `GoString`, y `String`/`GoString` no muestran los valores: ni un log con
+  `fmt` ni `encoding/json` los dejan salir. Un test del dominio comprueba cada
+  uno de esos caminos. Para saber de qué proyecto es la sesión (RN-015-1),
+  `SesionPlanningPoker` suma `ProyectoID`, que completa la persistencia.
 - **Dependencia con US-016: el cierre es manual.** La votación de una ronda se
   cierra solo cuando alguien revela (US-016), que pasa la sesión a `revelada`
   con el mismo candado `FOR NO KEY UPDATE` sobre la sesión (RN-015-10). Desde
@@ -274,4 +280,6 @@ cuenta propia:
   cuenta el último voto, votos por ronda, voto oculto garantizado por el
   dominio, cierre manual al revelar, concurrencia), usando las specs de US-013,
   US-014, US-010, US-019 y T-005 como modelo
+- [x] Use IA para: el ajuste tras la implementación (nombres del código y cómo
+  se garantiza el voto oculto), redactado con Claude Code
 - Revisado y entendido por: Juan Ignacio Vergara
