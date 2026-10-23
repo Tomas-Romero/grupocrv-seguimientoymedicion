@@ -4,7 +4,7 @@
 > No se edita a mano: se regenera. Enlaza Historia → Spec → Criterios de aceptación →
 > Escenarios BDD → Tests → Código (la guía de la cátedra la pide como evidencia).
 
-Total: 24 especificaciones, 157 criterios de aceptación, 104 con escenario BDD y 120 con test.
+Total: 24 especificaciones, 157 criterios de aceptación, 110 con escenario BDD y 126 con test.
 
 Un criterio sin escenario BDD o sin test se muestra con `—`: o falta la evidencia, o el criterio
 se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no llevan `.feature`).
@@ -22,7 +22,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | US-009 | [specs/US-009-asignar-historias-sprint.md](../specs/US-009-asignar-historias-sprint.md) | borrador | 8 | 8 | 8 | `internal/domain/sprint/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/` |
 | US-010 | [specs/US-010-marcar-historias-completadas.md](../specs/US-010-marcar-historias-completadas.md) | borrador | 6 | 6 | 6 | `internal/domain/sprint/`, `internal/domain/backlog/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`, `migraciones/00008_items_completado_en.sql` |
 | US-011 | [specs/US-011-cerrar-sprint.md](../specs/US-011-cerrar-sprint.md) | borrador | 6 | 6 | 5 | `internal/domain/sprint/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/` |
-| US-012 | [specs/US-012-sprints-anteriores.md](../specs/US-012-sprints-anteriores.md) | borrador | 6 | 0 | 0 | `internal/app/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
+| US-012 | [specs/US-012-sprints-anteriores.md](../specs/US-012-sprints-anteriores.md) | borrador | 6 | 6 | 6 | `internal/app/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
 | US-013 | [specs/US-013-estimar-historia-fibonacci.md](../specs/US-013-estimar-historia-fibonacci.md) | borrador | 6 | 5 | 5 | `internal/domain/backlog/`, `internal/app/`, `internal/adapters/postgres/` |
 | US-014 | [specs/US-014-iniciar-sesion-planning-poker.md](../specs/US-014-iniciar-sesion-planning-poker.md) | borrador | 7 | 7 | 7 | `internal/domain/planningpoker/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/00009_sesiones_planning_poker.sql` |
 | US-015 | [specs/US-015-voto-individual-oculto.md](../specs/US-015-voto-individual-oculto.md) | borrador | 7 | 6 | 7 | `internal/domain/planningpoker/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/00010_votos_planning_poker.sql` |
@@ -198,18 +198,18 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 ### US-012 — Consultar los Sprints anteriores y su resultado
 
 - **Spec:** [specs/US-012-sprints-anteriores.md](../specs/US-012-sprints-anteriores.md) · **Issue:** #20
-- **Escenarios BDD:** ninguno
+- **Escenarios BDD:** [features/US-012-sprints-anteriores.feature](../features/US-012-sprints-anteriores.feature)
 - **Código:** `internal/app/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/`
-- **Tests que la citan:** 0
+- **Tests que la citan:** 12
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
-| CA-012-1 | normal | — | — |
-| CA-012-2 | alternativo | — | — |
-| CA-012-3 | alternativo | — | — |
-| CA-012-4 | límite | — | — |
-| CA-012-5 | alternativo | — | — |
-| CA-012-6 | error | — | — |
+| CA-012-1 | normal | Los sprints cerrados salen del más reciente al más antiguo, cada uno con su resultado | TestPantallasAnteriores_Historial, TestConsultarSprintsAnteriores |
+| CA-012-2 | alternativo | La velocidad es el promedio de los story points completados de los sprints cerrados | TestPantallasAnteriores_Historial, TestConsultarSprintsAnteriores |
+| CA-012-3 | alternativo | El sprint abierto no aparece en el historial ni cuenta para la velocidad | TestPantallasAnteriores_SinSprintsCerrados, TestConsultarSprintsAnteriores |
+| CA-012-4 | límite | Sin sprints cerrados no hay error: la lista está vacía y la velocidad es cero, Un sprint cerrado sin historias aparece con todo en cero | TestPantallasAnteriores_SinSprintsCerrados, TestConsultarSprintsAnteriores_CasosLimite |
+| CA-012-5 | alternativo | Una historia que no se completó en un sprint y se completó después en otro sigue figurando como no completada en el primero | TestPantallasAnteriores_ElResultadoEsElDeLaFila, TestConsultarSprintsAnteriores_ElResultadoEsElDeLaFila |
+| CA-012-6 | error | Un proyecto inexistente se rechaza | TestConsultarSprintsAnteriores_ProyectoInexistente |
 
 ### US-013 — Estimar una historia con Story Points en escala Fibonacci
 
@@ -397,7 +397,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 - **Spec:** [specs/T-011-pantallas-proyectos-backlog.md](../specs/T-011-pantallas-proyectos-backlog.md) · **Issue:** #79 (tarea) · #140 (spec)
 - **Escenarios BDD:** ninguno
 - **Código:** `internal/app/`, `internal/adapters/memoria/`, `internal/adapters/postgres/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/`
-- **Tests que la citan:** 25
+- **Tests que la citan:** 26
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
@@ -412,7 +412,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 - **Spec:** [specs/T-015-pantallas-sprints.md](../specs/T-015-pantallas-sprints.md) · **Issue:** #141 (tarea) · #142 (spec)
 - **Escenarios BDD:** ninguno
 - **Código:** `internal/app/`, `internal/adapters/memoria/`, `internal/adapters/postgres/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/`
-- **Tests que la citan:** 19
+- **Tests que la citan:** 22
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
