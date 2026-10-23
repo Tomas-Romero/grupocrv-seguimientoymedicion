@@ -7,7 +7,7 @@
 | **Issue** | #20 |
 | **Escenarios BDD** | `features/US-012-sprints-anteriores.feature` |
 | **Código** | caso de uso en `internal/app/`, `internal/adapters/http/` y `web/templates/` (la pantalla), `cmd/server/`. Sin cambios en el dominio ni migración |
-| **Última actualización** | 2026-10-23 |
+| **Última actualización** | 2026-10-24 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
 > implementación. Si durante la implementación descubrís que algo de acá está
@@ -116,6 +116,12 @@ a esta pantalla.
   lista (RN-012-3). El resto del contexto sale de frases que ya existen (`un sprint ... con el
   objetivo ...`, `la historia ... asignada al sprint ...`, `la historia ... completada`,
   `el sprint ... cerrado`).
+- **Nombres en el código.** El caso de uso es `ConsultarSprintsAnteriores` y devuelve
+  `SprintsAnteriores{Sprints []SprintAnterior, Velocidad}`; usa el puerto `RepositorioListarSprints`
+  de T-015 sin agregarle nada. La pantalla está en `Pantallas.sprintsAnteriores`, con las plantillas
+  `SprintsAnteriores` y la fila `FilaSprintAnterior`. La velocidad se escribe con coma decimal y sin
+  ceros de más ("6,5", "8"). La lista de sprints (T-015) enlaza con "Ver sprints anteriores", y el
+  historial con "Ver todos los sprints".
 - La pantalla es de solo lectura y no tiene formularios; responde la página o solo el fragmento
   si lo pide HTMX, igual que las de T-011 y T-015.
 - El diseño visual es funcional (Tailwind); se mejora después.
