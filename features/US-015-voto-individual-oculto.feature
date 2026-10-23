@@ -3,8 +3,9 @@
 # Los escenarios no comprueban que valor quedo guardado: con la sesion votando no se
 # puede ver (RN-015-7). Lo cubren los tests del repositorio, y los escenarios de US-016.
 # Sin escenario todavia:
-# - CA-015-6 (con la sesion revelada o finalizada no se vota) necesita revelar, que es
-#   US-016. Lo cubren los tests del dominio, de la aplicacion y de Postgres.
+# - CA-015-6 con la sesion finalizada necesita US-018. Con la sesion revelada (US-016) si
+#   hay escenario. La finalizada la cubren los tests del dominio, de la aplicacion y de
+#   Postgres.
 @US-015
 Característica: Registrar el voto individual manteniéndolo oculto hasta el cierre
   Como integrante del equipo
@@ -127,3 +128,19 @@ Característica: Registrar el voto individual manteniéndolo oculto hasta el cie
     Cuando el integrante "Fantasma" vota 5 en la sesión de la historia "Alta de proyectos"
     Entonces la operación se rechaza
     Y el mensaje de error indica "el integrante no existe"
+
+  @CA-015-6 @error
+  Escenario: Con la sesión revelada ya no se vota
+    Dado un proyecto "Demo"
+    Y el integrante "Ana" con rol "product_architect"
+    Y el integrante "Beto" con rol "agile_enabler"
+    Y una historia "Alta de proyectos" con prioridad "must"
+    Y una sesión de Planning Poker sobre la historia "Alta de proyectos"
+    Y el integrante "Ana" ya votó 5 en la sesión de la historia "Alta de proyectos"
+    Y el integrante "Ana" reveló los votos de la sesión de la historia "Alta de proyectos"
+    Cuando el integrante "Beto" vota 8 en la sesión de la historia "Alta de proyectos"
+    Entonces la operación se rechaza
+    Y el mensaje de error indica "la votacion de esta ronda esta cerrada"
+    Y los votos de la sesión de la historia "Alta de proyectos" son:
+      | integrante | voto |
+      | Ana        | 5    |
