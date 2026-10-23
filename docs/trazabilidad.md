@@ -4,7 +4,7 @@
 > No se edita a mano: se regenera. Enlaza Historia → Spec → Criterios de aceptación →
 > Escenarios BDD → Tests → Código (la guía de la cátedra la pide como evidencia).
 
-Total: 24 especificaciones, 157 criterios de aceptación, 115 con escenario BDD y 127 con test.
+Total: 24 especificaciones, 157 criterios de aceptación, 124 con escenario BDD y 135 con test.
 
 Un criterio sin escenario BDD o sin test se muestra con `—`: o falta la evidencia, o el criterio
 se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no llevan `.feature`).
@@ -25,8 +25,8 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | US-012 | [specs/US-012-sprints-anteriores.md](../specs/US-012-sprints-anteriores.md) | borrador | 6 | 6 | 6 | `internal/app/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
 | US-013 | [specs/US-013-estimar-historia-fibonacci.md](../specs/US-013-estimar-historia-fibonacci.md) | borrador | 6 | 5 | 5 | `internal/domain/backlog/`, `internal/app/`, `internal/adapters/postgres/` |
 | US-014 | [specs/US-014-iniciar-sesion-planning-poker.md](../specs/US-014-iniciar-sesion-planning-poker.md) | borrador | 7 | 7 | 7 | `internal/domain/planningpoker/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/00009_sesiones_planning_poker.sql` |
-| US-015 | [specs/US-015-voto-individual-oculto.md](../specs/US-015-voto-individual-oculto.md) | borrador | 7 | 6 | 7 | `internal/domain/planningpoker/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/00010_votos_planning_poker.sql` |
-| US-016 | [specs/US-016-revelar-estimaciones.md](../specs/US-016-revelar-estimaciones.md) | borrador | 8 | 0 | 0 | `internal/domain/planningpoker/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/` |
+| US-015 | [specs/US-015-voto-individual-oculto.md](../specs/US-015-voto-individual-oculto.md) | borrador | 7 | 7 | 7 | `internal/domain/planningpoker/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/00010_votos_planning_poker.sql` |
+| US-016 | [specs/US-016-revelar-estimaciones.md](../specs/US-016-revelar-estimaciones.md) | borrador | 8 | 8 | 8 | `internal/domain/planningpoker/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/` |
 | US-019 | [specs/US-019-registrar-esfuerzo.md](../specs/US-019-registrar-esfuerzo.md) | borrador | 11 | 9 | 7 | `internal/domain/esfuerzo/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/` |
 | US-025 | [specs/US-025-story-points-sprint.md](../specs/US-025-story-points-sprint.md) | borrador | 4 | 4 | 1 | `internal/domain/metricas/` |
 | US-026 | [specs/US-026-velocidad-equipo.md](../specs/US-026-velocidad-equipo.md) | borrador | 4 | 4 | 1 | `internal/domain/metricas/` |
@@ -258,26 +258,26 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | CA-015-3 | alternativo | Aunque hayan votado todos, los valores siguen ocultos | TestVotacion_VotaronYFaltan, TestVotacion_NoHayFormaDeLeerLosValoresMientrasSeVota |
 | CA-015-4 | límite | Solo se vota con un valor de la escala, Un valor fuera de la escala no cuenta como voto | TestVotarEnSesion_ReglasDelDominio, TestVerificarVoto_Valido, TestVerificarVoto_Rechazos |
 | CA-015-5 | error | Un integrante que se sumó después de iniciar no vota | TestVotarEnSesion_ReglasDelDominio, TestVerificarVoto_Rechazos |
-| CA-015-6 | error | — | TestVotarEnSesion_ReglasDelDominio, TestVerificarVoto_Rechazos |
+| CA-015-6 | error | Con la sesión revelada ya no se vota | TestVotarEnSesion_ReglasDelDominio, TestVerificarVoto_Rechazos |
 | CA-015-7 | error | Votar en una historia sin sesión se rechaza, Un integrante que no existe no vota | TestBase_RegistrarVoto_SesionInexistente, TestRegistrarVoto_SesionInexistente, TestVotarEnSesion_LoQueNoExiste |
 
 ### US-016 — Revelar las estimaciones y detectar divergencias entre integrantes
 
 - **Spec:** [specs/US-016-revelar-estimaciones.md](../specs/US-016-revelar-estimaciones.md) · **Issue:** #27
-- **Escenarios BDD:** ninguno
+- **Escenarios BDD:** [features/US-016-revelar-estimaciones.feature](../features/US-016-revelar-estimaciones.feature)
 - **Código:** `internal/domain/planningpoker/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`
-- **Tests que la citan:** 2
+- **Tests que la citan:** 24
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
-| CA-016-1 | normal | — | — |
-| CA-016-2 | alternativo | — | — |
-| CA-016-3 | alternativo | — | — |
-| CA-016-4 | límite | — | — |
-| CA-016-5 | error | — | — |
-| CA-016-6 | error | — | — |
-| CA-016-7 | error | — | — |
-| CA-016-8 | error | — | — |
+| CA-016-1 | normal | Si todos votaron lo mismo, se revelan los votos y no hay divergencia | TestBase_GuardarRevelado, TestGuardarRevelado, TestRevelarVotos_Revela, TestRevelar |
+| CA-016-2 | alternativo | Si votaron valores distintos, se revelan los votos y hay divergencia | TestBase_GuardarRevelado, TestRevelar |
+| CA-016-3 | alternativo | Se puede revelar aunque falten votos, y se sabe quiénes no votaron, Un participante que cambió su voto antes de revelar figura una sola vez, con el último | TestBase_GuardarRevelado, TestGuardarRevelado, TestRevelarVotos_Revela, TestRevelar |
+| CA-016-4 | límite | Valores contiguos de la escala también son una divergencia, Con un único voto emitido se revela y no hay divergencia | TestRevelar |
+| CA-016-5 | error | Sin ningún voto no se revela y la sesión sigue votando | TestBase_GuardarRevelado_Rechazos, TestGuardarRevelado_Reglas, TestRevelarVotos_ReglasDelDominio, TestRevelar_Rechazos |
+| CA-016-6 | error | Un integrante que no participa de la sesión no revela | TestBase_GuardarRevelado_Rechazos, TestGuardarRevelado_Reglas, TestRevelarVotos_ReglasDelDominio, TestRevelar_Rechazos |
+| CA-016-7 | error | Una sesión ya revelada no se revela de nuevo | TestBase_GuardarRevelado_Rechazos, TestBase_GuardarRevelado_DespuesNoSeVota, TestGuardarRevelado_Reglas, TestGuardarRevelado_DespuesNoSeVota, +2 más |
+| CA-016-8 | error | Revelar en una historia sin sesión se rechaza, Un integrante que no existe no revela | TestRevelarVotos_LoQueNoExiste |
 
 ### US-019 — Registrar esfuerzo con integrante, fecha, actividad y horas
 
