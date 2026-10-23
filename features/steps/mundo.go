@@ -95,7 +95,18 @@ type Sprints interface {
 	SprintEstaCerrado(proyecto, nombre string) (bool, error)
 }
 
-// Metricas es el area de US-025 y US-026.
+// HorasDelSprint son las horas de un sprint tal como las muestra la consulta de
+// US-027: estimadas, reales, la desviacion en horas y, si se puede calcular, en
+// porcentaje.
+type HorasDelSprint struct {
+	Estimadas            float64
+	Reales               float64
+	Desviacion           float64
+	Porcentaje           float64
+	PorcentajeCalculable bool
+}
+
+// Metricas es el area de US-025, US-026 y US-027.
 type Metricas interface {
 	// AgregarItemAlSprint arma el contexto: suma una historia al sprint, con sus
 	// story points y si esta completada. No valida nada: las reglas se aplican al
@@ -108,6 +119,13 @@ type Metricas interface {
 	PuntosPlanificados(sprint string) (int, error)
 	PuntosCompletados(sprint string) (int, error)
 	VelocidadDelEquipo() (float64, error)
+
+	// RegistrarHorasDelSprint arma el contexto de US-027: suma al sprint un registro
+	// de esfuerzo con esas horas. No valida nada: 0 o un numero negativo es justo el
+	// dato que tiene que rechazar el dominio. Los story points del sprint salen de
+	// AgregarItemAlSprint.
+	RegistrarHorasDelSprint(sprint string, horas float64) error
+	HorasDelSprint(sprint string) (HorasDelSprint, error)
 }
 
 // Esfuerzo es el area de US-019 (US-020 y US-021 la amplian).
@@ -192,6 +210,7 @@ type mundo struct {
 	puntosPlanificados int
 	puntosCompletados  int
 	velocidad          float64
+	horas              HorasDelSprint
 }
 
 // registrarAccion guarda el resultado de un step de accion.
