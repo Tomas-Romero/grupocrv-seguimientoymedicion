@@ -20,24 +20,26 @@ const idDeSprintInexistente = "00000000-0000-0000-0000-000000000000"
 // directamente, porque todavia no hay casos de uso de lectura (US-012). Cerrar un
 // sprint es de US-011.
 type sprintsSobreApp struct {
-	escenario *escenario
-	crear     *app.CrearSprint
-	asignar   *app.AsignarItemASprint
-	marcar    *app.MarcarCompletado
-	desmarcar *app.DesmarcarCompletado
-	cerrar    *app.CerrarSprint
+	escenario  *escenario
+	crear      *app.CrearSprint
+	asignar    *app.AsignarItemASprint
+	marcar     *app.MarcarCompletado
+	desmarcar  *app.DesmarcarCompletado
+	cerrar     *app.CerrarSprint
+	anteriores *app.ConsultarSprintsAnteriores
 }
 
 var _ steps.Sprints = (*sprintsSobreApp)(nil)
 
 func nuevoSprintsSobreApp(e *escenario) *sprintsSobreApp {
 	return &sprintsSobreApp{
-		escenario: e,
-		crear:     app.NuevoCrearSprint(e.base),
-		asignar:   app.NuevoAsignarItemASprint(e.base),
-		marcar:    app.NuevoMarcarCompletado(e.base, ahoraEnEscenarios),
-		desmarcar: app.NuevoDesmarcarCompletado(e.base),
-		cerrar:    app.NuevoCerrarSprint(e.base),
+		escenario:  e,
+		crear:      app.NuevoCrearSprint(e.base),
+		asignar:    app.NuevoAsignarItemASprint(e.base),
+		marcar:     app.NuevoMarcarCompletado(e.base, ahoraEnEscenarios),
+		desmarcar:  app.NuevoDesmarcarCompletado(e.base),
+		cerrar:     app.NuevoCerrarSprint(e.base),
+		anteriores: app.NuevoConsultarSprintsAnteriores(e.base),
 	}
 }
 
@@ -164,4 +166,26 @@ func (a *sprintsSobreApp) CerrarSprint(proyecto, nombre string) error {
 	}
 	_, err := a.cerrar.Ejecutar(context.Background(), sprintID)
 	return err
+}
+
+// SprintsAnteriores consulta el historial con el caso de uso de US-012. Un proyecto que el
+// escenario no creo (despues de `Dado ningún proyecto`) se manda con un ID que no esta en la base,
+// asi el rechazo lo produce la aplicacion.
+func (a *sprintsSobreApp) SprintsAnteriores(proyecto string) (steps.SprintsAnteriores, error) {
+	proyectoID, ok := a.escenario.proyectos[proyecto]
+	if !ok {
+		proyectoID = idDeProyectoInexistente
+	}
+	resultado, err := a.anteriores.Ejecutar(context.Background(), proyectoID)
+	if err != nil {
+		return steps.SprintsAnteriores{}, err
+	}
+	sprints := make([]steps.SprintAnterior, 0, len(resultado.Sprints))
+	for _, s := range resultado.Sprints {
+		sprints = append(sprints, steps.SprintAnterior{
+			Nombre: s.Sprint.Nombre(), Planificados: s.Planificados, Completados: s.Completados,
+			HistoriasCompletadas: s.HistoriasCompletadas, HistoriasNoCompletadas: s.HistoriasNoCompletadas,
+		})
+	}
+	return steps.SprintsAnteriores{Sprints: sprints, Velocidad: resultado.Velocidad}, nil
 }
