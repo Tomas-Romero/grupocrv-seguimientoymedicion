@@ -7,7 +7,7 @@
 | **Issue** | #157 (tarea) · #158 (spec) |
 | **Escenarios BDD** | ninguno: es una tarea técnica (ver "Decisiones") |
 | **Código** | `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
-| **Última actualización** | 2026-10-23 |
+| **Última actualización** | 2026-10-24 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
 > implementación. Si durante la implementación descubrís que algo de acá está
@@ -55,8 +55,8 @@ un sprint cerrado no se vuelve a abrir: no existe esa operación.
 
 | Parte | Qué muestra |
 |---|---|
-| Resumen | Estado "cerrado", los Story Points planificados y completados, y "Volvieron al backlog: N historias" (se omite si N es 0) |
-| Tabla de historias | La columna "Acciones" se reemplaza por **"Resultado"**: "Completada" o "No completada · volvió al backlog". Sin botones de marcar |
+| Resumen | Estado "cerrado", los Story Points planificados y completados, y "Volvieron al backlog: 1 historia" o "N historias" (se omite si N es 0) |
+| Tabla de historias | Las columnas "Estado" y "Acciones" se reemplazan por **"Resultado"**: "Completada" o "No completada · volvió al backlog". Sin botones de marcar. Se quita "Estado" porque es el estado *actual* de la historia y contradice al resultado cuando se completa en otro sprint |
 | Asignación | No se muestra (RN-T015-7) |
 
 La lista de sprints no cambia: ya muestra el estado y los Story Points de cada sprint.
@@ -73,8 +73,8 @@ No hay reglas de dominio nuevas. Son reglas de comportamiento de la interfaz.
   texto que dice qué pasa: las historias no completadas vuelven al backlog y el sprint no se
   puede reabrir.
 - **RN-T016-3** — Un sprint sin historias se puede cerrar (RN-011-4).
-- **RN-T016-4** — En un sprint cerrado, cada historia muestra su resultado según el de **su
-  fila** (`HistoriaDelSprint.Resultado`), no según su estado actual (RN-T015-13).
+- **RN-T016-4** — En un sprint cerrado, cada historia muestra su resultado (columna "Resultado",
+  sin el estado actual) según el de **su fila** (`HistoriaDelSprint.Resultado`), no según su estado actual (RN-T015-13).
 - **RN-T016-5** — "Volvieron al backlog" cuenta las historias del sprint con resultado
   `no_completado`. Las completadas no aparecen ahí.
 - **RN-T016-6** — Cerrar un sprint que ya está cerrado se rechaza con `ErrSprintCerrado`
