@@ -25,6 +25,7 @@ type sprintsSobreApp struct {
 	asignar   *app.AsignarItemASprint
 	marcar    *app.MarcarCompletado
 	desmarcar *app.DesmarcarCompletado
+	cerrar    *app.CerrarSprint
 }
 
 var _ steps.Sprints = (*sprintsSobreApp)(nil)
@@ -36,6 +37,7 @@ func nuevoSprintsSobreApp(e *escenario) *sprintsSobreApp {
 		asignar:   app.NuevoAsignarItemASprint(e.base),
 		marcar:    app.NuevoMarcarCompletado(e.base, ahoraEnEscenarios),
 		desmarcar: app.NuevoDesmarcarCompletado(e.base),
+		cerrar:    app.NuevoCerrarSprint(e.base),
 	}
 }
 
@@ -148,5 +150,18 @@ func (a *sprintsSobreApp) historiaYUltimoSprint(titulo string) (itemID, sprintID
 	return itemID, sprintID
 }
 
-// CerrarSprint es de US-011.
-func (a *sprintsSobreApp) CerrarSprint(_ string) error { return errSinConectar }
+// CerrarSprint cierra el sprint del proyecto con el caso de uso de US-011. No valida
+// nada: lo hace el caso de uso. Un sprint que no esta en el proyecto se manda con un ID
+// que no existe, asi el rechazo lo produce la aplicacion (RN-011-1).
+func (a *sprintsSobreApp) CerrarSprint(proyecto, nombre string) error {
+	sprintID := idDeSprintInexistente
+	if proyectoID, ok := a.escenario.proyectos[proyecto]; ok {
+		for _, s := range a.escenario.base.Sprints(proyectoID) {
+			if s.Nombre() == nombre {
+				sprintID = s.ID
+			}
+		}
+	}
+	_, err := a.cerrar.Ejecutar(context.Background(), sprintID)
+	return err
+}

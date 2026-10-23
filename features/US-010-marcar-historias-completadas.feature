@@ -3,11 +3,9 @@
 # Marcar y desmarcar operan sobre el ultimo sprint del proyecto de la historia, que es
 # el unico que puede estar abierto (RN-008-17). Las historias que se asignan usan la
 # frase con criterios, por la Definition of Ready de US-009.
-# Sin escenario todavia:
-# - CA-010-5 (con el sprint cerrado no se marca ni se desmarca) necesita un sprint
-#   cerrado, y cerrar es US-011. Lo cubren los tests del dominio y de Postgres.
-# - La fecha de completado (CA-010-1 y CA-010-3) no se verifica aca: el reloj de los
-#   escenarios es fijo. La cubren los tests del dominio, la aplicacion y Postgres.
+# La fecha de completado (CA-010-1 y CA-010-3) no se verifica aca: el reloj de los
+# escenarios es fijo. La cubren los tests del dominio, la aplicacion y Postgres.
+# CA-010-5 (sprint cerrado) llego con US-011, que es la que cierra.
 @US-010
 Característica: Marcar historias como completadas dentro de un Sprint
   Como integrante del equipo
@@ -62,6 +60,31 @@ Característica: Marcar historias como completadas dentro de un Sprint
     Cuando se marca la historia "Alta de proyectos" como completada
     Entonces la operación se rechaza
     Y el mensaje de error indica "la historia no esta asignada a este sprint"
+    Y la historia "Alta de proyectos" tiene estado "pendiente"
+
+  @CA-010-5 @error
+  Escenario: Con el sprint cerrado no se desmarca una historia completada
+    Dado un proyecto "Demo"
+    Y un sprint "Sprint 1" con el objetivo "MVP navegable"
+    Y una historia "Alta de proyectos" con prioridad "must", 5 story points y 2 criterios de aceptación
+    Y la historia "Alta de proyectos" asignada al sprint "Sprint 1"
+    Y la historia "Alta de proyectos" completada
+    Y el sprint "Sprint 1" cerrado
+    Cuando se desmarca la historia "Alta de proyectos"
+    Entonces la operación se rechaza
+    Y el mensaje de error indica "el sprint esta cerrado"
+    Y la historia "Alta de proyectos" tiene estado "completado"
+
+  @CA-010-5 @error
+  Escenario: Con el sprint cerrado no se marca una historia que no se completó
+    Dado un proyecto "Demo"
+    Y un sprint "Sprint 1" con el objetivo "MVP navegable"
+    Y una historia "Alta de proyectos" con prioridad "must", 5 story points y 2 criterios de aceptación
+    Y la historia "Alta de proyectos" asignada al sprint "Sprint 1"
+    Y el sprint "Sprint 1" cerrado
+    Cuando se marca la historia "Alta de proyectos" como completada
+    Entonces la operación se rechaza
+    Y el mensaje de error indica "el sprint esta cerrado"
     Y la historia "Alta de proyectos" tiene estado "pendiente"
 
   @CA-010-6 @error

@@ -17,6 +17,9 @@ const resultadoPendiente = "pendiente"
 type asignacion struct {
 	sprintID  string
 	resultado string
+	// numero es el orden de alta de la fila en toda la base: las filas se guardan por
+	// item, y con el numero se listan las de un sprint en orden de asignacion (US-011).
+	numero int
 }
 
 // Base cumple el puerto del caso de uso de US-009 (ObtenerItem es el de US-013).
@@ -71,7 +74,9 @@ func (b *Base) AsignarItemASprint(_ context.Context, itemID, sprintID string) er
 		return err
 	}
 
-	b.asignaciones[itemID] = append(b.asignaciones[itemID], asignacion{sprintID: sprintID, resultado: resultadoPendiente})
+	b.ultimaAsignacion++
+	fila := asignacion{sprintID: sprintID, resultado: resultadoPendiente, numero: b.ultimaAsignacion}
+	b.asignaciones[itemID] = append(b.asignaciones[itemID], fila)
 	return nil
 }
 

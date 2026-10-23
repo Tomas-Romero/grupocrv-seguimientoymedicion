@@ -24,8 +24,7 @@ const (
 	MaxDias = 28
 )
 
-// Estado es el estado de un sprint (RN-008-8). Esta historia solo usa el inicial;
-// cerrar un sprint es US-011.
+// Estado es el estado de un sprint (RN-008-8). Se crea abierto; cerrarlo es US-011.
 type Estado string
 
 // Los estados posibles de un sprint.

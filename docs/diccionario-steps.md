@@ -89,6 +89,7 @@ definidas en `features/steps/mundo.go`. Cada área se conecta en
 | Backlog | `Backlog` | US-005, US-006, US-013 | `features/steps/backlog.go` |
 | Sprints | `Sprints` | US-008, US-009, US-010, US-011 | `features/steps/sprints.go` |
 | Métricas | `Metricas` | US-025, US-026 | `features/steps/metricas.go` |
+| Planning Poker | `PlanningPoker` | US-014 a US-018 | `features/steps/planningpoker.go` |
 
 Un escenario solo necesita las áreas que usa. Un `.feature` de proyectos no
 exige que existan backlog, sprints ni métricas, así que el CI no se pone rojo por
@@ -118,6 +119,8 @@ conectada, falla con `area sin conectar a los steps: <área>`: es a propósito.
 | `Y el sprint "Sprint 1" con una historia de 5 story points completada` | `^el sprint "([^"]*)" con una historia de (-?\d+) story points completada$` |
 | `Y el sprint "Sprint 1" con una historia de 3 story points sin completar` | `^el sprint "([^"]*)" con una historia de (-?\d+) story points sin completar$` |
 | `Y el sprint cerrado "Sprint 1" con 20 story points completados de 25 planificados` | `^el sprint cerrado "([^"]*)" con (\d+) story points completados de (\d+) planificados$` |
+| `Y una sesión de Planning Poker sobre la historia "Crear proyecto"` | `^una sesión de Planning Poker sobre la historia "([^"]*)"$` |
+| `Y el integrante "Ana" ya votó 5 en la sesión de la historia "Crear proyecto"` | `^el integrante "([^"]*)" ya votó (-?\d+) en la sesión de la historia "([^"]*)"$` |
 | `Y el integrante "Ana" ya registró 3 horas de "Desarrollo" en la historia "Crear proyecto" el 2026-10-05` | `^el integrante "([^"]*)" ya registró (-?\d+(?:[.,]\d+)?) horas de "([^"]*)" en la historia "([^"]*)" el (\S+)$` |
 
 Un escenario **no repite títulos de historias**: el área Backlog las identifica
@@ -178,6 +181,8 @@ inexistente (CA-005-8, CA-008-10); con esa frase el escenario no lleva
 | `Cuando se consultan los story points planificados del sprint "Sprint 1"` | `^se consultan los story points planificados del sprint "([^"]*)"$` |
 | `Cuando se consultan los story points completados del sprint "Sprint 1"` | `^se consultan los story points completados del sprint "([^"]*)"$` |
 | `Cuando se consulta la velocidad del equipo` | `^se consulta la velocidad del equipo$` |
+| `Cuando se inicia una sesión de Planning Poker sobre la historia "Crear proyecto"` | `^se inicia una sesión de Planning Poker sobre la historia "([^"]*)"$` |
+| `Cuando el integrante "Ana" vota 5 en la sesión de la historia "Crear proyecto"` | `^el integrante "([^"]*)" vota (-?\d+) en la sesión de la historia "([^"]*)"$` |
 | `Cuando el integrante "Ana" registra 2,5 horas de "Desarrollo" en la historia "Crear proyecto" el 2026-10-05` | `^el integrante "([^"]*)" registra (-?\d+(?:[.,]\d+)?) horas de "([^"]*)" en la historia "([^"]*)" el (\S+)$` |
 
 **Propuesta US-003:** `se registra al integrante "X" con email "..." y rol "Y"`
@@ -271,12 +276,32 @@ cuenta caracteres y no bytes.
 | `Y la velocidad del equipo es 25` | `^la velocidad del equipo es (\d+(?:[.,]\d+)?)$` |
 | `Y el proyecto "Demo" tiene 1 registro de esfuerzo` | `^el proyecto "([^"]*)" tiene (\d+) registros? de esfuerzo$` |
 | `Y la historia "Crear proyecto" tiene 2,5 horas registradas` | `^la historia "([^"]*)" tiene (\d+(?:[.,]\d+)?) horas registradas$` |
+| `Y la sesión de la historia "Crear proyecto" está "votando" en la ronda 1` | `^la sesión de la historia "([^"]*)" está "([^"]*)" en la ronda (\d+)$` |
+| `Y los participantes de la sesión de la historia "Crear proyecto" son:` + tabla de nombres | `^los participantes de la sesión de la historia "([^"]*)" son:$` |
+| `Y en la sesión de la historia "Crear proyecto" votaron:` + tabla de nombres | `^en la sesión de la historia "([^"]*)" votaron:$` |
+| `Y en la sesión de la historia "Crear proyecto" faltan votar:` + tabla de nombres | `^en la sesión de la historia "([^"]*)" faltan votar:$` |
+| `Y los votos de la sesión de la historia "Crear proyecto" están ocultos` | `^los votos de la sesión de la historia "([^"]*)" están ocultos$` |
 
 `la operación es exitosa` y `la operación se rechaza` miran el error que dejó el
 último `Cuando`. Son los dos steps que más vas a usar: todo escenario de error
 termina con `se rechaza` más `el mensaje de error indica`. Los mensajes de error
 del código van sin tildes, así que el escenario los escribe igual: "el titulo es
 obligatorio".
+
+**Planning Poker (US-014):** la sesión se nombra por su historia, que tiene como
+máximo una sesión abierta. `una sesión de Planning Poker sobre la historia "X"` y
+`se inicia una sesión ...` la inician en el proyecto actual, con todos sus integrantes
+como participantes. Los participantes se comparan por nombre y en orden de alta en el
+proyecto. Los estados se escriben como los define el dominio: `votando`, `revelada`,
+`finalizada`.
+
+**Votos (US-015):** `el integrante "X" vota N` y su variante de contexto `ya votó` votan en
+la sesión abierta de la historia. El integrante se busca por nombre en el proyecto de la
+historia; uno que no esté ahí se rechaza por la aplicación. El número acepta negativos
+para poder escribir el rechazo de un valor fuera de la escala. Con la sesión votando, los
+escenarios ven quién votó y quién falta, pero no los valores: `los votos ... están
+ocultos` comprueba justamente eso. Una tabla de Gherkin no puede estar vacía, así que
+"no falta nadie" no tiene frase.
 
 `está sin estimar` y `tiene N story points` no son lo mismo: una historia recién
 creada está sin estimar, no tiene 0 story points (RN-005-7). Los estados se
