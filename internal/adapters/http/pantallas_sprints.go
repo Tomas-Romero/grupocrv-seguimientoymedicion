@@ -101,8 +101,15 @@ func (p *Pantallas) verSprint(w http.ResponseWriter, r *http.Request) {
 			Puntos:      textoDePuntos(h.Item),
 			Estado:      textoDeEstado(h.Item.Estado),
 			Completada:  h.Completada,
+			Resultado:   textoDeResultado(h.Completada),
 			Accion:      rutaDeSprint(id, sprintID) + "/historias/" + h.Item.ID + "/" + accion,
 			TextoAccion: texto,
+		}
+	}
+	devueltas := 0
+	for _, h := range detalle.Historias {
+		if !h.Completada {
+			devueltas++
 		}
 	}
 	disponibles := make([]plantillas.Opcion, len(detalle.Disponibles))
@@ -120,13 +127,34 @@ func (p *Pantallas) verSprint(w http.ResponseWriter, r *http.Request) {
 		Planificados:  detalle.Planificados,
 		Completados:   detalle.Completados,
 		Historias:     historias,
+		AccionCerrar:  rutaDeSprint(id, sprintID) + "/cerrar",
 		AccionAsignar: rutaDeSprint(id, sprintID) + "/historias",
 		Disponibles:   disponibles,
 		Volver:        rutaDeProyecto(id) + "/sprints",
 	}
+	if abierto {
+		vista.ConfirmaCierre = "¿Cerrar el " + vista.Nombre + "? Las historias no completadas vuelven al backlog y el sprint no se puede reabrir."
+	} else {
+		vista.TextoDevueltas = textoDeCantidadDeHistorias(devueltas)
+	}
 	pagina := paginaDeProyecto(proyecto.Proyecto, plantillas.SeccionSprints)
 	pagina.Titulo = detalle.Sprint.Nombre() + " | " + proyecto.Proyecto.Nombre
 	Responder(w, r, http.StatusOK, pagina, plantillas.DetalleDeSprint(vista))
+}
+
+// cerrarSprint cierra el sprint (US-011) despues de comprobar que es del proyecto (RN-T015-5): el de otro
+// proyecto, o uno que no existe, es un 404 antes de llamar al caso de uso (RN-T016-1, RN-T016-6).
+func (p *Pantallas) cerrarSprint(w http.ResponseWriter, r *http.Request) {
+	id, sprintID := r.PathValue("id"), r.PathValue("sprint")
+	if _, err := p.casos.ConsultarSprint.Ejecutar(r.Context(), id, sprintID); err != nil {
+		p.errores.ResponderError(w, r, err)
+		return
+	}
+	if _, err := p.casos.CerrarSprint.Ejecutar(r.Context(), sprintID); err != nil {
+		p.errores.ResponderError(w, r, err)
+		return
+	}
+	redirigir(w, r, rutaDeSprint(id, sprintID))
 }
 
 func (p *Pantallas) asignarHistoria(w http.ResponseWriter, r *http.Request) {
@@ -186,6 +214,25 @@ func (p *Pantallas) cambiarEstadoDeHistoria(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	redirigir(w, r, rutaDeSprint(id, sprintID))
+}
+
+// textoDeResultado es lo que dice un sprint cerrado de cada historia (RN-T016-4, RN-T016-8).
+func textoDeResultado(completada bool) string {
+	if completada {
+		return "Completada"
+	}
+	return "No completada · volvió al backlog"
+}
+
+// textoDeCantidadDeHistorias dice "1 historia" o "N historias"; vacio si no hay ninguna (RN-T016-5).
+func textoDeCantidadDeHistorias(n int) string {
+	switch n {
+	case 0:
+		return ""
+	case 1:
+		return "1 historia"
+	}
+	return strconv.Itoa(n) + " historias"
 }
 
 // textoDePuntos es el texto de los Story Points de una historia: el numero, o un guion si no
