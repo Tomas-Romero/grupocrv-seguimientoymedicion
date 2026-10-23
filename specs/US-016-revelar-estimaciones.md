@@ -7,7 +7,7 @@
 | **Issue** | #27 |
 | **Escenarios BDD** | `features/US-016-revelar-estimaciones.feature` |
 | **Código** | `internal/domain/planningpoker/` (revelar y divergencia), caso de uso en `internal/app/`, repositorio en `internal/adapters/postgres/` y `internal/adapters/memoria/`. Sin migración nueva |
-| **Última actualización** | 2026-10-22 |
+| **Última actualización** | 2026-10-23 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
 > implementación. Si durante la implementación descubrís que algo de acá está
@@ -156,6 +156,13 @@ Entre paréntesis, la capa que la hace cumplir.
   | `Entonces los votos de la sesión de la historia "H" son:` + tabla `integrante \| voto` | `^los votos de la sesión de la historia "([^"]*)" son:$` |
   | `Y hay divergencia en la sesión de la historia "H"` | `^hay divergencia en la sesión de la historia "([^"]*)"$` |
   | `Y no hay divergencia en la sesión de la historia "H"` | `^no hay divergencia en la sesión de la historia "([^"]*)"$` |
+  | `Y el integrante "X" reveló los votos de la sesión de la historia "H"` (contexto) | `^el integrante "([^"]*)" reveló los votos de la sesión de la historia "([^"]*)"$` |
+
+  La variante `reveló` es la de contexto, como `ya votó` en US-015: arma una sesión ya
+  revelada para los escenarios de CA-016-7 y de CA-015-6 (con la sesión revelada no se
+  vota), que US-015 no podía escribir. `los votos ... son:` lleva una tabla de dos columnas
+  con encabezado (`integrante | voto`) y solo incluye a quienes votaron, en el orden de los
+  participantes. `hay divergencia` lee lo que devolvió la última revelación de la historia.
 
   Los escenarios reutilizan las frases de US-014 (`Dado una sesión de Planning
   Poker sobre la historia "X"`, `Entonces la sesión de la historia "X" está
@@ -164,6 +171,13 @@ Entre paréntesis, la capa que la hace cumplir.
   votar:`, `Y los votos de la sesión de la historia "H" están ocultos`). Después
   de un rechazo, los escenarios comprueban que la sesión sigue `votando` y que
   los votos siguen ocultos.
+- **Nombres en el código.** El caso de uso es `RevelarVotos` y su puerto
+  `RepositorioRevelar`, con `ObtenerSesion` y `ExisteIntegranteEnProyecto` (los de
+  US-015), `VotosDeLaRonda` y `GuardarRevelado`. En el dominio, `planningpoker.Revelar`
+  recibe la sesión, quién revela y los votos de la ronda (por integrante), y devuelve
+  una `Revelacion`; el cambio de estado a `revelada` lo guarda el repositorio. `Votacion`
+  no gana métodos: la garantía de que sus únicos métodos exportados son los de US-015 se
+  mantiene, y la revelación lee los valores de una votación de la sesión ya revelada.
 - **Fuera de alcance.** Votar (US-015), abrir una ronda nueva con los mismos
   participantes (US-017), registrar la estimación acordada y finalizar la sesión
   (US-018), consultar una votación ya revelada desde la pantalla, la pantalla de
