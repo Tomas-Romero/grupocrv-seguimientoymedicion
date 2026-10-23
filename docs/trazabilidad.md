@@ -4,7 +4,7 @@
 > No se edita a mano: se regenera. Enlaza Historia → Spec → Criterios de aceptación →
 > Escenarios BDD → Tests → Código (la guía de la cátedra la pide como evidencia).
 
-Total: 19 especificaciones, 124 criterios de aceptación, 75 con escenario BDD y 87 con test.
+Total: 22 especificaciones, 146 criterios de aceptación, 104 con escenario BDD y 116 con test.
 
 Un criterio sin escenario BDD o sin test se muestra con `—`: o falta la evidencia, o el criterio
 se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no llevan `.feature`).
@@ -18,20 +18,23 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | US-003 | [specs/US-003-registrar-integrantes.md](../specs/US-003-registrar-integrantes.md) | borrador | 9 | 9 | 9 | `internal/domain/integrante/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`, `migraciones/00005_integrantes_id_por_defecto.sql` |
 | US-005 | [specs/US-005-crear-item-backlog.md](../specs/US-005-crear-item-backlog.md) | borrador | 8 | 8 | 8 | `internal/domain/backlog/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/` |
 | US-006 | [specs/US-006-editar-item-backlog.md](../specs/US-006-editar-item-backlog.md) | borrador | 7 | 5 | 6 | `internal/domain/backlog/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/` |
-| US-008 | [specs/US-008-crear-sprint.md](../specs/US-008-crear-sprint.md) | borrador | 11 | 9 | 11 | `internal/domain/sprint/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/` |
-| US-009 | [specs/US-009-asignar-historias-sprint.md](../specs/US-009-asignar-historias-sprint.md) | borrador | 8 | 7 | 8 | `internal/domain/sprint/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/` |
-| US-010 | [specs/US-010-marcar-historias-completadas.md](../specs/US-010-marcar-historias-completadas.md) | borrador | 6 | 5 | 6 | `internal/domain/sprint/`, `internal/domain/backlog/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`, `migraciones/00008_items_completado_en.sql` |
-| US-011 | [specs/US-011-cerrar-sprint.md](../specs/US-011-cerrar-sprint.md) | borrador | 6 | 0 | 0 | `internal/domain/sprint/`, `internal/app/`, `internal/adapters/postgres/` |
+| US-008 | [specs/US-008-crear-sprint.md](../specs/US-008-crear-sprint.md) | borrador | 11 | 11 | 11 | `internal/domain/sprint/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/` |
+| US-009 | [specs/US-009-asignar-historias-sprint.md](../specs/US-009-asignar-historias-sprint.md) | borrador | 8 | 8 | 8 | `internal/domain/sprint/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/` |
+| US-010 | [specs/US-010-marcar-historias-completadas.md](../specs/US-010-marcar-historias-completadas.md) | borrador | 6 | 6 | 6 | `internal/domain/sprint/`, `internal/domain/backlog/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`, `migraciones/00008_items_completado_en.sql` |
+| US-011 | [specs/US-011-cerrar-sprint.md](../specs/US-011-cerrar-sprint.md) | borrador | 6 | 6 | 5 | `internal/domain/sprint/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/` |
 | US-013 | [specs/US-013-estimar-historia-fibonacci.md](../specs/US-013-estimar-historia-fibonacci.md) | borrador | 6 | 5 | 5 | `internal/domain/backlog/`, `internal/app/`, `internal/adapters/postgres/` |
+| US-014 | [specs/US-014-iniciar-sesion-planning-poker.md](../specs/US-014-iniciar-sesion-planning-poker.md) | borrador | 7 | 7 | 7 | `internal/domain/planningpoker/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/00009_sesiones_planning_poker.sql` |
+| US-015 | [specs/US-015-voto-individual-oculto.md](../specs/US-015-voto-individual-oculto.md) | borrador | 7 | 6 | 7 | `internal/domain/planningpoker/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/00010_votos_planning_poker.sql` |
+| US-016 | [specs/US-016-revelar-estimaciones.md](../specs/US-016-revelar-estimaciones.md) | borrador | 8 | 0 | 0 | `internal/domain/planningpoker/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/` |
 | US-019 | [specs/US-019-registrar-esfuerzo.md](../specs/US-019-registrar-esfuerzo.md) | borrador | 11 | 9 | 7 | `internal/domain/esfuerzo/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/` |
 | US-025 | [specs/US-025-story-points-sprint.md](../specs/US-025-story-points-sprint.md) | borrador | 4 | 4 | 1 | `internal/domain/metricas/` |
 | US-026 | [specs/US-026-velocidad-equipo.md](../specs/US-026-velocidad-equipo.md) | borrador | 4 | 4 | 1 | `internal/domain/metricas/` |
-| US-027 | [specs/US-027-horas-estimadas-reales.md](../specs/US-027-horas-estimadas-reales.md) | borrador | 6 | 0 | 0 | `internal/domain/metricas/` |
+| US-027 | [specs/US-027-horas-estimadas-reales.md](../specs/US-027-horas-estimadas-reales.md) | borrador | 6 | 6 | 6 | `internal/domain/metricas/` |
 | US-028 | [specs/US-028-porcentaje-historias-completadas.md](../specs/US-028-porcentaje-historias-completadas.md) | borrador | 5 | 0 | 0 | `internal/domain/metricas/` |
 | T-004 | [specs/T-004-layout-base.md](../specs/T-004-layout-base.md) | revision | 5 | 0 | 4 | `web/templates/`, `internal/adapters/http/`, `cmd/server/` |
 | T-005 | [specs/T-005-validaciones-errores-uniformes.md](../specs/T-005-validaciones-errores-uniformes.md) | borrador | 8 | 0 | 7 | `internal/platform/errores/`, `internal/adapters/http/` |
 | T-011 | [specs/T-011-pantallas-proyectos-backlog.md](../specs/T-011-pantallas-proyectos-backlog.md) | borrador | 5 | 0 | 4 | `internal/app/`, `internal/adapters/memoria/`, `internal/adapters/postgres/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
-| T-015 | [specs/T-015-pantallas-sprints.md](../specs/T-015-pantallas-sprints.md) | borrador | 5 | 0 | 0 | `internal/app/`, `internal/adapters/memoria/`, `internal/adapters/postgres/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
+| T-015 | [specs/T-015-pantallas-sprints.md](../specs/T-015-pantallas-sprints.md) | borrador | 5 | 0 | 4 | `internal/app/`, `internal/adapters/memoria/`, `internal/adapters/postgres/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
 
 ## Detalle
 
@@ -131,12 +134,12 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | CA-008-1 | normal | Un sprint válido queda abierto y con el número siguiente del proyecto | TestBase_RegistrarSprint, TestRegistrarSprint_Primero, TestCrearSprint_Registra, TestNuevo_DatosValidos |
 | CA-008-2 | alternativo | El primer sprint de cada proyecto es el Sprint 1 | TestBase_RegistrarSprint_NumeracionPorProyecto, TestRegistrarSprint_Primero, TestRegistrarSprint_NumeracionPorProyecto |
 | CA-008-3 | límite | Un sprint dura entre 1 y 28 días | TestNuevo_Duracion |
-| CA-008-4 | límite | — | TestRegistrarSprint_UltimoCerrado, TestVerificarUltimoSprint_Cerrado |
+| CA-008-4 | límite | El sprint siguiente empieza después del fin del último | TestRegistrarSprint_UltimoCerrado, TestVerificarUltimoSprint_Cerrado |
 | CA-008-5 | límite | Un sprint que ocupa exactamente las fechas del proyecto es válido | TestNuevo_ExtremosDelProyectoEstanDentro |
 | CA-008-6 | error | Un Sprint Goal vacío se rechaza | TestNuevo_SprintGoal |
 | CA-008-7 | error | La fecha de fin anterior a la de inicio se rechaza | TestNuevo_Fechas |
 | CA-008-8 | error | Un sprint fuera de las fechas del proyecto se rechaza, Con varios datos inválidos se informan todos juntos | TestCrearSprint_UsaLasFechasDelProyecto, TestNuevo_FueraDelProyecto |
-| CA-008-9 | error | — | TestRegistrarSprint_UltimoCerrado |
+| CA-008-9 | error | Empezar antes de que termine el último sprint se rechaza | TestRegistrarSprint_UltimoCerrado |
 | CA-008-10 | error | Crear un sprint en un proyecto que no existe se rechaza, sin mirar los demás datos | TestBase_RegistrarSprint_ProyectoInexistente, TestRegistrarSprint_ProyectoInexistente, TestCrearSprint_ProyectoInexistente |
 | CA-008-11 | error | Con el último sprint abierto no se puede crear otro | TestBase_RegistrarSprint_UltimoAbierto, TestRegistrarSprint_UltimoAbierto, TestVerificarUltimoSprint_Abierto |
 
@@ -145,7 +148,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 - **Spec:** [specs/US-009-asignar-historias-sprint.md](../specs/US-009-asignar-historias-sprint.md) · **Issue:** #10
 - **Escenarios BDD:** [features/US-009-asignar-historias-sprint.feature](../features/US-009-asignar-historias-sprint.feature)
 - **Código:** `internal/domain/sprint/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/`
-- **Tests que la citan:** 35
+- **Tests que la citan:** 38
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
@@ -154,7 +157,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | CA-009-3 | límite | Una historia con un solo criterio y un solo story point cumple la Definition of Ready | TestVerificarAsignacion_Valida |
 | CA-009-4 | error | Una historia sin estimar se rechaza y sigue en el backlog | TestAsignarItemASprint_DefinitionOfReady, TestVerificarAsignacion_DefinitionOfReady |
 | CA-009-5 | error | Una historia sin criterios de aceptación se rechaza y sigue en el backlog, Una historia sin estimar y sin criterios informa las dos faltas juntas | TestAsignarItemASprint_DefinitionOfReady, TestVerificarAsignacion_DefinitionOfReady |
-| CA-009-6 | error | — | TestAsignarItemASprint_SprintCerrado, TestVerificarAsignacion_SprintCerrado |
+| CA-009-6 | error | Asignar a un sprint cerrado se rechaza y la historia sigue en el backlog | TestAsignarItemASprint_SprintCerrado, TestVerificarAsignacion_SprintCerrado |
 | CA-009-7 | error | Una historia que ya está en un sprint no se asigna otra vez | TestBase_AsignarItemASprint_YaAsignado, TestAsignarItemASprint_YaAsignado, TestVerificarAsignacion_ItemYaAsignado |
 | CA-009-8 | error | Asignar a un sprint que no existe se rechaza, Asignar una historia que no existe se rechaza, Una historia de otro proyecto no se asigna a un sprint de este | TestAsignarItemASprint_LoQueNoExiste |
 
@@ -163,7 +166,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 - **Spec:** [specs/US-010-marcar-historias-completadas.md](../specs/US-010-marcar-historias-completadas.md) · **Issue:** #18
 - **Escenarios BDD:** [features/US-010-marcar-historias-completadas.feature](../features/US-010-marcar-historias-completadas.feature)
 - **Código:** `internal/domain/sprint/`, `internal/domain/backlog/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`, `migraciones/00008_items_completado_en.sql`
-- **Tests que la citan:** 33
+- **Tests que la citan:** 36
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
@@ -171,24 +174,24 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | CA-010-2 | alternativo | Una historia completada se desmarca y vuelve a pendiente | TestBase_GuardarCambioDeEstado_Desmarca, TestGuardarCambioDeEstado_Desmarca, TestDesmarcarCompletado_Desmarca, TestReabrir, +1 más |
 | CA-010-3 | límite | Marcar una historia que ya está completada no es un error | TestBase_GuardarCambioDeEstado_SegundoMarcadoConservaLaFecha, TestGuardarCambioDeEstado_MarcarDosVeces, TestMarcarCompletado_YaCompletado, TestCompletar_YaCompletado |
 | CA-010-4 | error | Una historia que no está en el sprint no se marca | TestGuardarCambioDeEstado_Reglas, TestMarcarYDesmarcar_ReglasDelDominio, TestVerificarMarcado_ItemFueraDelSprint |
-| CA-010-5 | error | — | TestGuardarCambioDeEstado_Reglas, TestMarcarYDesmarcar_ReglasDelDominio, TestVerificarMarcado_SprintCerrado |
+| CA-010-5 | error | Con el sprint cerrado no se desmarca una historia completada, Con el sprint cerrado no se marca una historia que no se completó | TestGuardarCambioDeEstado_Reglas, TestMarcarYDesmarcar_ReglasDelDominio, TestVerificarMarcado_SprintCerrado |
 | CA-010-6 | error | Marcar una historia que no existe se rechaza, Marcar una historia de un proyecto sin sprints se rechaza y no cambia nada | TestBase_GuardarCambioDeEstado_Inexistentes, TestGuardarCambioDeEstado_Inexistentes, TestMarcarYDesmarcar_LoQueNoExiste |
 
 ### US-011 — Cerrar un Sprint y devolver las historias no completadas al backlog
 
 - **Spec:** [specs/US-011-cerrar-sprint.md](../specs/US-011-cerrar-sprint.md) · **Issue:** #19
-- **Escenarios BDD:** ninguno
-- **Código:** `internal/domain/sprint/`, `internal/app/`, `internal/adapters/postgres/`
-- **Tests que la citan:** 3
+- **Escenarios BDD:** [features/US-011-cerrar-sprint.feature](../features/US-011-cerrar-sprint.feature)
+- **Código:** `internal/domain/sprint/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`
+- **Tests que la citan:** 27
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
-| CA-011-1 | normal | — | — |
-| CA-011-2 | alternativo | — | — |
-| CA-011-3 | alternativo | — | — |
-| CA-011-4 | límite | — | — |
-| CA-011-5 | error | — | — |
-| CA-011-6 | error | — | — |
+| CA-011-1 | normal | Al cerrar, las completadas quedan completadas y las demás vuelven al backlog | TestBase_GuardarCierre, TestGuardarCierre, TestCerrarSprint_Cierra, TestCerrar |
+| CA-011-2 | alternativo | Después de cerrar se crea el sprint siguiente y una historia devuelta se asigna a él | TestBase_GuardarCierre_HistoriaDevueltaSeAsignaAlSiguiente, TestGuardarCierre_HistoriaDevueltaSeAsignaAlSiguiente |
+| CA-011-3 | alternativo | Los planificados de un sprint cerrado incluyen las historias no completadas, La velocidad se calcula con lo completado en cada sprint cerrado | — |
+| CA-011-4 | límite | Un sprint sin historias se cierra | TestBase_GuardarCierre_SinHistorias, TestGuardarCierre_SinHistorias, TestCerrarSprint_SinHistorias, TestCerrar_SinHistorias |
+| CA-011-5 | error | Un sprint ya cerrado no se vuelve a cerrar | TestBase_GuardarCierre_Rechazos, TestGuardarCierre_Rechazos, TestCerrarSprint_SprintCerrado, TestCerrar_SprintCerrado |
+| CA-011-6 | error | Cerrar un sprint que no existe se rechaza | TestBase_GuardarCierre_Rechazos, TestGuardarCierre_Rechazos, TestCerrarSprint_SprintInexistente |
 
 ### US-013 — Estimar una historia con Story Points en escala Fibonacci
 
@@ -206,12 +209,64 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | CA-013-5 | error | — | TestEstimar_ItemCompletado |
 | CA-013-6 | error | Estimar una historia que no existe se rechaza | TestBase_GuardarEstimacion_ItemInexistente, TestObtenerItem_Inexistente, TestGuardarEstimacion_ItemInexistente, TestEstimarItem_ItemInexistente |
 
+### US-014 — Iniciar una sesión de Planning Poker sobre una historia
+
+- **Spec:** [specs/US-014-iniciar-sesion-planning-poker.md](../specs/US-014-iniciar-sesion-planning-poker.md) · **Issue:** #25
+- **Escenarios BDD:** [features/US-014-iniciar-sesion-planning-poker.feature](../features/US-014-iniciar-sesion-planning-poker.feature)
+- **Código:** `internal/domain/planningpoker/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/00009_sesiones_planning_poker.sql`
+- **Tests que la citan:** 24
+
+| Criterio | Tipo | Escenarios BDD | Tests |
+|---|---|---|---|
+| CA-014-1 | normal | La sesión queda votando, en la ronda 1, con todos los integrantes | TestBase_RegistrarSesion, TestRegistrarSesion, TestIniciarSesionPlanningPoker_Inicia, TestNuevaSesion |
+| CA-014-2 | alternativo | Una historia ya estimada se vuelve a estimar en una sesión | TestIniciarSesionPlanningPoker_HistoriaEstimadaOEnProgreso |
+| CA-014-3 | alternativo | Un integrante que se suma después de iniciar no participa | TestBase_RegistrarSesion_ParticipantesAlIniciar, TestRegistrarSesion_ParticipantesAlIniciar |
+| CA-014-4 | límite | Con dos integrantes la sesión se inicia, Con un solo integrante la sesión se rechaza | TestIniciarSesionPlanningPoker_ReglasDelDominio, TestNuevaSesion_MinimoDeParticipantes |
+| CA-014-5 | error | Una historia completada no se pone en sesión | TestIniciarSesionPlanningPoker_ReglasDelDominio, TestNuevaSesion_Rechazos |
+| CA-014-6 | error | Una historia con una sesión abierta no admite otra | TestIniciarSesionPlanningPoker_ReglasDelDominio, TestNuevaSesion_Rechazos |
+| CA-014-7 | error | Una historia que no existe se rechaza, Un proyecto que no existe se rechaza, sin mirar la historia | TestBase_RegistrarSesion_HistoriaInexistente, TestRegistrarSesion_HistoriaInexistente, TestIniciarSesionPlanningPoker_LoQueNoExiste |
+
+### US-015 — Registrar el voto individual manteniéndolo oculto hasta el cierre
+
+- **Spec:** [specs/US-015-voto-individual-oculto.md](../specs/US-015-voto-individual-oculto.md) · **Issue:** #26
+- **Escenarios BDD:** [features/US-015-voto-individual-oculto.feature](../features/US-015-voto-individual-oculto.feature)
+- **Código:** `internal/domain/planningpoker/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/00010_votos_planning_poker.sql`
+- **Tests que la citan:** 28
+
+| Criterio | Tipo | Escenarios BDD | Tests |
+|---|---|---|---|
+| CA-015-1 | normal | Un participante vota y queda registrado que votó, sin que se vea el valor | TestBase_RegistrarVoto, TestRegistrarVoto, TestVotarEnSesion_Vota, TestVerificarVoto_Valido, +1 más |
+| CA-015-2 | alternativo | Un participante cambia su voto y figura una sola vez | TestBase_RegistrarVoto_CambiarElVoto, TestRegistrarVoto_CambiarElVoto |
+| CA-015-3 | alternativo | Aunque hayan votado todos, los valores siguen ocultos | TestVotacion_VotaronYFaltan, TestVotacion_NoHayFormaDeLeerLosValoresMientrasSeVota |
+| CA-015-4 | límite | Solo se vota con un valor de la escala, Un valor fuera de la escala no cuenta como voto | TestVotarEnSesion_ReglasDelDominio, TestVerificarVoto_Valido, TestVerificarVoto_Rechazos |
+| CA-015-5 | error | Un integrante que se sumó después de iniciar no vota | TestVotarEnSesion_ReglasDelDominio, TestVerificarVoto_Rechazos |
+| CA-015-6 | error | — | TestVotarEnSesion_ReglasDelDominio, TestVerificarVoto_Rechazos |
+| CA-015-7 | error | Votar en una historia sin sesión se rechaza, Un integrante que no existe no vota | TestBase_RegistrarVoto_SesionInexistente, TestRegistrarVoto_SesionInexistente, TestVotarEnSesion_LoQueNoExiste |
+
+### US-016 — Revelar las estimaciones y detectar divergencias entre integrantes
+
+- **Spec:** [specs/US-016-revelar-estimaciones.md](../specs/US-016-revelar-estimaciones.md) · **Issue:** #27
+- **Escenarios BDD:** ninguno
+- **Código:** `internal/domain/planningpoker/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`
+- **Tests que la citan:** 2
+
+| Criterio | Tipo | Escenarios BDD | Tests |
+|---|---|---|---|
+| CA-016-1 | normal | — | — |
+| CA-016-2 | alternativo | — | — |
+| CA-016-3 | alternativo | — | — |
+| CA-016-4 | límite | — | — |
+| CA-016-5 | error | — | — |
+| CA-016-6 | error | — | — |
+| CA-016-7 | error | — | — |
+| CA-016-8 | error | — | — |
+
 ### US-019 — Registrar esfuerzo con integrante, fecha, actividad y horas
 
 - **Spec:** [specs/US-019-registrar-esfuerzo.md](../specs/US-019-registrar-esfuerzo.md) · **Issue:** #22
 - **Escenarios BDD:** [features/US-019-registrar-esfuerzo.feature](../features/US-019-registrar-esfuerzo.feature)
 - **Código:** `internal/domain/esfuerzo/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/`
-- **Tests que la citan:** 33
+- **Tests que la citan:** 34
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
@@ -232,7 +287,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 - **Spec:** [specs/US-025-story-points-sprint.md](../specs/US-025-story-points-sprint.md) · **Issue:** #11
 - **Escenarios BDD:** [features/US-025-story-points-sprint.feature](../features/US-025-story-points-sprint.feature)
 - **Código:** `internal/domain/metricas/`
-- **Tests que la citan:** 2
+- **Tests que la citan:** 3
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
@@ -258,18 +313,18 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 ### US-027 — Calcular horas estimadas, horas reales y la desviación entre ambas
 
 - **Spec:** [specs/US-027-horas-estimadas-reales.md](../specs/US-027-horas-estimadas-reales.md) · **Issue:** #33
-- **Escenarios BDD:** ninguno
+- **Escenarios BDD:** [features/US-027-horas-estimadas-reales.feature](../features/US-027-horas-estimadas-reales.feature)
 - **Código:** `internal/domain/metricas/`
-- **Tests que la citan:** 0
+- **Tests que la citan:** 3
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
-| CA-027-1 | normal | — | — |
-| CA-027-2 | alternativo | — | — |
-| CA-027-3 | límite | — | — |
-| CA-027-4 | límite | — | — |
-| CA-027-5 | error | — | — |
-| CA-027-6 | error | — | — |
+| CA-027-1 | normal | Se trabajó un poco más de lo estimado | TestCalcularHoras |
+| CA-027-2 | alternativo | Se trabajó menos de lo estimado | TestCalcularHoras |
+| CA-027-3 | límite | Sin horas registradas la desviación es la de las estimadas en negativo | TestCalcularHoras |
+| CA-027-4 | límite | Sin story points planificados no se puede calcular el porcentaje | TestCalcularHoras |
+| CA-027-5 | error | Una hora en cero se rechaza indicando su posición, Una hora negativa se rechaza | TestCalcularHoras_Rechazos |
+| CA-027-6 | error | Story points planificados negativos se rechazan | TestCalcularHoras_Rechazos |
 
 ### US-028 — Calcular el porcentaje de historias completadas
 
@@ -339,12 +394,12 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 - **Spec:** [specs/T-015-pantallas-sprints.md](../specs/T-015-pantallas-sprints.md) · **Issue:** #141 (tarea) · #142 (spec)
 - **Escenarios BDD:** ninguno
 - **Código:** `internal/app/`, `internal/adapters/memoria/`, `internal/adapters/postgres/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/`
-- **Tests que la citan:** 0
+- **Tests que la citan:** 18
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
-| CA-T015-1 | normal | — | — |
-| CA-T015-2 | alternativo | — | — |
-| CA-T015-3 | límite | — | — |
-| CA-T015-4 | error | — | — |
+| CA-T015-1 | normal | — | TestPantallasSprints_Recorrido |
+| CA-T015-2 | alternativo | — | TestPantallasSprints_RedireccionesConYSinHTMX |
+| CA-T015-3 | límite | — | TestPantallasSprints_SprintCerrado |
+| CA-T015-4 | error | — | TestPantallasSprints_ErroresAlCrear |
 | CA-T015-5 | plataforma | — | — |
