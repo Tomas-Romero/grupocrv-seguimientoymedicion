@@ -3,6 +3,7 @@ package httpadapter
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/app"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/backlog"
@@ -50,8 +51,54 @@ func (p *Pantallas) listaDeSprints(w http.ResponseWriter, r *http.Request) {
 			Detalle:      rutaDeSprint(id, s.Sprint.ID),
 		}
 	}
-	vista := plantillas.VistaSprints{Sprints: filas, Alta: plantillas.FormSprint{Accion: rutaDeProyecto(id) + "/sprints"}}
+	vista := plantillas.VistaSprints{
+		Sprints:    filas,
+		Alta:       plantillas.FormSprint{Accion: rutaDeProyecto(id) + "/sprints"},
+		Anteriores: rutaDeProyecto(id) + "/sprints/anteriores",
+	}
 	Responder(w, r, http.StatusOK, paginaDeProyecto(detalle.Proyecto, plantillas.SeccionSprints), plantillas.ListaDeSprints(vista))
+}
+
+// sprintsAnteriores es el historial de sprints cerrados del proyecto, con su resultado (US-012).
+func (p *Pantallas) sprintsAnteriores(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	detalle, err := p.casos.ConsultarProyecto.Ejecutar(r.Context(), id)
+	if err != nil {
+		p.fallaDeLectura(w, r, err)
+		return
+	}
+	anteriores, err := p.casos.ConsultarSprintsAnteriores.Ejecutar(r.Context(), id)
+	if err != nil {
+		p.fallaDeLectura(w, r, err)
+		return
+	}
+	filas := make([]plantillas.FilaSprintAnterior, len(anteriores.Sprints))
+	for i, s := range anteriores.Sprints {
+		filas[i] = plantillas.FilaSprintAnterior{
+			Nombre:                 s.Sprint.Nombre(),
+			Goal:                   s.Sprint.SprintGoal,
+			Inicio:                 fechaVisible(s.Sprint.FechaInicio),
+			Fin:                    fechaVisible(s.Sprint.FechaFin),
+			Planificados:           s.Planificados,
+			Completados:            s.Completados,
+			HistoriasCompletadas:   s.HistoriasCompletadas,
+			HistoriasNoCompletadas: s.HistoriasNoCompletadas,
+			Detalle:                rutaDeSprint(id, s.Sprint.ID),
+		}
+	}
+	vista := plantillas.VistaSprintsAnteriores{
+		Sprints:   filas,
+		Velocidad: textoDeVelocidad(anteriores.Velocidad),
+		Volver:    rutaDeProyecto(id) + "/sprints",
+	}
+	pagina := paginaDeProyecto(detalle.Proyecto, plantillas.SeccionSprints)
+	pagina.Titulo = "Sprints anteriores | " + detalle.Proyecto.Nombre
+	Responder(w, r, http.StatusOK, pagina, plantillas.SprintsAnteriores(vista))
+}
+
+// textoDeVelocidad escribe la velocidad como la lee una persona: sin ceros de mas y con coma decimal.
+func textoDeVelocidad(velocidad float64) string {
+	return strings.Replace(strconv.FormatFloat(velocidad, 'f', -1, 64), ".", ",", 1)
 }
 
 func (p *Pantallas) crearSprint(w http.ResponseWriter, r *http.Request) {

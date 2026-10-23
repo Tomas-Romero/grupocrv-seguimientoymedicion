@@ -40,6 +40,9 @@ type CasosDeUso struct {
 
 	// Cierre de un sprint (T-016).
 	CerrarSprint *app.CerrarSprint
+
+	// Historial de sprints cerrados (US-012).
+	ConsultarSprintsAnteriores *app.ConsultarSprintsAnteriores
 }
 
 // Pantallas son los handlers de las pantallas de proyectos, integrantes y backlog.
@@ -71,6 +74,7 @@ func (p *Pantallas) registrar(mux *http.ServeMux) {
 	// Sprints (T-015).
 	mux.HandleFunc("GET /proyectos/{id}/sprints", p.listaDeSprints)
 	mux.HandleFunc("POST /proyectos/{id}/sprints", p.crearSprint)
+	mux.HandleFunc("GET /proyectos/{id}/sprints/anteriores", p.sprintsAnteriores)
 	mux.HandleFunc("GET /proyectos/{id}/sprints/{sprint}", p.verSprint)
 	mux.HandleFunc("POST /proyectos/{id}/sprints/{sprint}/historias", p.asignarHistoria)
 	mux.HandleFunc("POST /proyectos/{id}/sprints/{sprint}/historias/{item}/completar", p.completarHistoria)
