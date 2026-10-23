@@ -158,5 +158,7 @@ func casosDeUsoDePantallas(pool *pgxpool.Pool) httpadapter.CasosDeUso {
 		MarcarCompletado:    app.NuevoMarcarCompletado(asignaciones, time.Now),
 		DesmarcarCompletado: app.NuevoDesmarcarCompletado(asignaciones),
 		CerrarSprint:        app.NuevoCerrarSprint(asignaciones),
+
+		ConsultarSprintsAnteriores: app.NuevoConsultarSprintsAnteriores(asignaciones),
 	}
 }
