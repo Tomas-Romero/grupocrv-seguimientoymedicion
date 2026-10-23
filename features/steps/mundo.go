@@ -178,6 +178,21 @@ type PlanningPoker interface {
 	QuienesFaltan(titulo string) ([]string, error)
 	// VotosOcultos dice si los valores de la ronda actual no se pueden leer (RN-015-7).
 	VotosOcultos(titulo string) (bool, error)
+	// Revelar revela los votos de la sesion abierta de la historia (US-016). Lo que no
+	// existe se manda con un ID que no esta en la base, asi el rechazo lo produce la
+	// aplicacion.
+	Revelar(integrante, titulo string) error
+	// VotosRevelados devuelve los votos de la ronda actual con los nombres de quienes
+	// votaron, en el orden de los participantes. Solo se pueden leer con la sesion revelada.
+	VotosRevelados(titulo string) ([]VotoRevelado, error)
+	// HayDivergencia dice si la ultima revelacion de la sesion detecto divergencia (RN-016-6).
+	HayDivergencia(titulo string) (bool, error)
+}
+
+// VotoRevelado es el voto de un integrante, ya revelado.
+type VotoRevelado struct {
+	Integrante string
+	Valor      int
 }
 
 // Servicios agrupa las areas conectadas para UN escenario. Un campo nil
