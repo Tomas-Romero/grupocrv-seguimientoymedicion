@@ -7,7 +7,7 @@
 | **Issue** | #141 (tarea) · #142 (spec) |
 | **Escenarios BDD** | ninguno: es una tarea técnica (ver "Decisiones") |
 | **Código** | `internal/app/`, `internal/adapters/memoria/`, `internal/adapters/postgres/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
-| **Última actualización** | 2026-10-21 |
+| **Última actualización** | 2026-10-22 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
 > implementación. Si durante la implementación descubrís que algo de acá está
@@ -117,6 +117,13 @@ lecturas.
 - **RN-T015-8** — Los Story Points planificados y completados vienen de
   `metricas.CalcularResumenSprint`; una historia sin estimar cuenta como 0 y se
   muestra como `—`.
+- **RN-T015-13** (DEF-007) — Una historia cuenta como completada en un sprint según el
+  resultado de **su fila** en ese sprint, no según su estado actual: en un sprint cerrado
+  manda `completado` o `no_completado` (US-011), y mientras el sprint está abierto, con la
+  fila pendiente, manda el estado de la historia (US-010 la marca sin tocar la fila). Así una
+  historia que no se completó, volvió al backlog y se completó en otro sprint sigue siendo "no
+  completada" en el primero, y los Story Points completados de cada sprint no cambian después
+  de cerrarlo. Los repositorios devuelven cada historia con el resultado de su fila.
 - **RN-T015-9** — Las fechas se muestran como `dd/mm/aaaa` y se escriben como
   `AAAA-MM-DD`. El texto del Sprint Goal se muestra escapado.
 - **RN-T015-10** — Un ID que no existe o está mal formado responde 404: página con
@@ -165,6 +172,9 @@ lecturas.
   siempre en el mismo orden.
 - **CL-T015-10** — Un Sprint Goal con HTML, comillas, tildes o ñ se guarda y se muestra
   tal cual, escapado.
+- **CL-T015-11** (DEF-007) — Una historia no completada en el sprint 1, completada después en el
+  sprint 2: el sprint 1 sigue mostrándola como no completada y sin sumarla a sus Story Points
+  completados; el sprint 2 la muestra completada.
 
 ## 7. Condiciones de error
 

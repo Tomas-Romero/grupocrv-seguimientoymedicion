@@ -55,6 +55,8 @@ var entradasDelCatalogo = []entradaDelCatalogo{
 	// planningpoker
 	{"planningpoker.ErrSesionAbierta", planningpoker.ErrSesionAbierta, errores.Conflicto, ""},
 	{"planningpoker.ErrParticipantesInsuficientes", planningpoker.ErrParticipantesInsuficientes, errores.Conflicto, ""},
+	{"planningpoker.ErrVotacionCerrada", planningpoker.ErrVotacionCerrada, errores.Conflicto, ""},
+	{"planningpoker.ErrNoEsParticipante", planningpoker.ErrNoEsParticipante, errores.Conflicto, ""},
 
 	// proyecto
 	{"proyecto.ErrNombreVacio", proyecto.ErrNombreVacio, errores.Validacion, "nombre"},
@@ -85,6 +87,7 @@ var entradasDelCatalogo = []entradaDelCatalogo{
 	{"app.ErrItemInexistente", app.ErrItemInexistente, errores.NoEncontrado, ""},
 	{"app.ErrIntegranteInexistente", app.ErrIntegranteInexistente, errores.NoEncontrado, ""},
 	{"app.ErrSprintInexistente", app.ErrSprintInexistente, errores.NoEncontrado, ""},
+	{"app.ErrSesionInexistente", app.ErrSesionInexistente, errores.NoEncontrado, ""},
 	{"app.ErrEmailDuplicado", app.ErrEmailDuplicado, errores.Conflicto, "email"},
 }
 
@@ -94,6 +97,8 @@ var exclusionesDelCatalogo = map[string]string{
 	"metricas.ErrStoryPointsNegativos": "describe datos propios del sistema que salieron mal, no algo que la persona escribio",
 	"metricas.ErrResumenInconsistente": "describe datos propios del sistema que salieron mal, no algo que la persona escribio",
 	"metricas.ErrNombreVacio":          "describe datos propios del sistema que salieron mal, no algo que la persona escribio",
+	"metricas.ErrHorasInvalidas":       "describe datos propios del sistema que salieron mal (las horas ya entraron validadas por US-019), no algo que la persona escribio",
+	"planningpoker.ErrVotosOcultos":    "solo aparece si un adaptador pide los valores antes de revelar: es un error de programacion (spec US-015, seccion 5)",
 }
 
 // CatalogoDeErrores arma el catalogo de errores conocidos de la aplicacion.

@@ -52,7 +52,10 @@ type SesionPlanningPoker struct {
 	// (RN-014-12).
 	ID     string
 	ItemID string
-	Estado Estado
+	// ProyectoID es el proyecto de la historia; lo completa la persistencia (US-015 lo
+	// usa para verificar que quien vota sea de ese proyecto).
+	ProyectoID string
+	Estado     Estado
 	// Ronda empieza en 1; US-017 la aumenta.
 	Ronda int
 	// Participantes son los IDs de los integrantes del proyecto al iniciar, en orden
