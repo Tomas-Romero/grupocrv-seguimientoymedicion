@@ -7,7 +7,7 @@
 | **Issue** | #34 |
 | **Escenarios BDD** | `features/US-028-porcentaje-historias-completadas.feature` |
 | **Código** | `internal/domain/metricas/` |
-| **Última actualización** | 2026-10-18 |
+| **Última actualización** | 2026-10-24 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
 > implementación. Si durante la implementación descubrís que algo de acá está
@@ -141,10 +141,17 @@ resultado.
 - **Redondeo a 1 decimal**, como la velocidad (RN-026-2) y la desviación
   porcentual (US-027), para que todas las cifras del Dashboard tengan la misma
   precisión.
-- **Frases nuevas del diccionario** (se aprueban en el PR de implementación):
-  `se consulta el porcentaje de historias completadas del sprint "S"` y
-  `el porcentaje de historias completadas es N` (acepta coma o punto decimal).
-  Las dos pertenecen al área Métricas.
+- **Frases nuevas del diccionario** (agregadas a `docs/diccionario-steps.md` en el PR de
+  implementación): `se consulta el porcentaje de historias completadas del sprint "S"` y
+  `el porcentaje de historias completadas es N` (acepta coma o punto decimal). Las dos
+  pertenecen al área Métricas.
+- **Nombres en el código.** La función del dominio es `CalcularPorcentajeCompletadas(items
+  []ItemDelSprint) (float64, error)`, en `porcentaje_completadas.go`. Valida todos los ítems antes
+  de contar, así que nunca devuelve un porcentaje parcial. Para los escenarios, la interfaz
+  `Metricas` de los steps suma `PorcentajeHistoriasCompletadas(sprint string) (float64, error)`,
+  que el adaptador en memoria resuelve sobre los mismos ítems que arma el contexto de US-025. No
+  se creó ningún error nuevo: `ErrStoryPointsNegativos` ya está en las exclusiones del catálogo
+  de errores (sale como error interno a propósito), por lo que `catalogo.go` no cambia.
 
 ## Uso de IA en esta especificación
 
