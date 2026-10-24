@@ -9,7 +9,7 @@ import (
 	"github.com/cucumber/godog"
 )
 
-// Steps del area Metricas (US-025, US-026 y US-027).
+// Steps del area Metricas (US-025, US-026, US-027 y US-028).
 
 func registrarMetricas(sc *godog.ScenarioContext, m *mundo) {
 	sc.Step(`^el sprint "([^"]*)" con una historia de (-?\d+) story points completada$`, m.dadoHistoriaDeSprintCompletada)
@@ -31,6 +31,9 @@ func registrarMetricas(sc *godog.ScenarioContext, m *mundo) {
 	sc.Step(`^la desviación de horas es (-?\d+(?:[.,]\d+)?)$`, m.entoncesDesviacionDeHorasEs)
 	sc.Step(`^la desviación porcentual es (-?\d+(?:[.,]\d+)?)$`, m.entoncesDesviacionPorcentualEs)
 	sc.Step(`^la desviación porcentual no se puede calcular$`, m.entoncesDesviacionPorcentualNoSePuedeCalcular)
+
+	sc.Step(`^se consulta el porcentaje de historias completadas del sprint "([^"]*)"$`, m.cuandoSeConsultaPorcentajeDeHistorias)
+	sc.Step(`^el porcentaje de historias completadas es (\d+(?:[.,]\d+)?)$`, m.entoncesPorcentajeDeHistoriasEs)
 }
 
 // dadoHistoriaDeSprintCompletada y dadoHistoriaDeSprintSinCompletar arman el
@@ -179,6 +182,22 @@ func (m *mundo) entoncesDesviacionPorcentualNoSePuedeCalcular() error {
 		return fmt.Errorf("la desviación porcentual se pudo calcular (%g) y se esperaba que no", m.horas.Porcentaje)
 	}
 	return nil
+}
+
+// cuandoSeConsultaPorcentajeDeHistorias guarda el resultado aunque haya error: un escenario
+// de error (CA-028-5) sigue hasta el `Entonces la operacion se rechaza`.
+func (m *mundo) cuandoSeConsultaPorcentajeDeHistorias(sprint string) error {
+	metricas, err := m.metricas()
+	if err != nil {
+		return err
+	}
+	porcentaje, err := metricas.PorcentajeHistoriasCompletadas(sprint)
+	m.porcentajeHistorias = porcentaje
+	return m.registrarAccion(err)
+}
+
+func (m *mundo) entoncesPorcentajeDeHistoriasEs(esperado string) error {
+	return compararCifra("porcentaje de historias completadas", esperado, m.porcentajeHistorias)
 }
 
 // numeroDelEscenario lee un numero como lo escribe una persona: acepta coma o punto

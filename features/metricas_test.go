@@ -121,6 +121,18 @@ func (m *metricasEnMemoria) RegistrarHorasDelSprint(sprint string, horas float64
 	return nil
 }
 
+// PorcentajeHistoriasCompletadas calcula el porcentaje de US-028 sobre los mismos items
+// que arma el contexto para US-025. Un sprint sin items es una lista vacia, que el dominio
+// resuelve con 0 sin error (RN-028-4 / CL-028-1); los Story Points negativos los rechaza el
+// dominio con la posicion del item (RN-028-5), asi que aca no se valida nada.
+func (m *metricasEnMemoria) PorcentajeHistoriasCompletadas(sprint string) (float64, error) {
+	porcentaje, err := metricas.CalcularPorcentajeCompletadas(m.items[sprint])
+	if err != nil {
+		return 0, fmt.Errorf("porcentaje de historias del sprint %q: %w", sprint, err)
+	}
+	return porcentaje, nil
+}
+
 // HorasDelSprint calcula las horas con los story points planificados del sprint (los
 // mismos de US-025) y con las horas que armo el contexto.
 func (m *metricasEnMemoria) HorasDelSprint(sprint string) (steps.HorasDelSprint, error) {

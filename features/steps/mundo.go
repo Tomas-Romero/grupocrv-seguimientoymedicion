@@ -124,7 +124,7 @@ type HorasDelSprint struct {
 	PorcentajeCalculable bool
 }
 
-// Metricas es el area de US-025, US-026 y US-027.
+// Metricas es el area de US-025, US-026, US-027 y US-028.
 type Metricas interface {
 	// AgregarItemAlSprint arma el contexto: suma una historia al sprint, con sus
 	// story points y si esta completada. No valida nada: las reglas se aplican al
@@ -144,6 +144,10 @@ type Metricas interface {
 	// AgregarItemAlSprint.
 	RegistrarHorasDelSprint(sprint string, horas float64) error
 	HorasDelSprint(sprint string) (HorasDelSprint, error)
+
+	// PorcentajeHistoriasCompletadas es el de US-028: el porcentaje de historias
+	// completadas del sprint, sobre los mismos items que arma AgregarItemAlSprint.
+	PorcentajeHistoriasCompletadas(sprint string) (float64, error)
 }
 
 // Esfuerzo es el area de US-019 (US-020 y US-021 la amplian).
@@ -225,11 +229,12 @@ type mundo struct {
 	finDelUltimoSprint map[string]time.Time
 
 	// resultados de las consultas de metricas
-	puntosPlanificados int
-	puntosCompletados  int
-	velocidad          float64
-	horas              HorasDelSprint
-	anteriores         SprintsAnteriores
+	puntosPlanificados  int
+	puntosCompletados   int
+	velocidad           float64
+	horas               HorasDelSprint
+	porcentajeHistorias float64
+	anteriores          SprintsAnteriores
 }
 
 // registrarAccion guarda el resultado de un step de accion.
