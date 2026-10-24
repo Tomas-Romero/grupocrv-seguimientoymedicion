@@ -1,6 +1,8 @@
 package metricas_test
 
 import (
+	"errors"
+	"strings"
 	"testing"
 
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/metricas"
@@ -118,5 +120,54 @@ func TestCalcularPorcentajeCompletadas(t *testing.T) {
 				t.Fatalf("porcentaje = %v, se esperaba %v", obtenido, c.esperado)
 			}
 		})
+	}
+}
+
+// US-028 / CA-028-5 (error) / RN-028-5: un item con Story Points negativos
+// devuelve ErrStoryPointsNegativos con la posicion del item (desde 1) y ningun
+// porcentaje parcial.
+func TestCalcularPorcentajeCompletadas_StoryPointsNegativos(t *testing.T) {
+	items := []metricas.ItemDelSprint{
+		{StoryPoints: 5, Completado: true},
+		{StoryPoints: -1, Completado: false},
+		{StoryPoints: 3, Completado: true},
+	}
+
+	obtenido, err := metricas.CalcularPorcentajeCompletadas(items)
+
+	if !errors.Is(err, metricas.ErrStoryPointsNegativos) {
+		t.Fatalf("error = %v, se esperaba ErrStoryPointsNegativos", err)
+	}
+	if !strings.Contains(err.Error(), "posicion 2") {
+		t.Fatalf("el error %q no indica la posicion 2 (contada desde 1)", err)
+	}
+	if obtenido != 0 {
+		t.Fatalf("porcentaje = %v, se esperaba 0 (sin porcentaje parcial)", obtenido)
+	}
+}
+
+// US-028 / CL-028-8 / RN-028-5: con varios items invalidos (el 2 y el 4) se
+// devuelve el error del primero y ningun porcentaje.
+func TestCalcularPorcentajeCompletadas_VariosNegativosDevuelveElPrimero(t *testing.T) {
+	items := []metricas.ItemDelSprint{
+		{StoryPoints: 5, Completado: true},
+		{StoryPoints: -1, Completado: true},
+		{StoryPoints: 3, Completado: false},
+		{StoryPoints: -2, Completado: false},
+	}
+
+	obtenido, err := metricas.CalcularPorcentajeCompletadas(items)
+
+	if !errors.Is(err, metricas.ErrStoryPointsNegativos) {
+		t.Fatalf("error = %v, se esperaba ErrStoryPointsNegativos", err)
+	}
+	if !strings.Contains(err.Error(), "posicion 2") {
+		t.Fatalf("el error %q no indica la posicion 2 (el primer item invalido)", err)
+	}
+	if strings.Contains(err.Error(), "posicion 4") {
+		t.Fatalf("el error %q menciona la posicion 4: solo debe informar el primero", err)
+	}
+	if obtenido != 0 {
+		t.Fatalf("porcentaje = %v, se esperaba 0 (sin porcentaje parcial)", obtenido)
 	}
 }
