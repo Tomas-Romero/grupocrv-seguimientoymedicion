@@ -85,6 +85,27 @@ func TestCalcularPorcentajeCompletadas(t *testing.T) {
 			},
 			esperado: 66.7,
 		},
+		{
+			// CA-028-2 (alternativo) / CL-028-7 / RN-028-2: se cuentan historias, no
+			// puntos. Con Story Points daria 13 de 16 = 81,3.
+			nombre: "una historia grande completada y tres chicas sin completar",
+			items: []metricas.ItemDelSprint{
+				{StoryPoints: 13, Completado: true},
+				{StoryPoints: 1, Completado: false},
+				{StoryPoints: 1, Completado: false},
+				{StoryPoints: 1, Completado: false},
+			},
+			esperado: 25,
+		},
+		{
+			// CL-028-6: una historia con 0 puntos cuenta como cualquier otra (RN-025-3)
+			nombre: "historias con cero story points",
+			items: []metricas.ItemDelSprint{
+				{StoryPoints: 0, Completado: true},
+				{StoryPoints: 0, Completado: false},
+			},
+			esperado: 50,
+		},
 	}
 
 	for _, c := range casos {
