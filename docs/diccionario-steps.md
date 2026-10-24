@@ -88,7 +88,7 @@ definidas en `features/steps/mundo.go`. Cada área se conecta en
 | Proyectos | `Proyectos` | US-001, US-002, US-003 | `features/steps/proyectos.go` |
 | Backlog | `Backlog` | US-005, US-006, US-013 | `features/steps/backlog.go` |
 | Sprints | `Sprints` | US-008, US-009, US-010, US-011, US-012 | `features/steps/sprints.go` |
-| Métricas | `Metricas` | US-025, US-026, US-027 | `features/steps/metricas.go` |
+| Métricas | `Metricas` | US-025, US-026, US-027, US-028 | `features/steps/metricas.go` |
 | Planning Poker | `PlanningPoker` | US-014 a US-018 | `features/steps/planningpoker.go` |
 
 Un escenario solo necesita las áreas que usa. Un `.feature` de proyectos no
@@ -146,6 +146,13 @@ frases `el sprint "S" con una historia de N story points ...`. Acepta 0 y un nú
 propósito, porque es la única forma de escribir el escenario de error de CA-027-5. Los números
 aceptan coma o punto decimal.
 
+**Porcentaje de historias completadas (US-028):** `se consulta el porcentaje de historias
+completadas del sprint "S"` y `el porcentaje de historias completadas es N` usan el contexto
+de las frases `el sprint "S" con una historia de N story points ...` (las mismas de US-025):
+cada línea es una historia del sprint, y se cuentan historias, no Story Points. N acepta coma
+o punto decimal y se compara con una tolerancia de 0,001. Un sprint sin historias da 0 sin
+error; un story point negativo se rechaza con el mensaje de US-025.
+
 `el sprint cerrado "S" con N story points completados de M planificados` arma un sprint
 ya cerrado para los escenarios de la velocidad (US-026). No valida nada: "8 completados de
 5 planificados" es justo el dato corrupto que tiene que rechazar el dominio. Un nombre
@@ -189,6 +196,7 @@ inexistente (CA-005-8, CA-008-10); con esa frase el escenario no lleva
 | `Cuando se consultan los story points planificados del sprint "Sprint 1"` | `^se consultan los story points planificados del sprint "([^"]*)"$` |
 | `Cuando se consultan los story points completados del sprint "Sprint 1"` | `^se consultan los story points completados del sprint "([^"]*)"$` |
 | `Cuando se consulta la velocidad del equipo` | `^se consulta la velocidad del equipo$` |
+| `Cuando se consulta el porcentaje de historias completadas del sprint "Sprint 1"` | `^se consulta el porcentaje de historias completadas del sprint "([^"]*)"$` |
 | `Cuando se inicia una sesión de Planning Poker sobre la historia "Crear proyecto"` | `^se inicia una sesión de Planning Poker sobre la historia "([^"]*)"$` |
 | `Cuando el integrante "Ana" vota 5 en la sesión de la historia "Crear proyecto"` | `^el integrante "([^"]*)" vota (-?\d+) en la sesión de la historia "([^"]*)"$` |
 | `Cuando se consultan las horas del sprint "Sprint 1"` | `^se consultan las horas del sprint "([^"]*)"$` |
@@ -286,6 +294,7 @@ cuenta caracteres y no bytes.
 | `Y los story points planificados son 13` | `^los story points planificados son (\d+)$` |
 | `Y los story points completados son 8` | `^los story points completados son (\d+)$` |
 | `Y la velocidad del equipo es 25` | `^la velocidad del equipo es (\d+(?:[.,]\d+)?)$` |
+| `Y el porcentaje de historias completadas es 66,7` | `^el porcentaje de historias completadas es (\d+(?:[.,]\d+)?)$` |
 | `Y las horas estimadas son 7,5` | `^las horas estimadas son (-?\d+(?:[.,]\d+)?)$` |
 | `Y las horas reales son 8` | `^las horas reales son (-?\d+(?:[.,]\d+)?)$` |
 | `Y la desviación de horas es -3` | `^la desviación de horas es (-?\d+(?:[.,]\d+)?)$` |
