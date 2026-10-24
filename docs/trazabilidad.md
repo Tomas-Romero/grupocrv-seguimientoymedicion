@@ -4,7 +4,7 @@
 > No se edita a mano: se regenera. Enlaza Historia → Spec → Criterios de aceptación →
 > Escenarios BDD → Tests → Código (la guía de la cátedra la pide como evidencia).
 
-Total: 24 especificaciones, 157 criterios de aceptación, 110 con escenario BDD y 126 con test.
+Total: 24 especificaciones, 157 criterios de aceptación, 115 con escenario BDD y 127 con test.
 
 Un criterio sin escenario BDD o sin test se muestra con `—`: o falta la evidencia, o el criterio
 se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no llevan `.feature`).
@@ -31,7 +31,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | US-025 | [specs/US-025-story-points-sprint.md](../specs/US-025-story-points-sprint.md) | borrador | 4 | 4 | 1 | `internal/domain/metricas/` |
 | US-026 | [specs/US-026-velocidad-equipo.md](../specs/US-026-velocidad-equipo.md) | borrador | 4 | 4 | 1 | `internal/domain/metricas/` |
 | US-027 | [specs/US-027-horas-estimadas-reales.md](../specs/US-027-horas-estimadas-reales.md) | borrador | 6 | 6 | 6 | `internal/domain/metricas/` |
-| US-028 | [specs/US-028-porcentaje-historias-completadas.md](../specs/US-028-porcentaje-historias-completadas.md) | borrador | 5 | 0 | 0 | `internal/domain/metricas/` |
+| US-028 | [specs/US-028-porcentaje-historias-completadas.md](../specs/US-028-porcentaje-historias-completadas.md) | borrador | 5 | 5 | 1 | `internal/domain/metricas/` |
 | T-004 | [specs/T-004-layout-base.md](../specs/T-004-layout-base.md) | revision | 5 | 0 | 4 | `web/templates/`, `internal/adapters/http/`, `cmd/server/` |
 | T-005 | [specs/T-005-validaciones-errores-uniformes.md](../specs/T-005-validaciones-errores-uniformes.md) | borrador | 8 | 0 | 7 | `internal/platform/errores/`, `internal/adapters/http/` |
 | T-011 | [specs/T-011-pantallas-proyectos-backlog.md](../specs/T-011-pantallas-proyectos-backlog.md) | borrador | 5 | 0 | 4 | `internal/app/`, `internal/adapters/memoria/`, `internal/adapters/postgres/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
@@ -347,17 +347,17 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 ### US-028 — Calcular el porcentaje de historias completadas
 
 - **Spec:** [specs/US-028-porcentaje-historias-completadas.md](../specs/US-028-porcentaje-historias-completadas.md) · **Issue:** #34
-- **Escenarios BDD:** ninguno
+- **Escenarios BDD:** [features/US-028-porcentaje-historias-completadas.feature](../features/US-028-porcentaje-historias-completadas.feature)
 - **Código:** `internal/domain/metricas/`
-- **Tests que la citan:** 0
+- **Tests que la citan:** 3
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
-| CA-028-1 | normal | — | — |
-| CA-028-2 | alternativo | — | — |
-| CA-028-3 | límite | — | — |
-| CA-028-4 | límite | — | — |
-| CA-028-5 | error | — | — |
+| CA-028-1 | normal | El porcentaje es la parte de las historias que están completadas | — |
+| CA-028-2 | alternativo | Se cuentan historias y no story points | — |
+| CA-028-3 | límite | Un sprint sin historias da cero y no es un error | — |
+| CA-028-4 | límite | El porcentaje se redondea a un decimal | — |
+| CA-028-5 | error | Una historia con story points negativos se rechaza | TestCalcularPorcentajeCompletadas_StoryPointsNegativos |
 
 ### T-004 — Layout base, navegación y sistema visual con Tailwind
 
