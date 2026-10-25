@@ -9,6 +9,12 @@ import (
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/planningpoker"
 )
 
+// votacionDe arma la votacion de la ronda como la entrega el repositorio: con el estado de la sesion
+// y sin dejar leer los valores mientras se vota (RN-015-7).
+func votacionDe(s planningpoker.SesionPlanningPoker, votos map[string]int) planningpoker.Votacion {
+	return planningpoker.NuevaVotacion(s, votos)
+}
+
 // US-016 (CA-016-1, CA-016-2, CA-016-3 y CA-016-4): al revelar salen los votos de quienes
 // votaron, en el orden de los participantes; los que no votaron figuran aparte, y hay
 // divergencia si los valores emitidos no son todos iguales (RN-016-5 y RN-016-6).
@@ -71,7 +77,7 @@ func TestRevelar(t *testing.T) {
 			s := sesionEn(planningpoker.EstadoVotando)
 			s.Ronda = 2
 
-			r, err := planningpoker.Revelar(s, "ana", c.votos)
+			r, err := planningpoker.Revelar(s, "ana", votacionDe(s, c.votos))
 			if err != nil {
 				t.Fatalf("Revelar: error inesperado: %v", err)
 			}
@@ -95,7 +101,8 @@ func TestRevelar(t *testing.T) {
 func TestRevelar_NoModificaLosVotos(t *testing.T) {
 	votos := map[string]int{"ana": 5, "beto": 8}
 
-	if _, err := planningpoker.Revelar(sesionEn(planningpoker.EstadoVotando), "ana", votos); err != nil {
+	s := sesionEn(planningpoker.EstadoVotando)
+	if _, err := planningpoker.Revelar(s, "ana", votacionDe(s, votos)); err != nil {
 		t.Fatalf("Revelar: %v", err)
 	}
 
@@ -126,7 +133,8 @@ func TestRevelar_Rechazos(t *testing.T) {
 
 	for _, c := range casos {
 		t.Run(c.nombre, func(t *testing.T) {
-			r, err := planningpoker.Revelar(sesionEn(c.estado), c.quien, c.votos)
+			s := sesionEn(c.estado)
+			r, err := planningpoker.Revelar(s, c.quien, votacionDe(s, c.votos))
 
 			if err == nil {
 				t.Fatal("Revelar no devolvio error")
@@ -147,7 +155,8 @@ func TestRevelar_Rechazos(t *testing.T) {
 // votacion cerrada, no es participante y sin votos. Con datos reales no se da (una sesion
 // revelada ya tuvo votos), pero la funcion es pura y se prueba con ese caso.
 func TestRevelar_ErroresUnidosEnOrden(t *testing.T) {
-	_, err := planningpoker.Revelar(sesionEn(planningpoker.EstadoFinalizada), "dani", nil)
+	s := sesionEn(planningpoker.EstadoFinalizada)
+	_, err := planningpoker.Revelar(s, "dani", votacionDe(s, nil))
 
 	for _, esperado := range []error{planningpoker.ErrVotacionCerrada, planningpoker.ErrNoEsParticipante, planningpoker.ErrSinVotos} {
 		if !errors.Is(err, esperado) {
@@ -162,6 +171,31 @@ func TestRevelar_ErroresUnidosEnOrden(t *testing.T) {
 			t.Fatalf("el error %q no sigue el orden de RN-016-10", texto)
 		}
 		desde += i + len(parte)
+	}
+}
+
+// US-016 / RN-015-7, RN-016-2: la votacion que recibe Revelar esta oculta (la sesion sigue votando y
+// Valores se niega), y aun asi la revelacion trae los valores: Revelar los lee al revelar, dentro del
+// dominio. Ningun puerto tiene que entregar los valores en crudo.
+func TestRevelar_LeeLosValoresDeUnaVotacionOculta(t *testing.T) {
+	s := sesionEn(planningpoker.EstadoVotando)
+	v := votacionDe(s, map[string]int{"ana": 5, "beto": 8})
+	if _, err := v.Valores(); !errors.Is(err, planningpoker.ErrVotosOcultos) {
+		t.Fatalf("la votacion deja leer los valores antes de revelar: %v", err)
+	}
+
+	r, err := planningpoker.Revelar(s, "ana", v)
+
+	if err != nil {
+		t.Fatalf("Revelar: %v", err)
+	}
+	quiero := []planningpoker.Voto{{ParticipanteID: "ana", Valor: 5}, {ParticipanteID: "beto", Valor: 8}}
+	if !reflect.DeepEqual(r.Votos, quiero) {
+		t.Errorf("Votos = %+v, quiero %+v", r.Votos, quiero)
+	}
+	// La votacion sigue oculta despues: revelar no la cambia.
+	if _, err := v.Valores(); !errors.Is(err, planningpoker.ErrVotosOcultos) {
+		t.Errorf("revelar cambio la votacion recibida: %v", err)
 	}
 }
 

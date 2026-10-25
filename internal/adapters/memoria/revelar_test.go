@@ -5,7 +5,6 @@ import (
 	"errors"
 	"reflect"
 	"slices"
-	"strconv"
 	"testing"
 
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/adapters/memoria"
@@ -26,36 +25,40 @@ func votarTodos(t *testing.T, b baseParaPoker, sesionID string, valores map[stri
 	}
 }
 
-// US-016 / RN-016-7: los votos que se piden son los de la ronda actual; los de una ronda
-// anterior no entran. Una sesion que no esta, o con un ID mal formado, no tiene votos.
-func TestBase_VotosDeLaRonda(t *testing.T) {
+// US-016 / RN-016-7, RN-015-7: la votacion que entrega la base es la de la ronda actual (los votos de una
+// ronda anterior no entran) y, mientras se vota, no deja leer los valores: el puerto nunca los entrega en
+// crudo. Una sesion que no esta, o con un ID mal formado, no tiene votos.
+func TestBase_VotacionDeLaRonda(t *testing.T) {
 	ctx := context.Background()
 	b, sesion := conSesion(t)
-	ana, beto := b.integrantes[0], b.integrantes[1]
+	ana, beto, caro := b.integrantes[0], b.integrantes[1], b.integrantes[2]
 	votarTodos(t, b, sesion.ID, map[string]int{ana: 5, beto: 8})
 
-	votos, err := b.base.VotosDeLaRonda(ctx, sesion.ID)
-	if err != nil || !reflect.DeepEqual(votos, map[string]int{ana: 5, beto: 8}) {
-		t.Fatalf("VotosDeLaRonda = %v, %v; se esperaba el voto de ana y de beto", votos, err)
+	v, err := b.base.VotacionDeLaRonda(ctx, sesion.ID)
+	if err != nil || !slices.Equal(v.Votaron(), []string{ana, beto}) || !slices.Equal(v.Faltan(), []string{caro}) {
+		t.Fatalf("votaron %q y faltan %q (%v); se esperaba ana y beto, y falta caro", v.Votaron(), v.Faltan(), err)
+	}
+	if _, err := v.Valores(); !errors.Is(err, planningpoker.ErrVotosOcultos) {
+		t.Errorf("la votacion deja leer los valores mientras se vota: %v", err)
+	}
+
+	// Revelada, los valores se pueden leer.
+	b.base.CambiarSesion(sesion.ID, planningpoker.EstadoRevelada, 1)
+	revelada, _ := b.base.VotacionDeLaRonda(ctx, sesion.ID)
+	if valores, err := revelada.Valores(); err != nil || !reflect.DeepEqual(valores, map[string]int{ana: 5, beto: 8}) {
+		t.Errorf("Valores con la sesion revelada = %v, %v; se esperaba el voto de ana y de beto", valores, err)
 	}
 
 	b.base.CambiarSesion(sesion.ID, planningpoker.EstadoVotando, 2)
-	votos, err = b.base.VotosDeLaRonda(ctx, sesion.ID)
-	if err != nil || len(votos) != 0 {
-		t.Errorf("en la ronda 2 = %v, %v; se esperaba ningun voto (los de la ronda 1 no entran)", votos, err)
+	v, err = b.base.VotacionDeLaRonda(ctx, sesion.ID)
+	if err != nil || len(v.Votaron()) != 0 || len(v.Faltan()) != 3 {
+		t.Errorf("en la ronda 2 votaron %q y faltan %q (%v); se esperaba que no hubiera votos (los de la ronda 1 no entran)", v.Votaron(), v.Faltan(), err)
 	}
 
 	for _, id := range []string{idSinDuenoAsignaciones, "no-es-un-uuid"} {
-		if votos, err := b.base.VotosDeLaRonda(ctx, id); err != nil || len(votos) != 0 {
-			t.Errorf("VotosDeLaRonda(%q) = %v, %v; se esperaba una lista vacia y sin error", id, votos, err)
+		if v, err := b.base.VotacionDeLaRonda(ctx, id); err != nil || len(v.Votaron()) != 0 {
+			t.Errorf("VotacionDeLaRonda(%q) votaron %q (%v); se esperaba una votacion vacia y sin error", id, v.Votaron(), err)
 		}
-	}
-
-	// Cambiar lo devuelto no cambia lo guardado.
-	votos, _ = b.base.VotosDeLaRonda(ctx, sesion.ID)
-	votos[ana] = 99
-	if valor, _ := b.base.VotoGuardado(sesion.ID, 2, ana); valor == 99 {
-		t.Error("cambiar lo devuelto cambio lo guardado")
 	}
 }
 
@@ -164,17 +167,8 @@ func TestBase_GuardarRevelado_DespuesNoSeVota(t *testing.T) {
 	if !errors.Is(err, planningpoker.ErrVotacionCerrada) {
 		t.Fatalf("votar con la sesion revelada = %v, se esperaba ErrVotacionCerrada", err)
 	}
-	votos, _ := b.base.VotosDeLaRonda(ctx, sesion.ID)
-	if !slices.Equal(mapaOrdenado(votos), []string{ana + "=5"}) {
-		t.Errorf("votos = %v, se esperaba solo el de ana", votos)
+	v, _ := b.base.VotacionDeLaRonda(ctx, sesion.ID)
+	if !slices.Equal(v.Votaron(), []string{ana}) {
+		t.Errorf("votaron %q, se esperaba solo ana", v.Votaron())
 	}
-}
-
-func mapaOrdenado(m map[string]int) []string {
-	salida := []string{}
-	for k, v := range m {
-		salida = append(salida, k+"="+strconv.Itoa(v))
-	}
-	slices.Sort(salida)
-	return salida
 }
