@@ -4,7 +4,7 @@
 > No se edita a mano: se regenera. Enlaza Historia → Spec → Criterios de aceptación →
 > Escenarios BDD → Tests → Código (la guía de la cátedra la pide como evidencia).
 
-Total: 25 especificaciones, 163 criterios de aceptación, 124 con escenario BDD y 135 con test.
+Total: 25 especificaciones, 163 criterios de aceptación, 130 con escenario BDD y 141 con test.
 
 Un criterio sin escenario BDD o sin test se muestra con `—`: o falta la evidencia, o el criterio
 se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no llevan `.feature`).
@@ -32,7 +32,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | US-026 | [specs/US-026-velocidad-equipo.md](../specs/US-026-velocidad-equipo.md) | borrador | 4 | 4 | 1 | `internal/domain/metricas/` |
 | US-027 | [specs/US-027-horas-estimadas-reales.md](../specs/US-027-horas-estimadas-reales.md) | borrador | 6 | 6 | 6 | `internal/domain/metricas/` |
 | US-028 | [specs/US-028-porcentaje-historias-completadas.md](../specs/US-028-porcentaje-historias-completadas.md) | borrador | 5 | 5 | 1 | `internal/domain/metricas/` |
-| US-029 | [specs/US-029-defectos-por-sprint.md](../specs/US-029-defectos-por-sprint.md) | borrador | 6 | 0 | 0 | `internal/domain/metricas/` |
+| US-029 | [specs/US-029-defectos-por-sprint.md](../specs/US-029-defectos-por-sprint.md) | borrador | 6 | 6 | 6 | `internal/domain/metricas/` |
 | T-004 | [specs/T-004-layout-base.md](../specs/T-004-layout-base.md) | revision | 5 | 0 | 4 | `web/templates/`, `internal/adapters/http/`, `cmd/server/` |
 | T-005 | [specs/T-005-validaciones-errores-uniformes.md](../specs/T-005-validaciones-errores-uniformes.md) | borrador | 8 | 0 | 7 | `internal/platform/errores/`, `internal/adapters/http/` |
 | T-011 | [specs/T-011-pantallas-proyectos-backlog.md](../specs/T-011-pantallas-proyectos-backlog.md) | borrador | 5 | 0 | 4 | `internal/app/`, `internal/adapters/memoria/`, `internal/adapters/postgres/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
@@ -363,18 +363,18 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 ### US-029 — Calcular defectos detectados y resueltos por sprint
 
 - **Spec:** [specs/US-029-defectos-por-sprint.md](../specs/US-029-defectos-por-sprint.md) · **Issue:** #35
-- **Escenarios BDD:** ninguno
+- **Escenarios BDD:** [features/US-029-defectos-por-sprint.feature](../features/US-029-defectos-por-sprint.feature)
 - **Código:** `internal/domain/metricas/`
-- **Tests que la citan:** 0
+- **Tests que la citan:** 3
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
-| CA-029-1 | normal | — | — |
-| CA-029-2 | alternativo | — | — |
-| CA-029-3 | alternativo | — | — |
-| CA-029-4 | límite | — | — |
-| CA-029-5 | error | — | — |
-| CA-029-6 | error | — | — |
+| CA-029-1 | normal | Se cuentan los detectados y los resueltos del sprint | TestCalcularDefectosDelSprint |
+| CA-029-2 | alternativo | Un defecto se cuenta como detectado donde se detectó y como resuelto donde se resolvió | TestCalcularDefectosDelSprint |
+| CA-029-3 | alternativo | Un defecto detectado y resuelto en el mismo sprint cuenta en las dos cifras | TestCalcularDefectosDelSprint |
+| CA-029-4 | límite | Un sprint sin defectos da cero y no es un error, Un defecto sin resolver cuenta como detectado y nunca como resuelto | TestCalcularDefectosDelSprint |
+| CA-029-5 | error | Un defecto resuelto antes de detectarse se rechaza | TestCalcularDefectosDelSprint_Rechazos |
+| CA-029-6 | error | Un número de sprint menor que 1 se rechaza | TestCalcularDefectosDelSprint_Rechazos |
 
 ### T-004 — Layout base, navegación y sistema visual con Tailwind
 
