@@ -284,4 +284,4 @@ cuenta propia:
   la regla de US-013 sin su caso de uso, historia completada rechazada, el
   valor guardado en la sesión), usando las specs de US-013, US-014, US-015,
   US-016 y T-005 como modelo
-- Revisado y entendido por:
+- Revisado y entendido por: Juan Ignacio Vergara
