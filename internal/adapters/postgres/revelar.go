@@ -14,14 +14,22 @@ import (
 // y ExisteIntegranteEnProyecto son los de US-015).
 var _ app.RepositorioRevelar = (*RepositorioPlanningPoker)(nil)
 
-// VotosDeLaRonda devuelve el voto de cada participante en la ronda actual de la sesion, por
-// integrante. Un ID mal formado, o una sesion que no esta, no tiene votos.
-func (r *RepositorioPlanningPoker) VotosDeLaRonda(ctx context.Context, sesionID string) (map[string]int, error) {
-	votos, err := votosDeLaRonda(ctx, r.pool, sesionID)
-	if esIDMalFormado(err) {
-		return map[string]int{}, nil
+// VotacionDeLaRonda devuelve la votacion de la ronda actual de la sesion. Mientras se vota no deja
+// leer los valores (RN-015-7): el puerto nunca los entrega en crudo. Un ID mal formado, o una sesion
+// que no esta, no tiene votos: devuelve una votacion vacia.
+func (r *RepositorioPlanningPoker) VotacionDeLaRonda(ctx context.Context, sesionID string) (planningpoker.Votacion, error) {
+	sesion, existe, err := leerSesion(ctx, r.pool, sesionID, "")
+	if esIDMalFormado(err) || (err == nil && !existe) {
+		return planningpoker.Votacion{}, nil
 	}
-	return votos, err
+	if err != nil {
+		return planningpoker.Votacion{}, err
+	}
+	votos, err := votosDeLaRonda(ctx, r.pool, sesionID)
+	if err != nil {
+		return planningpoker.Votacion{}, err
+	}
+	return planningpoker.NuevaVotacion(sesion, votos), nil
 }
 
 // votosDeLaRonda lee los votos de la ronda actual de la sesion con el pool o dentro de una
@@ -79,7 +87,7 @@ func (r *RepositorioPlanningPoker) GuardarRevelado(ctx context.Context, sesionID
 	}
 
 	// Paso 3: la misma funcion del dominio que el caso de uso, con la sesion bloqueada.
-	revelacion, err := planningpoker.Revelar(sesion, integranteID, votos)
+	revelacion, err := planningpoker.Revelar(sesion, integranteID, planningpoker.NuevaVotacion(sesion, votos))
 	if err != nil {
 		return planningpoker.Revelacion{}, err
 	}

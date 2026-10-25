@@ -35,14 +35,15 @@ type Revelacion struct {
 // (RN-016-2 a RN-016-6). Quien revela es un participante, la sesion tiene que estar votando
 // y tiene que haber al menos un voto; pueden faltar votos de otros participantes.
 //
+// Recibe la votacion de la ronda y no los votos en crudo (RN-015-7): ningun puerto entrega los
+// valores mientras se vota. Revelar los lee de la votacion al revelar, dentro del dominio, que es
+// el unico lugar donde la votacion los muestra antes de que la sesion este revelada.
+//
 // RN-016-10: no corta en el primer error. Devuelve todos unidos con errors.Join, en orden
 // fijo: votacion cerrada, no es participante y sin votos. La usa el caso de uso con los
 // datos que leyo y la repite el repositorio con la sesion bloqueada (RN-016-8). El cambio de
-// estado a revelada lo guarda quien la llama: esta funcion no modifica la sesion ni los votos.
-//
-// Los valores salen del dominio solo por Votacion.Valores (RN-015-7): la revelacion los lee
-// de una votacion de la sesion ya revelada.
-func Revelar(s SesionPlanningPoker, integranteID string, votos map[string]int) (Revelacion, error) {
+// estado a revelada lo guarda quien la llama: esta funcion no modifica la sesion ni la votacion.
+func Revelar(s SesionPlanningPoker, integranteID string, v Votacion) (Revelacion, error) {
 	var errs []error
 	if s.Estado != EstadoVotando {
 		errs = append(errs, ErrVotacionCerrada)
@@ -50,28 +51,22 @@ func Revelar(s SesionPlanningPoker, integranteID string, votos map[string]int) (
 	if !slices.Contains(s.Participantes, integranteID) {
 		errs = append(errs, ErrNoEsParticipante)
 	}
-	if len(NuevaVotacion(s, votos).Votaron()) == 0 {
+	if len(v.Votaron()) == 0 {
 		errs = append(errs, ErrSinVotos)
 	}
 	if err := errors.Join(errs...); err != nil {
 		return Revelacion{}, err
 	}
 
-	revelada := s
-	revelada.Estado = EstadoRevelada
-	votacion := NuevaVotacion(revelada, votos)
-	// La sesion ya figura revelada: Valores no se niega.
-	valores, _ := votacion.Valores()
-
-	r := Revelacion{SesionID: s.ID, Ronda: s.Ronda, Votos: []Voto{}, Faltaron: votacion.Faltan()}
-	for _, p := range votacion.Votaron() {
-		v := valores[p]
-		r.Votos = append(r.Votos, Voto{ParticipanteID: p, Valor: v})
-		if len(r.Votos) == 1 || v < r.Minimo {
-			r.Minimo = v
+	r := Revelacion{SesionID: s.ID, Ronda: s.Ronda, Votos: []Voto{}, Faltaron: v.Faltan()}
+	for _, p := range v.Votaron() {
+		valor := v.votos[p]
+		r.Votos = append(r.Votos, Voto{ParticipanteID: p, Valor: valor})
+		if len(r.Votos) == 1 || valor < r.Minimo {
+			r.Minimo = valor
 		}
-		if len(r.Votos) == 1 || v > r.Maximo {
-			r.Maximo = v
+		if len(r.Votos) == 1 || valor > r.Maximo {
+			r.Maximo = valor
 		}
 	}
 	r.Divergencia = r.Minimo != r.Maximo

@@ -12,28 +12,18 @@ import (
 // ExisteIntegranteEnProyecto, el de US-019).
 var _ app.RepositorioRevelar = (*Base)(nil)
 
-// VotosDeLaRonda devuelve el voto de cada participante en la ronda actual de la sesion, por
-// integrante. Es una copia. Una sesion que no esta, incluido un ID mal formado, no tiene votos.
-func (b *Base) VotosDeLaRonda(_ context.Context, sesionID string) (map[string]int, error) {
+// VotacionDeLaRonda devuelve la votacion de la ronda actual de la sesion. Mientras se vota no deja
+// leer los valores (RN-015-7). Una sesion que no esta, incluido un ID mal formado, no tiene votos:
+// devuelve una votacion vacia.
+func (b *Base) VotacionDeLaRonda(_ context.Context, sesionID string) (planningpoker.Votacion, error) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	return b.votosDeLaRonda(sesionID), nil
-}
-
-// votosDeLaRonda devuelve los votos de la ronda actual de la sesion. Se llama con mu tomado.
-func (b *Base) votosDeLaRonda(sesionID string) map[string]int {
-	votos := map[string]int{}
 	s := b.sesionGuardada(sesionID)
 	if s == nil {
-		return votos
+		return planningpoker.Votacion{}, nil
 	}
-	for clave, valor := range b.votos {
-		if clave.sesionID == s.ID && clave.ronda == s.Ronda {
-			votos[clave.integranteID] = valor
-		}
-	}
-	return votos
+	return b.votacion(*s), nil
 }
 
 // GuardarRevelado replica lo que hace la persistencia (RN-016-8), con mu tomado en lugar
@@ -48,7 +38,7 @@ func (b *Base) GuardarRevelado(_ context.Context, sesionID, integranteID string)
 	if s == nil {
 		return planningpoker.Revelacion{}, fmt.Errorf("%w (id %s)", app.ErrSesionInexistente, sesionID)
 	}
-	revelacion, err := planningpoker.Revelar(*s, integranteID, b.votosDeLaRonda(sesionID))
+	revelacion, err := planningpoker.Revelar(*s, integranteID, b.votacion(*s))
 	if err != nil {
 		return planningpoker.Revelacion{}, err
 	}
