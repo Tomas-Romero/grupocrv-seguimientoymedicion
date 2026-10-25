@@ -96,11 +96,13 @@ var entradasDelCatalogo = []entradaDelCatalogo{
 // exclusionesDelCatalogo son los errores exportados que no se registran a proposito: salen
 // como errores internos. Cada uno lleva el motivo.
 var exclusionesDelCatalogo = map[string]string{
-	"metricas.ErrStoryPointsNegativos": "describe datos propios del sistema que salieron mal, no algo que la persona escribio",
-	"metricas.ErrResumenInconsistente": "describe datos propios del sistema que salieron mal, no algo que la persona escribio",
-	"metricas.ErrNombreVacio":          "describe datos propios del sistema que salieron mal, no algo que la persona escribio",
-	"metricas.ErrHorasInvalidas":       "describe datos propios del sistema que salieron mal (las horas ya entraron validadas por US-019), no algo que la persona escribio",
-	"planningpoker.ErrVotosOcultos":    "solo aparece si un adaptador pide los valores antes de revelar: es un error de programacion (spec US-015, seccion 5)",
+	"metricas.ErrStoryPointsNegativos":         "describe datos propios del sistema que salieron mal, no algo que la persona escribio",
+	"metricas.ErrResumenInconsistente":         "describe datos propios del sistema que salieron mal, no algo que la persona escribio",
+	"metricas.ErrNombreVacio":                  "describe datos propios del sistema que salieron mal, no algo que la persona escribio",
+	"metricas.ErrHorasInvalidas":               "describe datos propios del sistema que salieron mal (las horas ya entraron validadas por US-019), no algo que la persona escribio",
+	"metricas.ErrSprintInvalido":               "describe datos propios del sistema que salieron mal (el numero de sprint sale de la base), no algo que la persona escribio",
+	"metricas.ErrResolucionAnteriorADeteccion": "describe datos propios del sistema que salieron mal, no algo que la persona escribio",
+	"planningpoker.ErrVotosOcultos":            "solo aparece si un adaptador pide los valores antes de revelar: es un error de programacion (spec US-015, seccion 5)",
 }
 
 // CatalogoDeErrores arma el catalogo de errores conocidos de la aplicacion.
