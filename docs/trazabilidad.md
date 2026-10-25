@@ -4,7 +4,7 @@
 > No se edita a mano: se regenera. Enlaza Historia → Spec → Criterios de aceptación →
 > Escenarios BDD → Tests → Código (la guía de la cátedra la pide como evidencia).
 
-Total: 24 especificaciones, 157 criterios de aceptación, 124 con escenario BDD y 135 con test.
+Total: 25 especificaciones, 163 criterios de aceptación, 124 con escenario BDD y 135 con test.
 
 Un criterio sin escenario BDD o sin test se muestra con `—`: o falta la evidencia, o el criterio
 se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no llevan `.feature`).
@@ -32,6 +32,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | US-026 | [specs/US-026-velocidad-equipo.md](../specs/US-026-velocidad-equipo.md) | borrador | 4 | 4 | 1 | `internal/domain/metricas/` |
 | US-027 | [specs/US-027-horas-estimadas-reales.md](../specs/US-027-horas-estimadas-reales.md) | borrador | 6 | 6 | 6 | `internal/domain/metricas/` |
 | US-028 | [specs/US-028-porcentaje-historias-completadas.md](../specs/US-028-porcentaje-historias-completadas.md) | borrador | 5 | 5 | 1 | `internal/domain/metricas/` |
+| US-029 | [specs/US-029-defectos-por-sprint.md](../specs/US-029-defectos-por-sprint.md) | borrador | 6 | 0 | 0 | `internal/domain/metricas/` |
 | T-004 | [specs/T-004-layout-base.md](../specs/T-004-layout-base.md) | revision | 5 | 0 | 4 | `web/templates/`, `internal/adapters/http/`, `cmd/server/` |
 | T-005 | [specs/T-005-validaciones-errores-uniformes.md](../specs/T-005-validaciones-errores-uniformes.md) | borrador | 8 | 0 | 7 | `internal/platform/errores/`, `internal/adapters/http/` |
 | T-011 | [specs/T-011-pantallas-proyectos-backlog.md](../specs/T-011-pantallas-proyectos-backlog.md) | borrador | 5 | 0 | 4 | `internal/app/`, `internal/adapters/memoria/`, `internal/adapters/postgres/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
@@ -249,7 +250,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 - **Spec:** [specs/US-015-voto-individual-oculto.md](../specs/US-015-voto-individual-oculto.md) · **Issue:** #26
 - **Escenarios BDD:** [features/US-015-voto-individual-oculto.feature](../features/US-015-voto-individual-oculto.feature)
 - **Código:** `internal/domain/planningpoker/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/00010_votos_planning_poker.sql`
-- **Tests que la citan:** 28
+- **Tests que la citan:** 31
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
@@ -266,7 +267,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 - **Spec:** [specs/US-016-revelar-estimaciones.md](../specs/US-016-revelar-estimaciones.md) · **Issue:** #27
 - **Escenarios BDD:** [features/US-016-revelar-estimaciones.feature](../features/US-016-revelar-estimaciones.feature)
 - **Código:** `internal/domain/planningpoker/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`
-- **Tests que la citan:** 24
+- **Tests que la citan:** 25
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
@@ -358,6 +359,22 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | CA-028-3 | límite | Un sprint sin historias da cero y no es un error | — |
 | CA-028-4 | límite | El porcentaje se redondea a un decimal | — |
 | CA-028-5 | error | Una historia con story points negativos se rechaza | TestCalcularPorcentajeCompletadas_StoryPointsNegativos |
+
+### US-029 — Calcular defectos detectados y resueltos por sprint
+
+- **Spec:** [specs/US-029-defectos-por-sprint.md](../specs/US-029-defectos-por-sprint.md) · **Issue:** #35
+- **Escenarios BDD:** ninguno
+- **Código:** `internal/domain/metricas/`
+- **Tests que la citan:** 0
+
+| Criterio | Tipo | Escenarios BDD | Tests |
+|---|---|---|---|
+| CA-029-1 | normal | — | — |
+| CA-029-2 | alternativo | — | — |
+| CA-029-3 | alternativo | — | — |
+| CA-029-4 | límite | — | — |
+| CA-029-5 | error | — | — |
+| CA-029-6 | error | — | — |
 
 ### T-004 — Layout base, navegación y sistema visual con Tailwind
 
