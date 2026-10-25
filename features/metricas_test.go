@@ -21,6 +21,7 @@ type metricasEnMemoria struct {
 	items     map[string][]metricas.ItemDelSprint
 	cerrados  []metricas.SprintCerrado
 	horas     map[string][]float64
+	defectos  []metricas.DefectoRegistrado
 }
 
 var _ steps.Metricas = (*metricasEnMemoria)(nil)
@@ -152,4 +153,21 @@ func (m *metricasEnMemoria) HorasDelSprint(sprint string) (steps.HorasDelSprint,
 		Porcentaje:           porcentaje,
 		PorcentajeCalculable: calculable,
 	}, nil
+}
+
+// RegistrarDefecto suma un defecto al contexto, en el orden en que llega. No valida nada: lo hace
+// el dominio al calcular.
+func (m *metricasEnMemoria) RegistrarDefecto(detectadoEn, resueltoEn int) error {
+	m.defectos = append(m.defectos, metricas.DefectoRegistrado{SprintDeteccion: detectadoEn, SprintResolucion: resueltoEn})
+	return nil
+}
+
+// DefectosDelSprint calcula los defectos detectados y resueltos del sprint con los defectos que
+// armo el contexto (US-029).
+func (m *metricasEnMemoria) DefectosDelSprint(sprint int) (steps.ResumenDeDefectos, error) {
+	resumen, err := metricas.CalcularDefectosDelSprint(sprint, m.defectos)
+	if err != nil {
+		return steps.ResumenDeDefectos{}, fmt.Errorf("defectos del sprint %d: %w", sprint, err)
+	}
+	return steps.ResumenDeDefectos{Detectados: resumen.Detectados, Resueltos: resumen.Resueltos}, nil
 }

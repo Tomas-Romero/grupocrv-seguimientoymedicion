@@ -9,7 +9,7 @@ import (
 	"github.com/cucumber/godog"
 )
 
-// Steps del area Metricas (US-025, US-026, US-027 y US-028).
+// Steps del area Metricas (US-025, US-026, US-027, US-028 y US-029).
 
 func registrarMetricas(sc *godog.ScenarioContext, m *mundo) {
 	sc.Step(`^el sprint "([^"]*)" con una historia de (-?\d+) story points completada$`, m.dadoHistoriaDeSprintCompletada)
@@ -34,6 +34,12 @@ func registrarMetricas(sc *godog.ScenarioContext, m *mundo) {
 
 	sc.Step(`^se consulta el porcentaje de historias completadas del sprint "([^"]*)"$`, m.cuandoSeConsultaPorcentajeDeHistorias)
 	sc.Step(`^el porcentaje de historias completadas es (\d+(?:[.,]\d+)?)$`, m.entoncesPorcentajeDeHistoriasEs)
+
+	sc.Step(`^un defecto detectado en el sprint (-?\d+) y resuelto en el sprint (-?\d+)$`, m.dadoDefectoResuelto)
+	sc.Step(`^un defecto detectado en el sprint (-?\d+) sin resolver$`, m.dadoDefectoSinResolver)
+	sc.Step(`^se consultan los defectos del sprint (-?\d+)$`, m.cuandoSeConsultanLosDefectos)
+	sc.Step(`^los defectos detectados son (\d+)$`, m.entoncesDefectosDetectadosSon)
+	sc.Step(`^los defectos resueltos son (\d+)$`, m.entoncesDefectosResueltosSon)
 }
 
 // dadoHistoriaDeSprintCompletada y dadoHistoriaDeSprintSinCompletar arman el
@@ -220,6 +226,52 @@ func compararCifra(nombre, esperada string, obtenida float64) error {
 	const tolerancia = 0.001
 	if math.Abs(obtenida-quiero) > tolerancia {
 		return fmt.Errorf("%s: se esperaba %g, se obtuvo %g", nombre, quiero, obtenida)
+	}
+	return nil
+}
+
+// dadoDefectoResuelto y dadoDefectoSinResolver arman los defectos del contexto de US-029. Aceptan
+// numeros negativos y resoluciones anteriores a la deteccion a proposito: es la unica forma de
+// escribir los escenarios de error (CA-029-5).
+func (m *mundo) dadoDefectoResuelto(detectadoEn, resueltoEn int) error {
+	return m.agregarDefecto(detectadoEn, resueltoEn)
+}
+
+func (m *mundo) dadoDefectoSinResolver(detectadoEn int) error {
+	return m.agregarDefecto(detectadoEn, 0)
+}
+
+func (m *mundo) agregarDefecto(detectadoEn, resueltoEn int) error {
+	metricas, err := m.metricas()
+	if err != nil {
+		return err
+	}
+	if err = metricas.RegistrarDefecto(detectadoEn, resueltoEn); err != nil {
+		return fmt.Errorf("registrar un defecto del contexto: %w", err)
+	}
+	return nil
+}
+
+func (m *mundo) cuandoSeConsultanLosDefectos(sprint int) error {
+	metricas, err := m.metricas()
+	if err != nil {
+		return err
+	}
+	defectos, err := metricas.DefectosDelSprint(sprint)
+	m.defectos = defectos
+	return m.registrarAccion(err)
+}
+
+func (m *mundo) entoncesDefectosDetectadosSon(esperados int) error {
+	if m.defectos.Detectados != esperados {
+		return fmt.Errorf("defectos detectados: se esperaban %d, se obtuvieron %d", esperados, m.defectos.Detectados)
+	}
+	return nil
+}
+
+func (m *mundo) entoncesDefectosResueltosSon(esperados int) error {
+	if m.defectos.Resueltos != esperados {
+		return fmt.Errorf("defectos resueltos: se esperaban %d, se obtuvieron %d", esperados, m.defectos.Resueltos)
 	}
 	return nil
 }
