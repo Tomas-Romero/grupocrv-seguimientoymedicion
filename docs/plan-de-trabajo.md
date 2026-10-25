@@ -266,10 +266,13 @@ adelantado, como entonces:
 |---|---|---|
 | 00009 | US-014 | Tablas de sesiones de Planning Poker y de sus participantes |
 | 00010 | US-015 | Tabla de votos por ronda |
-| 00011 en adelante | US-022 y US-023 | Defectos; el número se reserva al escribir su spec (Sprint 5) |
+| 00011 | US-018 | Columna del valor acordado en las sesiones (la spec lo pidió en su PR, #169) |
+| 00012 en adelante | US-022 y US-023 | Defectos; el número se reserva al escribir su spec (Sprint 5) |
 
-Según las specs actuales, US-011, US-016, US-017, US-018, US-027, US-028, US-029,
-T-011 y T-015 no llevan migración. Si alguna la necesita, lo avisa en el PR de su spec.
+Según las specs actuales, US-011, US-016, US-017, US-027, US-028, US-029, T-011 y T-015
+no llevan migración. US-018 sí la lleva (00011): el plan original decía que no, pero
+guardar el valor acordado en la sesión necesita una columna. Si otra historia la
+necesita, lo avisa en el PR de su spec.
 
 Cada persona escribe las specs de lo que implementa, salvo US-027 y US-028, cuya
 spec ya está escrita y se publica como PR por Tomás. Las de US-014 y US-015 (Vergara)
