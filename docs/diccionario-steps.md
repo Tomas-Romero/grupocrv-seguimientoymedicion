@@ -88,7 +88,7 @@ definidas en `features/steps/mundo.go`. Cada área se conecta en
 | Proyectos | `Proyectos` | US-001, US-002, US-003 | `features/steps/proyectos.go` |
 | Backlog | `Backlog` | US-005, US-006, US-013 | `features/steps/backlog.go` |
 | Sprints | `Sprints` | US-008, US-009, US-010, US-011, US-012 | `features/steps/sprints.go` |
-| Métricas | `Metricas` | US-025, US-026, US-027, US-028 | `features/steps/metricas.go` |
+| Métricas | `Metricas` | US-025, US-026, US-027, US-028, US-029 | `features/steps/metricas.go` |
 | Planning Poker | `PlanningPoker` | US-014 a US-018 | `features/steps/planningpoker.go` |
 
 Un escenario solo necesita las áreas que usa. Un `.feature` de proyectos no
@@ -123,6 +123,8 @@ conectada, falla con `area sin conectar a los steps: <área>`: es a propósito.
 | `Y el integrante "Ana" ya votó 5 en la sesión de la historia "Crear proyecto"` | `^el integrante "([^"]*)" ya votó (-?\d+) en la sesión de la historia "([^"]*)"$` |
 | `Y el sprint "Sprint 1" con 8 horas registradas` | `^el sprint "([^"]*)" con (-?\d+(?:[.,]\d+)?) horas registradas$` |
 | `Y el integrante "Ana" reveló los votos de la sesión de la historia "Crear proyecto"` | `^el integrante "([^"]*)" reveló los votos de la sesión de la historia "([^"]*)"$` |
+| `Y un defecto detectado en el sprint 2 y resuelto en el sprint 3` | `^un defecto detectado en el sprint (-?\d+) y resuelto en el sprint (-?\d+)$` |
+| `Y un defecto detectado en el sprint 2 sin resolver` | `^un defecto detectado en el sprint (-?\d+) sin resolver$` |
 | `Y el integrante "Ana" ya registró 3 horas de "Desarrollo" en la historia "Crear proyecto" el 2026-10-05` | `^el integrante "([^"]*)" ya registró (-?\d+(?:[.,]\d+)?) horas de "([^"]*)" en la historia "([^"]*)" el (\S+)$` |
 
 Un escenario **no repite títulos de historias**: el área Backlog las identifica
@@ -153,6 +155,14 @@ de las frases `el sprint "S" con una historia de N story points ...` (las mismas
 cada línea es una historia del sprint, y se cuentan historias, no Story Points. N acepta coma
 o punto decimal y se compara con una tolerancia de 0,001. Un sprint sin historias da 0 sin
 error; un story point negativo se rechaza con el mensaje de US-025.
+
+**Defectos por sprint (US-029):** `un defecto detectado en el sprint N y resuelto en el sprint M` y
+`un defecto detectado en el sprint N sin resolver` arman los defectos del escenario sin pasar por el
+registro de defectos (US-022): cada línea suma un defecto. Los sprints se escriben por su número, sin
+comillas, y aceptan 0 y números negativos a propósito: es la única forma de escribir los escenarios
+de error. `se consultan los defectos del sprint N` calcula con todos los defectos del contexto, y
+`los defectos detectados son N` y `los defectos resueltos son N` comparan las dos cifras del sprint.
+Un sprint sin defectos da 0 y 0, sin error.
 
 `el sprint cerrado "S" con N story points completados de M planificados` arma un sprint
 ya cerrado para los escenarios de la velocidad (US-026). No valida nada: "8 completados de
@@ -198,6 +208,7 @@ inexistente (CA-005-8, CA-008-10); con esa frase el escenario no lleva
 | `Cuando se consultan los story points completados del sprint "Sprint 1"` | `^se consultan los story points completados del sprint "([^"]*)"$` |
 | `Cuando se consulta la velocidad del equipo` | `^se consulta la velocidad del equipo$` |
 | `Cuando se consulta el porcentaje de historias completadas del sprint "Sprint 1"` | `^se consulta el porcentaje de historias completadas del sprint "([^"]*)"$` |
+| `Cuando se consultan los defectos del sprint 3` | `^se consultan los defectos del sprint (-?\d+)$` |
 | `Cuando se inicia una sesión de Planning Poker sobre la historia "Crear proyecto"` | `^se inicia una sesión de Planning Poker sobre la historia "([^"]*)"$` |
 | `Cuando el integrante "Ana" vota 5 en la sesión de la historia "Crear proyecto"` | `^el integrante "([^"]*)" vota (-?\d+) en la sesión de la historia "([^"]*)"$` |
 | `Cuando se consultan las horas del sprint "Sprint 1"` | `^se consultan las horas del sprint "([^"]*)"$` |
@@ -298,6 +309,8 @@ cuenta caracteres y no bytes.
 | `Y los story points completados son 8` | `^los story points completados son (\d+)$` |
 | `Y la velocidad del equipo es 25` | `^la velocidad del equipo es (\d+(?:[.,]\d+)?)$` |
 | `Y el porcentaje de historias completadas es 66,7` | `^el porcentaje de historias completadas es (\d+(?:[.,]\d+)?)$` |
+| `Y los defectos detectados son 3` | `^los defectos detectados son (\d+)$` |
+| `Y los defectos resueltos son 2` | `^los defectos resueltos son (\d+)$` |
 | `Y las horas estimadas son 7,5` | `^las horas estimadas son (-?\d+(?:[.,]\d+)?)$` |
 | `Y las horas reales son 8` | `^las horas reales son (-?\d+(?:[.,]\d+)?)$` |
 | `Y la desviación de horas es -3` | `^la desviación de horas es (-?\d+(?:[.,]\d+)?)$` |

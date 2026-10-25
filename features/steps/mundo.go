@@ -124,7 +124,7 @@ type HorasDelSprint struct {
 	PorcentajeCalculable bool
 }
 
-// Metricas es el area de US-025, US-026, US-027 y US-028.
+// Metricas es el area de US-025, US-026, US-027, US-028 y US-029.
 type Metricas interface {
 	// AgregarItemAlSprint arma el contexto: suma una historia al sprint, con sus
 	// story points y si esta completada. No valida nada: las reglas se aplican al
@@ -148,6 +148,19 @@ type Metricas interface {
 	// PorcentajeHistoriasCompletadas es el de US-028: el porcentaje de historias
 	// completadas del sprint, sobre los mismos items que arma AgregarItemAlSprint.
 	PorcentajeHistoriasCompletadas(sprint string) (float64, error)
+
+	// RegistrarDefecto arma el contexto de US-029: suma un defecto detectado en un sprint y
+	// resuelto en otro (0 si sigue sin resolver). Los sprints se escriben por su numero y no se
+	// validan: 0, un numero negativo o una resolucion anterior a la deteccion son justo los datos
+	// que tiene que rechazar el dominio.
+	RegistrarDefecto(detectadoEn, resueltoEn int) error
+	DefectosDelSprint(sprint int) (ResumenDeDefectos, error)
+}
+
+// ResumenDeDefectos son los defectos detectados y resueltos de un sprint (US-029).
+type ResumenDeDefectos struct {
+	Detectados int
+	Resueltos  int
 }
 
 // Esfuerzo es el area de US-019 (US-020 y US-021 la amplian).
@@ -254,6 +267,7 @@ type mundo struct {
 	velocidad           float64
 	horas               HorasDelSprint
 	porcentajeHistorias float64
+	defectos            ResumenDeDefectos
 	anteriores          SprintsAnteriores
 }
 
