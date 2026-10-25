@@ -30,30 +30,43 @@ func estadoYRondaGuardados(ctx context.Context, t *testing.T, e escenarioPoker, 
 	return f.estado, f.ronda
 }
 
-// US-016 / RN-016-7: los votos que se piden son los de la ronda actual; los de una ronda
-// anterior no entran. Una sesion que no esta, o con un ID mal formado, no tiene votos.
-func TestVotosDeLaRonda(t *testing.T) {
+// US-016 / RN-016-7, RN-015-7: la votacion que entrega el repositorio es la de la ronda actual (los votos de
+// una ronda anterior no entran) y, mientras se vota, no deja leer los valores: el puerto nunca los entrega en
+// crudo. Una sesion que no esta, o con un ID mal formado, no tiene votos.
+func TestVotacionDeLaRonda(t *testing.T) {
 	ctx := contexto(t)
 	e, sesion := conSesionEnPostgres(ctx, t)
-	ana, beto := e.integrantes[0], e.integrantes[1]
+	ana, beto, caro := e.integrantes[0], e.integrantes[1], e.integrantes[2]
 	votarEn(ctx, t, e, sesion.ID, map[string]int{ana: 5, beto: 8})
 
-	votos, err := e.repo.VotosDeLaRonda(ctx, sesion.ID)
-	if err != nil || !reflect.DeepEqual(votos, map[string]int{ana: 5, beto: 8}) {
-		t.Fatalf("VotosDeLaRonda = %v, %v; se esperaba el voto de ana y de beto", votos, err)
+	v, err := e.repo.VotacionDeLaRonda(ctx, sesion.ID)
+	if err != nil || !reflect.DeepEqual(v.Votaron(), []string{ana, beto}) || !reflect.DeepEqual(v.Faltan(), []string{caro}) {
+		t.Fatalf("votaron %q y faltan %q (%v); se esperaba ana y beto, y falta caro", v.Votaron(), v.Faltan(), err)
+	}
+	if _, err := v.Valores(); !errors.Is(err, planningpoker.ErrVotosOcultos) {
+		t.Errorf("la votacion deja leer los valores mientras se vota: %v", err)
 	}
 
-	if _, err := e.pool.Exec(ctx, `UPDATE sesiones_planning_poker SET ronda = 2 WHERE id = $1`, sesion.ID); err != nil {
+	// Revelada, los valores se pueden leer.
+	if _, err := e.pool.Exec(ctx, `UPDATE sesiones_planning_poker SET estado = 'revelada' WHERE id = $1`, sesion.ID); err != nil {
+		t.Fatalf("revelar la sesion: %v", err)
+	}
+	revelada, _ := e.repo.VotacionDeLaRonda(ctx, sesion.ID)
+	if valores, err := revelada.Valores(); err != nil || !reflect.DeepEqual(valores, map[string]int{ana: 5, beto: 8}) {
+		t.Errorf("Valores con la sesion revelada = %v, %v; se esperaba el voto de ana y de beto", valores, err)
+	}
+
+	if _, err := e.pool.Exec(ctx, `UPDATE sesiones_planning_poker SET estado = 'votando', ronda = 2 WHERE id = $1`, sesion.ID); err != nil {
 		t.Fatalf("pasar a la ronda 2: %v", err)
 	}
-	votos, err = e.repo.VotosDeLaRonda(ctx, sesion.ID)
-	if err != nil || len(votos) != 0 {
-		t.Errorf("en la ronda 2 = %v, %v; se esperaba ningun voto (los de la ronda 1 no entran)", votos, err)
+	v, err = e.repo.VotacionDeLaRonda(ctx, sesion.ID)
+	if err != nil || len(v.Votaron()) != 0 || len(v.Faltan()) != 3 {
+		t.Errorf("en la ronda 2 votaron %q y faltan %q (%v); se esperaba que no hubiera votos (los de la ronda 1 no entran)", v.Votaron(), v.Faltan(), err)
 	}
 
 	for _, id := range []string{idQueNoEsDeNingunItem, "no-es-un-uuid"} {
-		if votos, err := e.repo.VotosDeLaRonda(ctx, id); err != nil || len(votos) != 0 {
-			t.Errorf("VotosDeLaRonda(%q) = %v, %v; se esperaba una lista vacia y sin error", id, votos, err)
+		if v, err := e.repo.VotacionDeLaRonda(ctx, id); err != nil || len(v.Votaron()) != 0 {
+			t.Errorf("VotacionDeLaRonda(%q) votaron %q (%v); se esperaba una votacion vacia y sin error", id, v.Votaron(), err)
 		}
 	}
 }

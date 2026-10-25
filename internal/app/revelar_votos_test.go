@@ -38,8 +38,11 @@ func (r *repositorioRevelarFalso) ExisteIntegranteEnProyecto(_ context.Context, 
 	return r.existeIntegrante, r.errIntegrante
 }
 
-func (r *repositorioRevelarFalso) VotosDeLaRonda(_ context.Context, _ string) (map[string]int, error) {
-	return r.votos, r.errVotos
+func (r *repositorioRevelarFalso) VotacionDeLaRonda(_ context.Context, _ string) (planningpoker.Votacion, error) {
+	if r.errVotos != nil {
+		return planningpoker.Votacion{}, r.errVotos
+	}
+	return planningpoker.NuevaVotacion(r.sesion, r.votos), nil
 }
 
 func (r *repositorioRevelarFalso) GuardarRevelado(_ context.Context, sesionID, integranteID string) (planningpoker.Revelacion, error) {
