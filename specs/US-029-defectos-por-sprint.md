@@ -7,7 +7,7 @@
 | **Issue** | #35 |
 | **Escenarios BDD** | `features/US-029-defectos-por-sprint.feature` |
 | **Código** | `internal/domain/metricas/` |
-| **Última actualización** | 2026-10-24 |
+| **Última actualización** | 2026-10-25 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
 > implementación. Si durante la implementación descubrís que algo de acá está
@@ -114,6 +114,13 @@ Son conteos, sin redondeo. `Resueltos` cuenta los defectos que se resolvieron
   Los números aceptan 0 y negativos a propósito: es la única forma de escribir
   los escenarios de error. Los mensajes se comprueban con `el mensaje de error
   indica "..."`.
+- **Nombres en el código.** La función es `CalcularDefectosDelSprint(sprint int, defectos
+  []DefectoRegistrado) (ResumenDefectos, error)`, en `internal/domain/metricas/defectos.go`. Los
+  mensajes de los errores son "el numero de sprint tiene que ser 1 o mayor" y "el defecto se
+  resolvio antes de detectarse", y cada uno se envuelve con el sprint consultado o con la posición
+  y los sprints del defecto. Para los escenarios, la interfaz `Metricas` de los steps suma
+  `RegistrarDefecto(detectadoEn, resueltoEn int)` y `DefectosDelSprint(sprint int)`, que el
+  adaptador en memoria resuelve con esta misma función.
 - **Fuera de alcance.** Registrar y cambiar defectos (US-022 y US-023), listarlos
   (US-024), los defectos abiertos acumulados al cierre de cada Sprint, el gráfico
   de evolución (US-032), la pantalla y el desglose por severidad.
