@@ -17,10 +17,10 @@ type RepositorioRevelar interface {
 	// de US-019).
 	ExisteIntegranteEnProyecto(ctx context.Context, proyectoID, integranteID string) (bool, error)
 
-	// VotosDeLaRonda devuelve el voto de cada participante en la ronda actual de la
-	// sesion, por integrante. Es la entrada del dominio para validar: los valores no
-	// salen del caso de uso (RN-015-7).
-	VotosDeLaRonda(ctx context.Context, sesionID string) (map[string]int, error)
+	// VotacionDeLaRonda devuelve la votacion de la ronda actual de la sesion. Mientras se
+	// vota no deja leer los valores (RN-015-7): ningun puerto los entrega en crudo. Una sesion
+	// que no esta no tiene votos: devuelve una votacion vacia.
+	VotacionDeLaRonda(ctx context.Context, sesionID string) (planningpoker.Votacion, error)
 
 	// GuardarRevelado revela la sesion en una transaccion, con los pasos de RN-016-8:
 	// bloquea la sesion, lee sus participantes y los votos de la ronda, vuelve a
@@ -62,14 +62,14 @@ func (c *RevelarVotos) Ejecutar(ctx context.Context, sesionID, integranteID stri
 		return planningpoker.Revelacion{}, fmt.Errorf("%w (id %s)", ErrIntegranteInexistente, integranteID)
 	}
 
-	votos, err := c.repo.VotosDeLaRonda(ctx, sesionID)
+	votacion, err := c.repo.VotacionDeLaRonda(ctx, sesionID)
 	if err != nil {
 		return planningpoker.Revelacion{}, fmt.Errorf("leer los votos de la sesion %s: %w", sesionID, err)
 	}
 
 	// Los errores del dominio se devuelven tal cual: su mensaje es el que ve la persona
 	// (spec US-016, seccion 7).
-	if _, err := planningpoker.Revelar(sesion, integranteID, votos); err != nil {
+	if _, err := planningpoker.Revelar(sesion, integranteID, votacion); err != nil {
 		return planningpoker.Revelacion{}, err
 	}
 
