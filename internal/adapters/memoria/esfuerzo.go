@@ -56,8 +56,8 @@ func (b *Base) RegistrarEsfuerzo(_ context.Context, r esfuerzo.RegistroEsfuerzo)
 
 // Esfuerzos devuelve una copia de los registros de esfuerzo del proyecto, en orden
 // de alta. Un proyecto sin registros, o que no existe, devuelve una lista vacia. Lo
-// usan los escenarios para verificar lo que quedo guardado: todavia no hay casos de
-// uso de lectura (US-020).
+// usan los escenarios de US-019 para verificar lo que quedo guardado; la consulta de
+// US-020 es LeerEsfuerzo.
 func (b *Base) Esfuerzos(proyectoID string) []esfuerzo.RegistroEsfuerzo {
 	b.mu.Lock()
 	defer b.mu.Unlock()
