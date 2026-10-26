@@ -2,6 +2,8 @@ package app_test
 
 import (
 	"context"
+	"errors"
+	"strings"
 	"testing"
 
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/app"
@@ -82,5 +84,68 @@ func TestRegistrarDefecto_Registra(t *testing.T) {
 	}
 	if len(repo.registrados) != 1 || repo.registrados[0].ID != "" {
 		t.Errorf("registrados = %+v, quiero uno solo y sin ID: lo genera la base", repo.registrados)
+	}
+}
+
+// US-022 / RN-022-5 / CL-022-7 a CL-022-9 / CA-022-9 a CA-022-11: se verifica en el orden
+// proyecto, historia, sprint de deteccion. Lo primero que no existe se devuelve solo,
+// reconocible con errors.Is y con el ID recibido, sin validar los datos (que aca son
+// invalidos a proposito) y sin registrar nada (RN-022-9).
+func TestRegistrarDefecto_LoQueNoExiste(t *testing.T) {
+	casos := []struct {
+		nombre   string
+		repo     *repositorioDefectosFalso
+		esperado error
+		idEnMsg  string
+		llamadas string
+	}{
+		{"el proyecto no existe", &repositorioDefectosFalso{}, app.ErrProyectoInexistente, "proyecto-1", "proyecto"},
+		{"la historia no existe o no es del proyecto", &repositorioDefectosFalso{existeProyecto: true}, app.ErrItemInexistente, "item-1", "proyecto,item"},
+		{"el sprint no existe o no es del proyecto", &repositorioDefectosFalso{existeProyecto: true, existeItem: true}, app.ErrSprintInexistente, "sprint-1", "proyecto,item,sprint"},
+	}
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			registrar := app.NuevoRegistrarDefecto(c.repo)
+
+			// Datos invalidos (descripcion y severidad) para comprobar que no se miran.
+			_, err := registrar.Ejecutar(context.Background(), "proyecto-1", "item-1", "sprint-1", "", "urgente")
+
+			if !errors.Is(err, c.esperado) {
+				t.Fatalf("error = %v, quiero %v", err, c.esperado)
+			}
+			if errors.Is(err, defecto.ErrDescripcionVacia) || errors.Is(err, defecto.ErrSeveridadInvalida) {
+				t.Errorf("el error %q se unio con errores de validacion", err)
+			}
+			if !strings.Contains(err.Error(), c.idEnMsg) {
+				t.Errorf("el error %q no indica el ID %s", err, c.idEnMsg)
+			}
+			if strings.Join(c.repo.llamadas, ",") != c.llamadas {
+				t.Errorf("llamadas = %v, quiero %s", c.repo.llamadas, c.llamadas)
+			}
+			if len(c.repo.registrados) != 0 {
+				t.Errorf("se registraron %d defectos, quiero ninguno", len(c.repo.registrados))
+			}
+		})
+	}
+}
+
+// US-022 / RN-022-5: la historia y el sprint se buscan DENTRO del proyecto, y el orden de
+// las llamadas es el de la spec, con el registro al final.
+func TestRegistrarDefecto_VerificaDentroDelProyecto(t *testing.T) {
+	repo := todoExisteParaDefectos()
+
+	_, err := app.NuevoRegistrarDefecto(repo).Ejecutar(context.Background(), "proyecto-1", "item-1", "sprint-1", "Falla", defecto.SeveridadBaja)
+	if err != nil {
+		t.Fatalf("Ejecutar: %v", err)
+	}
+
+	if esperado := "proyecto,item,sprint,registrar"; strings.Join(repo.llamadas, ",") != esperado {
+		t.Errorf("orden de llamadas = %v, quiero %s", repo.llamadas, esperado)
+	}
+	if repo.itemConsultado != [2]string{"proyecto-1", "item-1"} {
+		t.Errorf("la historia se busco con %v: tiene que buscarse dentro del proyecto", repo.itemConsultado)
+	}
+	if repo.sprintConsult != [2]string{"proyecto-1", "sprint-1"} {
+		t.Errorf("el sprint se busco con %v: tiene que buscarse dentro del proyecto", repo.sprintConsult)
 	}
 }
