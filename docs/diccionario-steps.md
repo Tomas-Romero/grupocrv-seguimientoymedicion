@@ -122,6 +122,7 @@ conectada, falla con `area sin conectar a los steps: <área>`: es a propósito.
 | `Y una sesión de Planning Poker sobre la historia "Crear proyecto"` | `^una sesión de Planning Poker sobre la historia "([^"]*)"$` |
 | `Y el integrante "Ana" ya votó 5 en la sesión de la historia "Crear proyecto"` | `^el integrante "([^"]*)" ya votó (-?\d+) en la sesión de la historia "([^"]*)"$` |
 | `Y el sprint "Sprint 1" con 8 horas registradas` | `^el sprint "([^"]*)" con (-?\d+(?:[.,]\d+)?) horas registradas$` |
+| `Y el integrante "Ana" reveló los votos de la sesión de la historia "Crear proyecto"` | `^el integrante "([^"]*)" reveló los votos de la sesión de la historia "([^"]*)"$` |
 | `Y el integrante "Ana" ya registró 3 horas de "Desarrollo" en la historia "Crear proyecto" el 2026-10-05` | `^el integrante "([^"]*)" ya registró (-?\d+(?:[.,]\d+)?) horas de "([^"]*)" en la historia "([^"]*)" el (\S+)$` |
 
 Un escenario **no repite títulos de historias**: el área Backlog las identifica
@@ -200,6 +201,8 @@ inexistente (CA-005-8, CA-008-10); con esa frase el escenario no lleva
 | `Cuando se inicia una sesión de Planning Poker sobre la historia "Crear proyecto"` | `^se inicia una sesión de Planning Poker sobre la historia "([^"]*)"$` |
 | `Cuando el integrante "Ana" vota 5 en la sesión de la historia "Crear proyecto"` | `^el integrante "([^"]*)" vota (-?\d+) en la sesión de la historia "([^"]*)"$` |
 | `Cuando se consultan las horas del sprint "Sprint 1"` | `^se consultan las horas del sprint "([^"]*)"$` |
+| `Cuando el integrante "Ana" revela los votos de la sesión de la historia "Crear proyecto"` | `^el integrante "([^"]*)" revela los votos de la sesión de la historia "([^"]*)"$` |
+| `Cuando el integrante "Ana" registra la estimación acordada de 5 en la sesión de la historia "Crear proyecto"` | `^el integrante "([^"]*)" registra la estimación acordada de (-?\d+) en la sesión de la historia "([^"]*)"$` |
 | `Cuando el integrante "Ana" registra 2,5 horas de "Desarrollo" en la historia "Crear proyecto" el 2026-10-05` | `^el integrante "([^"]*)" registra (-?\d+(?:[.,]\d+)?) horas de "([^"]*)" en la historia "([^"]*)" el (\S+)$` |
 
 **Propuesta US-003:** `se registra al integrante "X" con email "..." y rol "Y"`
@@ -307,6 +310,10 @@ cuenta caracteres y no bytes.
 | `Y en la sesión de la historia "Crear proyecto" votaron:` + tabla de nombres | `^en la sesión de la historia "([^"]*)" votaron:$` |
 | `Y en la sesión de la historia "Crear proyecto" faltan votar:` + tabla de nombres | `^en la sesión de la historia "([^"]*)" faltan votar:$` |
 | `Y los votos de la sesión de la historia "Crear proyecto" están ocultos` | `^los votos de la sesión de la historia "([^"]*)" están ocultos$` |
+| `Y los votos de la sesión de la historia "Crear proyecto" son:` + tabla `integrante \| voto` | `^los votos de la sesión de la historia "([^"]*)" son:$` |
+| `Y hay divergencia en la sesión de la historia "Crear proyecto"` | `^hay divergencia en la sesión de la historia "([^"]*)"$` |
+| `Y no hay divergencia en la sesión de la historia "Crear proyecto"` | `^no hay divergencia en la sesión de la historia "([^"]*)"$` |
+| `Y la estimación acordada de la sesión de la historia "Crear proyecto" es 5` | `^la estimación acordada de la sesión de la historia "([^"]*)" es (\d+)$` |
 
 `la operación es exitosa` y `la operación se rechaza` miran el error que dejó el
 último `Cuando`. Son los dos steps que más vas a usar: todo escenario de error
@@ -336,6 +343,22 @@ para poder escribir el rechazo de un valor fuera de la escala. Con la sesión vo
 escenarios ven quién votó y quién falta, pero no los valores: `los votos ... están
 ocultos` comprueba justamente eso. Una tabla de Gherkin no puede estar vacía, así que
 "no falta nadie" no tiene frase.
+
+**Revelar (US-016):** `el integrante "X" revela los votos ...` cierra la votación de la ronda
+de la sesión abierta de la historia, y su variante de contexto `reveló` sirve para armar una
+sesión ya revelada. Quien revela se busca por nombre, igual que quien vota. Después de
+revelar, `los votos ... son:` compara los votos con una tabla de dos columnas
+(`integrante | voto`, la primera fila es el encabezado) en el orden de los participantes, y
+solo incluye a quienes votaron: los que faltan se comprueban con `faltan votar`. Con la
+sesión todavía votando (por ejemplo, después de un revelado rechazado), pedir los votos
+falla: es la misma garantía de `están ocultos`. `hay divergencia` y `no hay divergencia`
+leen lo que devolvió la última revelación de esa historia.
+
+**Estimación acordada (US-018):** `el integrante "X" registra la estimación acordada de N`
+finaliza la sesión de la historia con ese valor y la deja estimada. Una sesión finalizada
+ya no está abierta, así que las frases de la sesión (estado, participantes, votos y
+estimación acordada) leen la **última** sesión de la historia. El número acepta negativos
+para poder escribir el rechazo de un valor fuera de la escala.
 
 `está sin estimar` y `tiene N story points` no son lo mismo: una historia recién
 creada está sin estimar, no tiene 0 story points (RN-005-7). Los estados se

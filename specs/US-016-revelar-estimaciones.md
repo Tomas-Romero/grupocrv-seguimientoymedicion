@@ -7,7 +7,7 @@
 | **Issue** | #27 |
 | **Escenarios BDD** | `features/US-016-revelar-estimaciones.feature` |
 | **Código** | `internal/domain/planningpoker/` (revelar y divergencia), caso de uso en `internal/app/`, repositorio en `internal/adapters/postgres/` y `internal/adapters/memoria/`. Sin migración nueva |
-| **Última actualización** | 2026-10-22 |
+| **Última actualización** | 2026-10-25 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
 > implementación. Si durante la implementación descubrís que algo de acá está
@@ -43,9 +43,10 @@ Revelar pasa por las capas en este orden:
    (`ErrSesionInexistente`) y que el integrante exista y sea del proyecto de la
    sesión (`ErrIntegranteInexistente`), en ese orden y sin validar nada más
    (RN-016-1). Son las mismas lecturas y los mismos errores que votar (US-015).
-2. **Dominio** (`internal/domain/planningpoker`): una función pura recibe el
-   estado de la sesión, la lista de participantes, los votos de la ronda y quién
-   revela; valida todo y devuelve la revelación o todos los errores.
+2. **Dominio** (`internal/domain/planningpoker`): una función pura recibe la
+   sesión (estado y participantes), quién revela y la votación de la ronda;
+   valida todo y devuelve la revelación o todos los errores. Recibe la
+   `Votacion` de US-015 y no los votos en crudo (RN-016-12).
 3. **Persistencia:** pasa la sesión a `revelada` en una transacción con la
    sesión bloqueada (RN-016-8).
 
@@ -125,6 +126,13 @@ Entre paréntesis, la capa que la hace cumplir.
   es participante, sin votos.
 - **RN-016-11** (aplicación) — La operación es de todo o nada: revelar no
   modifica ningún voto.
+- **RN-016-12** (dominio y puertos) — **Ningún puerto entrega los valores en
+  crudo.** El repositorio entrega la `Votacion` de la ronda (US-015), que mientras
+  la sesión está `votando` no deja leer los valores (RN-015-7); `Revelar` los lee
+  de esa votación, dentro del dominio, al revelar. Así la garantía del voto oculto
+  vale en todas las capas y no depende de la buena conducta del código de la
+  aplicación: una lectura futura que reutilice el puerto (por ejemplo, una pantalla
+  que muestre la sesión) no puede filtrar los votos.
 
 ## 5. Restricciones
 
@@ -156,6 +164,13 @@ Entre paréntesis, la capa que la hace cumplir.
   | `Entonces los votos de la sesión de la historia "H" son:` + tabla `integrante \| voto` | `^los votos de la sesión de la historia "([^"]*)" son:$` |
   | `Y hay divergencia en la sesión de la historia "H"` | `^hay divergencia en la sesión de la historia "([^"]*)"$` |
   | `Y no hay divergencia en la sesión de la historia "H"` | `^no hay divergencia en la sesión de la historia "([^"]*)"$` |
+  | `Y el integrante "X" reveló los votos de la sesión de la historia "H"` (contexto) | `^el integrante "([^"]*)" reveló los votos de la sesión de la historia "([^"]*)"$` |
+
+  La variante `reveló` es la de contexto, como `ya votó` en US-015: arma una sesión ya
+  revelada para los escenarios de CA-016-7 y de CA-015-6 (con la sesión revelada no se
+  vota), que US-015 no podía escribir. `los votos ... son:` lleva una tabla de dos columnas
+  con encabezado (`integrante | voto`) y solo incluye a quienes votaron, en el orden de los
+  participantes. `hay divergencia` lee lo que devolvió la última revelación de la historia.
 
   Los escenarios reutilizan las frases de US-014 (`Dado una sesión de Planning
   Poker sobre la historia "X"`, `Entonces la sesión de la historia "X" está
@@ -164,6 +179,14 @@ Entre paréntesis, la capa que la hace cumplir.
   votar:`, `Y los votos de la sesión de la historia "H" están ocultos`). Después
   de un rechazo, los escenarios comprueban que la sesión sigue `votando` y que
   los votos siguen ocultos.
+- **Nombres en el código.** El caso de uso es `RevelarVotos` y su puerto
+  `RepositorioRevelar`, con `ObtenerSesion` y `ExisteIntegranteEnProyecto` (los de
+  US-015), `VotacionDeLaRonda` y `GuardarRevelado`. En el dominio, `planningpoker.Revelar`
+  recibe la sesión, quién revela y la `Votacion` de la ronda, y devuelve una `Revelacion`;
+  el cambio de estado a `revelada` lo guarda el repositorio. `Votacion` no gana métodos: la
+  garantía de que sus únicos métodos exportados son los de US-015 se mantiene, y `Revelar`
+  lee los valores desde dentro del paquete, que es el único lugar donde se leen antes de que
+  la sesión esté revelada (se pidió en la revisión del PR).
 - **Fuera de alcance.** Votar (US-015), abrir una ronda nueva con los mismos
   participantes (US-017), registrar la estimación acordada y finalizar la sesión
   (US-018), consultar una votación ya revelada desde la pantalla, la pantalla de
