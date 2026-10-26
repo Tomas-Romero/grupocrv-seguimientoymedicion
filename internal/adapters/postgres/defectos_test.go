@@ -453,3 +453,37 @@ func TestDefectos_Indices(t *testing.T) {
 		}
 	}
 }
+
+// US-022 / CA-022-4 / CL-022-11 / RN-022-7: se puede registrar un defecto sobre una historia
+// pendiente, en progreso o completada, este o no en un sprint, y la historia no cambia.
+func TestRegistrarDefecto_SobreHistoriaEnCualquierEstado(t *testing.T) {
+	ctx := contexto(t)
+	e := nuevoEscenarioDefectos(ctx, t)
+
+	casos := []struct {
+		nombre string
+		estado string
+	}{
+		{"pendiente", "pendiente"},
+		{"en progreso", "en_progreso"},
+		{"completada", "completado"},
+	}
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			// completado_con_fecha exige la fecha de completado si, y solo si, esta completado.
+			const preparar = `UPDATE items_backlog SET estado = $2, completado_en = CASE WHEN $2 = 'completado' THEN now() END WHERE id = $1`
+			if _, err := e.pool.Exec(ctx, preparar, e.item, c.estado); err != nil {
+				t.Fatalf("dejar la historia %s: %v", c.estado, err)
+			}
+
+			if _, err := e.repo.RegistrarDefecto(ctx, e.defecto(t, "Falla", defecto.SeveridadAlta, 1)); err != nil {
+				t.Fatalf("RegistrarDefecto: %v", err)
+			}
+
+			var estado string
+			if err := e.pool.QueryRow(ctx, `SELECT estado FROM items_backlog WHERE id = $1`, e.item).Scan(&estado); err != nil || estado != c.estado {
+				t.Errorf("estado de la historia = %q (error %v), quiero %q: registrar un defecto no la cambia", estado, err, c.estado)
+			}
+		})
+	}
+}

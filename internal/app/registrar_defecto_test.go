@@ -87,7 +87,7 @@ func TestRegistrarDefecto_Registra(t *testing.T) {
 	}
 }
 
-// US-022 / RN-022-5 / CL-022-7 a CL-022-9 / CA-022-9 a CA-022-11: se verifica en el orden
+// US-022 / RN-022-5 / RN-022-9 / CL-022-7 / CL-022-8 / CL-022-9 / CA-022-9 / CA-022-10 / CA-022-11: se verifica en el orden
 // proyecto, historia, sprint de deteccion. Lo primero que no existe se devuelve solo,
 // reconocible con errors.Is y con el ID recibido, sin validar los datos (que aca son
 // invalidos a proposito) y sin registrar nada (RN-022-9).
