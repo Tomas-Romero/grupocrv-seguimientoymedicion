@@ -8,6 +8,7 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/app"
+	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/backlog"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/planningpoker"
 )
 
@@ -39,14 +40,15 @@ func leerSesion(ctx context.Context, q interface {
 	lectorDeFilas
 }, sesionID, bloqueo string) (planningpoker.SesionPlanningPoker, bool, error) {
 	consulta := `
-SELECT s.id::text, s.item_id::text, i.proyecto_id::text, s.estado, s.ronda
+SELECT s.id::text, s.item_id::text, i.proyecto_id::text, s.estado, s.ronda, s.valor_acordado
 FROM sesiones_planning_poker s JOIN items_backlog i ON i.id = s.item_id
 WHERE s.id = $1 ` + bloqueo
 	var (
-		s      planningpoker.SesionPlanningPoker
-		estado string
+		s             planningpoker.SesionPlanningPoker
+		estado        string
+		valorAcordado *int32
 	)
-	err := q.QueryRow(ctx, consulta, sesionID).Scan(&s.ID, &s.ItemID, &s.ProyectoID, &estado, &s.Ronda)
+	err := q.QueryRow(ctx, consulta, sesionID).Scan(&s.ID, &s.ItemID, &s.ProyectoID, &estado, &s.Ronda, &valorAcordado)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return planningpoker.SesionPlanningPoker{}, false, nil
 	}
@@ -54,6 +56,13 @@ WHERE s.id = $1 ` + bloqueo
 		return planningpoker.SesionPlanningPoker{}, false, fmt.Errorf("leer la sesion %s: %w", sesionID, err)
 	}
 	s.Estado = planningpoker.Estado(estado)
+	// El nulo es "sin acordar" (US-018). Un valor fuera de la escala es un dato corrupto: se
+	// informa, no se oculta (mismo criterio que la estimacion en leerItem).
+	if valorAcordado != nil {
+		if s.ValorAcordado, err = backlog.NuevosStoryPoints(int(*valorAcordado)); err != nil {
+			return planningpoker.SesionPlanningPoker{}, false, fmt.Errorf("la sesion %s tiene un valor acordado invalido: %w", sesionID, err)
+		}
+	}
 
 	const participantes = `
 SELECT p.integrante_id::text

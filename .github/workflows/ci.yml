@@ -51,6 +51,10 @@ jobs:
           version: v1.64.8
           args: --timeout=5m
 
+      # T-017: los workflows tambien se analizan (sintaxis, expresiones, secretos mal usados).
+      - name: Validar los workflows (actionlint)
+        run: go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.7
+
   # ---------------------------------------------------------------
   # 2. Tests unitarios + cobertura con umbrales
   # ---------------------------------------------------------------
