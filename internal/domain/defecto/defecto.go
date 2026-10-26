@@ -27,6 +27,9 @@ var (
 	// ErrDescripcionMuyLarga: la descripcion recortada pasa los 2000 caracteres
 	// (RN-022-1). Se devuelve envuelto, indicando cuantos tiene.
 	ErrDescripcionMuyLarga = errors.New("la descripcion no puede tener mas de 2000 caracteres")
+	// ErrSeveridadInvalida: la severidad no es critica, alta, media ni baja, o esta
+	// vacia (RN-022-2). Se devuelve envuelto, indicando el valor recibido.
+	ErrSeveridadInvalida = errors.New("la severidad tiene que ser critica, alta, media o baja")
 )
 
 // Severidad es la gravedad de un defecto (RN-022-2).
@@ -80,6 +83,13 @@ func Nuevo(proyectoID, itemID, sprintDeteccionID, descripcion string, severidad 
 		return Defecto{}, ErrDescripcionVacia
 	case largo > MaxLargoDescripcion:
 		return Defecto{}, fmt.Errorf("%w (tiene %d)", ErrDescripcionMuyLarga, largo)
+	}
+
+	// RN-022-2: valores exactos; no se pasa a minuscula ni se recorta.
+	switch severidad {
+	case SeveridadCritica, SeveridadAlta, SeveridadMedia, SeveridadBaja:
+	default:
+		return Defecto{}, fmt.Errorf("%w (se recibio %q)", ErrSeveridadInvalida, string(severidad))
 	}
 
 	return Defecto{
