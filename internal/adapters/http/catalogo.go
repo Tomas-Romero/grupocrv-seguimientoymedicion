@@ -3,6 +3,7 @@ package httpadapter
 import (
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/app"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/backlog"
+	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/defecto"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/esfuerzo"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/integrante"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/planningpoker"
@@ -36,6 +37,11 @@ var entradasDelCatalogo = []entradaDelCatalogo{
 	{"backlog.ErrCriterioVacio", backlog.ErrCriterioVacio, errores.Validacion, "criterios"},
 	{"backlog.ErrEstimacionFueraDeEscala", backlog.ErrEstimacionFueraDeEscala, errores.Validacion, "estimacion"},
 	{"backlog.ErrItemCompletado", backlog.ErrItemCompletado, errores.Conflicto, ""},
+
+	// defecto
+	{"defecto.ErrDescripcionVacia", defecto.ErrDescripcionVacia, errores.Validacion, "descripcion"},
+	{"defecto.ErrDescripcionMuyLarga", defecto.ErrDescripcionMuyLarga, errores.Validacion, "descripcion"},
+	{"defecto.ErrSeveridadInvalida", defecto.ErrSeveridadInvalida, errores.Validacion, "severidad"},
 
 	// esfuerzo
 	{"esfuerzo.ErrFechaVacia", esfuerzo.ErrFechaVacia, errores.Validacion, "fecha"},
