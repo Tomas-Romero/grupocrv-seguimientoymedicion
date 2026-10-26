@@ -108,7 +108,7 @@ puntero nulo dentro de la interfaz).
   van en `snake_case` y en español, y son los que usan los formularios de
   T-011: `nombre`, `email`, `rol`, `titulo`, `prioridad`, `criterios`,
   `estimacion`, `sprint_goal`, `fecha_inicio`, `fecha_fin`, `fecha`,
-  `actividad`, `horas`.
+  `actividad`, `horas`, `descripcion`, `severidad`.
 - **RN-T005-9** — Un `*ErrorDeValidacion` (lo que arma el formulario) se
   clasifica como `validacion` y conserva sus campos y mensajes tal cual.
   Puede venir solo o unido con errores del dominio.
