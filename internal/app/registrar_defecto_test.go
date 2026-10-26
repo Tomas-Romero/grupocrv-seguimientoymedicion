@@ -2,8 +2,6 @@ package app_test
 
 import (
 	"context"
-	"errors"
-	"strings"
 	"testing"
 
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/app"
