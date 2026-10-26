@@ -8,6 +8,27 @@
 // aplicacion.
 package defecto
 
+import (
+	"errors"
+	"fmt"
+	"strings"
+	"unicode/utf8"
+)
+
+// MaxLargoDescripcion es el maximo de caracteres de la descripcion recortada
+// (RN-022-1).
+const MaxLargoDescripcion = 2000
+
+// Errores del paquete (spec US-022, seccion 7). Son valores para compararlos con
+// errors.Is.
+var (
+	// ErrDescripcionVacia: la descripcion esta vacia o tiene solo espacios (RN-022-1).
+	ErrDescripcionVacia = errors.New("la descripcion es obligatoria")
+	// ErrDescripcionMuyLarga: la descripcion recortada pasa los 2000 caracteres
+	// (RN-022-1). Se devuelve envuelto, indicando cuantos tiene.
+	ErrDescripcionMuyLarga = errors.New("la descripcion no puede tener mas de 2000 caracteres")
+)
+
 // Severidad es la gravedad de un defecto (RN-022-2).
 type Severidad string
 
@@ -50,6 +71,17 @@ type Defecto struct {
 // Los IDs se copian tal cual: que existan y sean del proyecto lo verifica la capa de
 // aplicacion (RN-022-5), nunca el dominio.
 func Nuevo(proyectoID, itemID, sprintDeteccionID, descripcion string, severidad Severidad) (Defecto, error) {
+	// RN-022-1: se recorta antes de validar y se guarda recortada. El limite se mide en
+	// caracteres y no en bytes. Una descripcion de solo espacios queda vacia: es
+	// ErrDescripcionVacia aunque tenga 3000, nunca ErrDescripcionMuyLarga.
+	descripcion = strings.TrimSpace(descripcion)
+	switch largo := utf8.RuneCountInString(descripcion); {
+	case largo == 0:
+		return Defecto{}, ErrDescripcionVacia
+	case largo > MaxLargoDescripcion:
+		return Defecto{}, fmt.Errorf("%w (tiene %d)", ErrDescripcionMuyLarga, largo)
+	}
+
 	return Defecto{
 		ProyectoID:        proyectoID,
 		ItemID:            itemID,
