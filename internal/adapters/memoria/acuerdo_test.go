@@ -110,7 +110,7 @@ func TestBase_GuardarAcuerdo_Reglas(t *testing.T) {
 		errEsperado error
 	}{
 		{"sesion votando", true, func(b baseParaPoker) string { return b.integrantes[0] }, 5, planningpoker.ErrSesionNoRevelada},
-		{"no participa", false, func(b baseParaPoker) string { return idSinDuenoAsignaciones }, 5, planningpoker.ErrNoEsParticipante},
+		{"no participa", false, func(baseParaPoker) string { return idSinDuenoAsignaciones }, 5, planningpoker.ErrNoEsParticipante},
 		{"fuera de la escala", false, func(b baseParaPoker) string { return b.integrantes[0] }, 4, backlog.ErrEstimacionFueraDeEscala},
 	}
 	for _, c := range casos {
