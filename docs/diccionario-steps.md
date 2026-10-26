@@ -215,6 +215,8 @@ inexistente (CA-005-8, CA-008-10); con esa frase el escenario no lleva
 | `Cuando el integrante "Ana" revela los votos de la sesión de la historia "Crear proyecto"` | `^el integrante "([^"]*)" revela los votos de la sesión de la historia "([^"]*)"$` |
 | `Cuando el integrante "Ana" registra la estimación acordada de 5 en la sesión de la historia "Crear proyecto"` | `^el integrante "([^"]*)" registra la estimación acordada de (-?\d+) en la sesión de la historia "([^"]*)"$` |
 | `Cuando el integrante "Ana" registra 2,5 horas de "Desarrollo" en la historia "Crear proyecto" el 2026-10-05` | `^el integrante "([^"]*)" registra (-?\d+(?:[.,]\d+)?) horas de "([^"]*)" en la historia "([^"]*)" el (\S+)$` |
+| `Cuando se consulta el esfuerzo del proyecto "Demo"` | `^se consulta el esfuerzo del proyecto "([^"]*)"(?: de la historia "([^"]*)")?(?: del integrante "([^"]*)")?(?: del sprint "([^"]*)")?$` |
+| `Cuando se consulta el esfuerzo del proyecto "Demo" de la historia "Crear proyecto" del integrante "Ana" del sprint "Sprint 1"` | (la misma frase, con los tres filtros) |
 
 **Propuesta US-003:** `se registra al integrante "X" con email "..." y rol "Y"`
 es la variante con email de la frase anterior (ver la nota de Contexto). Un
@@ -240,6 +242,15 @@ integrante en el proyecto actual. Aceptan coma o punto decimal y un número nega
 2026-10-06 (el reloj fijo): una fecha posterior se rechaza. El integrante y la
 historia se buscan por nombre dentro del proyecto actual: uno que no esté ahí se
 rechaza por la aplicación, no por los steps.
+
+**Consultar el esfuerzo (US-020):** `se consulta el esfuerzo del proyecto "P"` acepta tres
+filtros opcionales que van en este orden: `de la historia "H"`, `del integrante "I"` y
+`del sprint "S"`. Los nombres se buscan dentro del proyecto consultado: uno que no esté ahí
+(por ejemplo, de otro proyecto) se manda con un ID que no existe y lo rechaza la aplicación. El
+sprint se nombra como lo conoce el escenario (`Sprint N`). Las frases `las horas ... en la
+consulta son N` comprueban los totales de lo que quedó después de filtrar; un nombre que no
+aparece en la consulta vale 0 horas. Como "hoy" es el 2026-10-06, el esfuerzo de los
+escenarios se registra antes de esa fecha y los sprints se crean con la frase con fechas.
 
 **Marcar y desmarcar (US-010):** `la historia "X" completada`, `se marca la historia "X"
 como completada` y `se desmarca la historia "X"` operan sobre el último sprint del
@@ -318,6 +329,13 @@ cuenta caracteres y no bytes.
 | `Y la desviación porcentual no se puede calcular` | `^la desviación porcentual no se puede calcular$` |
 | `Y el proyecto "Demo" tiene 1 registro de esfuerzo` | `^el proyecto "([^"]*)" tiene (\d+) registros? de esfuerzo$` |
 | `Y la historia "Crear proyecto" tiene 2,5 horas registradas` | `^la historia "([^"]*)" tiene (\d+(?:[.,]\d+)?) horas registradas$` |
+| `Y la consulta devuelve 4 registros` | `^la consulta devuelve (\d+) registros?$` |
+| `Y la consulta devuelve primero el registro de "Pruebas"` | `^la consulta devuelve primero el registro de "([^"]*)"$` |
+| `Y el total de horas de la consulta es 7,5` | `^el total de horas de la consulta es (\d+(?:[.,]\d+)?)$` |
+| `Y las horas de la historia "Crear proyecto" en la consulta son 2` | `^las horas de la historia "([^"]*)" en la consulta son (\d+(?:[.,]\d+)?)$` |
+| `Y las horas del integrante "Ana" en la consulta son 3,5` | `^las horas del integrante "([^"]*)" en la consulta son (\d+(?:[.,]\d+)?)$` |
+| `Y las horas del sprint "Sprint 1" en la consulta son 5` | `^las horas del sprint "([^"]*)" en la consulta son (\d+(?:[.,]\d+)?)$` |
+| `Y las horas fuera de todo sprint en la consulta son 1` | `^las horas fuera de todo sprint en la consulta son (\d+(?:[.,]\d+)?)$` |
 | `Y la sesión de la historia "Crear proyecto" está "votando" en la ronda 1` | `^la sesión de la historia "([^"]*)" está "([^"]*)" en la ronda (\d+)$` |
 | `Y los participantes de la sesión de la historia "Crear proyecto" son:` + tabla de nombres | `^los participantes de la sesión de la historia "([^"]*)" son:$` |
 | `Y en la sesión de la historia "Crear proyecto" votaron:` + tabla de nombres | `^en la sesión de la historia "([^"]*)" votaron:$` |

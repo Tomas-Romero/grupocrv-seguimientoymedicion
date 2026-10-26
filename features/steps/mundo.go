@@ -173,6 +173,25 @@ type Esfuerzo interface {
 	RegistrarEsfuerzo(proyecto, integrante, historia string, fecha time.Time, actividad string, horas float64) error
 	CantidadRegistros(proyecto string) (int, error)
 	HorasDeHistoria(proyecto, historia string) (float64, error)
+
+	// ConsultarEsfuerzo es la consulta de US-020. historia, integrante y sprint son los
+	// filtros, nombrados como los conoce el escenario; vacio es "sin filtro". Lo que el
+	// escenario nombra y no existe en el proyecto se manda con un ID que no esta en la
+	// base, asi el rechazo lo produce la aplicacion.
+	ConsultarEsfuerzo(proyecto, historia, integrante, sprint string) (ConsultaDeEsfuerzo, error)
+}
+
+// ConsultaDeEsfuerzo es lo que los Entonces de US-020 comprueban de una consulta de esfuerzo.
+// Los totales se indexan por el nombre con el que el escenario conoce cada cosa.
+type ConsultaDeEsfuerzo struct {
+	// Actividades son las actividades de los registros, en el orden en que salen.
+	Actividades   []string
+	TotalHoras    float64
+	PorHistoria   map[string]float64
+	PorIntegrante map[string]float64
+	PorSprint     map[string]float64
+	// FueraDeSprint son las horas cuya fecha no cae en ningun sprint.
+	FueraDeSprint float64
 }
 
 // PlanningPoker es el area de US-014 a US-018. La sesion se nombra por su historia,
@@ -269,6 +288,7 @@ type mundo struct {
 	porcentajeHistorias float64
 	defectos            ResumenDeDefectos
 	anteriores          SprintsAnteriores
+	consultaEsfuerzo    ConsultaDeEsfuerzo
 }
 
 // registrarAccion guarda el resultado de un step de accion.

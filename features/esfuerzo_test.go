@@ -16,17 +16,22 @@ import (
 const idDeIntegranteInexistente = "00000000-0000-0000-0000-000000000000"
 
 // esfuerzoSobreApp conecta el area Esfuerzo con el caso de uso de US-019 sobre la
-// base en memoria del escenario (ADR 0002). Los Entonces leen la base directamente,
-// porque todavia no hay casos de uso de lectura (US-020).
+// base en memoria del escenario (ADR 0002). Los Entonces de US-019 leen la base
+// directamente; la consulta de US-020 usa el caso de uso real.
 type esfuerzoSobreApp struct {
 	escenario *escenario
 	registrar *app.RegistrarEsfuerzo
+	consultar *app.ConsultarEsfuerzo
 }
 
 var _ steps.Esfuerzo = (*esfuerzoSobreApp)(nil)
 
 func nuevoEsfuerzoSobreApp(e *escenario) *esfuerzoSobreApp {
-	return &esfuerzoSobreApp{escenario: e, registrar: app.NuevoRegistrarEsfuerzo(e.base, ahoraEnEscenarios)}
+	return &esfuerzoSobreApp{
+		escenario: e,
+		registrar: app.NuevoRegistrarEsfuerzo(e.base, ahoraEnEscenarios),
+		consultar: app.NuevoConsultarEsfuerzo(e.base),
+	}
 }
 
 // RegistrarEsfuerzo no valida nada: lo hace el caso de uso. Busca al integrante y
@@ -81,4 +86,68 @@ func (a *esfuerzoSobreApp) HorasDeHistoria(proyecto, historia string) (float64, 
 		}
 	}
 	return total, nil
+}
+
+// ConsultarEsfuerzo no valida nada: lo hace el caso de uso. Busca la historia, el integrante y el
+// sprint por nombre DENTRO del proyecto; lo que el escenario nombra y no esta ahi se manda con
+// un ID que no existe. Devuelve los totales indexados por nombre.
+func (a *esfuerzoSobreApp) ConsultarEsfuerzo(proyecto, historia, integrante, nombreDelSprint string) (steps.ConsultaDeEsfuerzo, error) {
+	proyectoID, ok := a.escenario.proyectos[proyecto]
+	if !ok {
+		proyectoID = idDeProyectoInexistente
+	}
+	var filtro app.FiltroEsfuerzo
+	if historia != "" {
+		filtro.ItemID = idDeItemInexistente
+		for _, item := range a.escenario.base.Items(proyectoID) {
+			if item.Titulo == historia {
+				filtro.ItemID = item.ID
+			}
+		}
+	}
+	if integrante != "" {
+		filtro.IntegranteID = idDeIntegranteInexistente
+		for _, i := range a.escenario.base.Integrantes(proyectoID) {
+			if i.Nombre == integrante {
+				filtro.IntegranteID = i.ID
+			}
+		}
+	}
+	if nombreDelSprint != "" {
+		filtro.SprintID = idDeSprintInexistente
+		for _, s := range a.escenario.base.Sprints(proyectoID) {
+			if s.Nombre() == nombreDelSprint {
+				filtro.SprintID = s.ID
+			}
+		}
+	}
+
+	c, err := a.consultar.Ejecutar(context.Background(), proyectoID, filtro)
+	if err != nil {
+		return steps.ConsultaDeEsfuerzo{}, err
+	}
+
+	resultado := steps.ConsultaDeEsfuerzo{
+		TotalHoras:    c.TotalHoras,
+		PorHistoria:   map[string]float64{},
+		PorIntegrante: map[string]float64{},
+		PorSprint:     map[string]float64{},
+	}
+	for _, r := range c.Registros {
+		resultado.Actividades = append(resultado.Actividades, r.Registro.Actividad)
+	}
+	for _, t := range c.PorHistoria {
+		resultado.PorHistoria[t.Titulo] = t.Horas
+	}
+	for _, t := range c.PorIntegrante {
+		resultado.PorIntegrante[t.Nombre] = t.Horas
+	}
+	for _, t := range c.PorSprint {
+		if t.Numero == 0 {
+			resultado.FueraDeSprint = t.Horas
+			continue
+		}
+		resultado.PorSprint[fmt.Sprintf("Sprint %d", t.Numero)] = t.Horas
+	}
+	return resultado, nil
 }
