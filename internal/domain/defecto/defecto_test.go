@@ -2,6 +2,7 @@ package defecto_test
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -136,5 +137,35 @@ func TestNuevo_RecortaLaDescripcion(t *testing.T) {
 func TestNuevo_ElLargoSeMideRecortado(t *testing.T) {
 	if _, err := defecto.Nuevo("p", "i", "s", "  "+strings.Repeat("a", 2000)+"  ", defecto.SeveridadAlta); err != nil {
 		t.Errorf("Nuevo() = %v, quiero nil", err)
+	}
+}
+
+// US-022 / CA-022-8 / CL-022-5 / RN-022-2: la severidad es exacta. El dominio no pasa a
+// minuscula ni recorta, y el rechazo indica el valor recibido.
+func TestNuevo_SeveridadInvalida(t *testing.T) {
+	casos := []struct {
+		nombre    string
+		severidad defecto.Severidad
+	}{
+		{"mayuscula inicial", "Critica"},
+		{"todo en mayuscula", "CRITICA"},
+		{"con tilde", "crítica"},
+		{"con espacios alrededor", " alta "},
+		{"fuera de la lista", "urgente"},
+		{"vacia", ""},
+	}
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			d, err := defecto.Nuevo("p", "i", "s", "Falla", c.severidad)
+			if !errors.Is(err, defecto.ErrSeveridadInvalida) {
+				t.Fatalf("Nuevo() = %v, quiero ErrSeveridadInvalida", err)
+			}
+			if quiere := fmt.Sprintf("%q", string(c.severidad)); !strings.Contains(err.Error(), quiere) {
+				t.Errorf("el error %q no indica el valor recibido %s", err, quiere)
+			}
+			if d != (defecto.Defecto{}) {
+				t.Errorf("Nuevo() devolvio %+v con error, quiero el defecto vacio", d)
+			}
+		})
 	}
 }
