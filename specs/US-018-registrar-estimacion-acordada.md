@@ -6,8 +6,8 @@
 | **Autor** | Juan Ignacio Vergara |
 | **Issue** | #29 |
 | **Escenarios BDD** | `features/US-018-registrar-estimacion-acordada.feature` |
-| **Código** | `internal/domain/planningpoker/` (acuerdo), caso de uso en `internal/app/`, repositorio en `internal/adapters/postgres/` y `internal/adapters/memoria/`, migración `migraciones/00011_sesiones_valor_acordado.sql` |
-| **Última actualización** | 2026-10-25 |
+| **Código** | `internal/domain/planningpoker/` (`Acordar`, `SesionPlanningPoker.ValorAcordado`), caso de uso `RegistrarEstimacionAcordada` en `internal/app/`, `GuardarAcuerdo` en `internal/adapters/postgres/` y `internal/adapters/memoria/`, migración `migraciones/00011_sesiones_valor_acordado.sql` |
+| **Última actualización** | 2026-10-26 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
 > implementación. Si durante la implementación descubrís que algo de acá está
@@ -128,7 +128,9 @@ Entre paréntesis, la capa que la hace cumplir.
   llama desde este: no podría compartir la transacción, y la sesión podría
   quedar finalizada con la historia sin estimar. En el PR de implementación, la
   sentencia de `GuardarEstimacion` se extrae a una función que acepta el pool o
-  una transacción (como `leerItem` en US-010), y la usan los dos.
+  una transacción (como `leerItem` en US-010), y la usan los dos: es
+  `guardarEstimacion`. `ValorAcordado` es un `backlog.StoryPoints`, con el
+  mismo cero ("sin acordar") que los Story Points de la historia.
 - **Depende de US-016 (#162).** Usa el estado `revelada`, que pone el
   revelado. La implementación se abre con US-016 mergeada; esta spec solo cita
   sus nombres.
@@ -154,7 +156,11 @@ Entre paréntesis, la capa que la hace cumplir.
   `la sesión de la historia "X" está "finalizada" en la ronda N`, el área lee la
   **última** sesión de la historia, no solo la abierta. Los Story Points se
   comprueban con `la historia "H" tiene 5 story points` (US-013), y la sesión
-  revelada se arma con `el integrante "X" reveló los votos ...` (US-016).
+  revelada se arma con `el integrante "X" reveló los votos ...` (US-016). La
+  parte de CA-018-5 de una sesión ya finalizada no tiene escenario: no hay frase
+  de contexto para una sesión finalizada y el escenario necesitaría dos
+  registros. La cubren los tests del dominio, de la aplicación, de memoria y de
+  Postgres.
 - **Fuera de alcance.** Abrir una ronda nueva (US-017), el reporte de
   estimaciones (lo alimenta el valor guardado en la sesión), cancelar una
   sesión y la pantalla (tarea propia del Sprint 5).
@@ -284,4 +290,6 @@ cuenta propia:
   la regla de US-013 sin su caso de uso, historia completada rechazada, el
   valor guardado en la sesión), usando las specs de US-013, US-014, US-015,
   US-016 y T-005 como modelo
+- [x] Use IA para: el ajuste tras la implementación (nombres del código, el tipo
+  de `ValorAcordado` y la cobertura de CA-018-5), redactado con Claude Code
 - Revisado y entendido por: Juan Ignacio Vergara
