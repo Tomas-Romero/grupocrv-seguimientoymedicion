@@ -283,3 +283,23 @@ CREATE TRIGGER rechazar_finalizar BEFORE UPDATE ON sesiones_planning_poker FOR E
 		t.Errorf("cambio algo: (%q, acordado %d, story points %d), se esperaba nada", a.estado, valorDe(a.valorAcordado), valorDe(a.storyPoints))
 	}
 }
+
+// Un valor acordado que la columna acepta pero la escala no es un dato corrupto: ObtenerSesion
+// lo informa con contexto y no lo oculta ni lo confunde con una sesion inexistente (mismo
+// criterio que la estimacion en ObtenerItem).
+func TestObtenerSesion_ValorAcordadoFueraDeEscalaEnLaBase(t *testing.T) {
+	ctx := contexto(t)
+	e, sesion := conSesionEnPostgres(ctx, t)
+	if _, err := e.pool.Exec(ctx, `UPDATE sesiones_planning_poker SET estado = 'finalizada', valor_acordado = 4 WHERE id = $1`, sesion.ID); err != nil {
+		t.Fatalf("poner un valor fuera de la escala: %v", err)
+	}
+
+	_, existe, err := e.repo.ObtenerSesion(ctx, sesion.ID)
+
+	if !errors.Is(err, backlog.ErrEstimacionFueraDeEscala) {
+		t.Fatalf("error = %v, se esperaba ErrEstimacionFueraDeEscala", err)
+	}
+	if existe {
+		t.Error("ObtenerSesion informo que la sesion existe junto con un error")
+	}
+}
