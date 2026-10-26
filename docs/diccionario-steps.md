@@ -208,6 +208,7 @@ inexistente (CA-005-8, CA-008-10); con esa frase el escenario no lleva
 | `Cuando se consultan los story points completados del sprint "Sprint 1"` | `^se consultan los story points completados del sprint "([^"]*)"$` |
 | `Cuando se consulta la velocidad del equipo` | `^se consulta la velocidad del equipo$` |
 | `Cuando se consulta el porcentaje de historias completadas del sprint "Sprint 1"` | `^se consulta el porcentaje de historias completadas del sprint "([^"]*)"$` |
+| `Cuando se compara el esfuerzo del proyecto "Demo"` | `^se compara el esfuerzo del proyecto "([^"]*)"$` |
 | `Cuando se consultan los defectos del sprint 3` | `^se consultan los defectos del sprint (-?\d+)$` |
 | `Cuando se inicia una sesión de Planning Poker sobre la historia "Crear proyecto"` | `^se inicia una sesión de Planning Poker sobre la historia "([^"]*)"$` |
 | `Cuando el integrante "Ana" vota 5 en la sesión de la historia "Crear proyecto"` | `^el integrante "([^"]*)" vota (-?\d+) en la sesión de la historia "([^"]*)"$` |
@@ -221,6 +222,16 @@ inexistente (CA-005-8, CA-008-10); con esa frase el escenario no lleva
 **Propuesta US-003:** `se registra al integrante "X" con email "..." y rol "Y"`
 es la variante con email de la frase anterior (ver la nota de Contexto). Un
 nombre de 100 o 101 caracteres no tiene frase: se prueba con tests unitarios.
+
+**Comparar el esfuerzo (US-021):** `se compara el esfuerzo del proyecto "P"` usa el caso de uso real sobre
+la base del escenario, así que el contexto se arma con las frases de siempre: la historia con su
+estimación (`una historia "H" con prioridad "must", 5 story points y 1 criterio de aceptación`),
+asignada al sprint y `completada`, y las horas con `el integrante "X" ya registró N horas ...`. Los
+Entonces por historia (`... en la comparación`) buscan la historia por título. Después de comparar,
+las frases de US-027 (`las horas estimadas son N`, `las horas reales son N`, `la desviación de horas
+es N`, `la desviación porcentual es N` y `la desviación porcentual no se puede calcular`) se refieren
+al **total de las historias comparables**; `las horas sin comparar son N` es el esfuerzo de las
+historias que aparecen y no entran en ese total. Una historia pendiente sin horas no aparece.
 
 **Sprints (US-008):** el nombre entre comillas (`"Sprint 1"`) es el nombre
 **esperado**: la persona no lo escribe, lo asigna la aplicación (`Sprint N`, con N el
@@ -320,6 +331,14 @@ cuenta caracteres y no bytes.
 | `Y los story points completados son 8` | `^los story points completados son (\d+)$` |
 | `Y la velocidad del equipo es 25` | `^la velocidad del equipo es (\d+(?:[.,]\d+)?)$` |
 | `Y el porcentaje de historias completadas es 66,7` | `^el porcentaje de historias completadas es (\d+(?:[.,]\d+)?)$` |
+| `Y la comparación tiene 2 historias` | `^la comparación tiene (\d+) historias?$` |
+| `Y la primera historia de la comparación es "Crear proyecto"` | `^la primera historia de la comparación es "([^"]*)"$` |
+| `Y la historia "Crear proyecto" tiene 7,5 horas estimadas y 8 reales en la comparación` | `^la historia "([^"]*)" tiene (-?\d+(?:[.,]\d+)?) horas estimadas y (-?\d+(?:[.,]\d+)?) reales en la comparación$` |
+| `Y la desviación de la historia "Crear proyecto" en la comparación es -3` | `^la desviación de la historia "([^"]*)" en la comparación es (-?\d+(?:[.,]\d+)?)$` |
+| `Y la desviación porcentual de la historia "Crear proyecto" en la comparación es 6,7` | `^la desviación porcentual de la historia "([^"]*)" en la comparación es (-?\d+(?:[.,]\d+)?)$` |
+| `Y la desviación porcentual de la historia "Crear proyecto" en la comparación no se puede calcular` | `^la desviación porcentual de la historia "([^"]*)" en la comparación no se puede calcular$` |
+| `Y el total comparable tiene 2 historias` | `^el total comparable tiene (\d+) historias?$` |
+| `Y las horas sin comparar son 4` | `^las horas sin comparar son (\d+(?:[.,]\d+)?)$` |
 | `Y los defectos detectados son 3` | `^los defectos detectados son (\d+)$` |
 | `Y los defectos resueltos son 2` | `^los defectos resueltos son (\d+)$` |
 | `Y las horas estimadas son 7,5` | `^las horas estimadas son (-?\d+(?:[.,]\d+)?)$` |

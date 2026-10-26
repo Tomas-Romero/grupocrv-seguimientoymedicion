@@ -1,10 +1,12 @@
 package features_test
 
 import (
+	"context"
 	"fmt"
 	"slices"
 
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/features/steps"
+	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/app"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/metricas"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/sprint"
 )
@@ -153,6 +155,45 @@ func (m *metricasEnMemoria) HorasDelSprint(sprint string) (steps.HorasDelSprint,
 		Porcentaje:           porcentaje,
 		PorcentajeCalculable: calculable,
 	}, nil
+}
+
+// horasDelResumen convierte el resumen de horas del dominio en lo que comprueban los steps.
+func horasDelResumen(r metricas.ResumenHoras, porcentaje float64, calculable bool) steps.HorasDelSprint {
+	return steps.HorasDelSprint{
+		Estimadas:            r.Estimadas,
+		Reales:               r.Reales,
+		Desviacion:           r.Desviacion,
+		Porcentaje:           porcentaje,
+		PorcentajeCalculable: calculable,
+	}
+}
+
+// CompararEsfuerzo usa el caso de uso real de US-021 sobre la base del escenario. El proyecto que el
+// escenario no creo se manda con un ID que no existe, asi el rechazo lo produce la aplicacion.
+func (m *metricasEnMemoria) CompararEsfuerzo(proyecto string) (steps.ComparacionDeEsfuerzo, error) {
+	proyectoID, ok := m.escenario.proyectos[proyecto]
+	if !ok {
+		proyectoID = idDeProyectoInexistente
+	}
+	c, err := app.NuevoCompararEsfuerzo(m.escenario.base).Ejecutar(context.Background(), proyectoID)
+	if err != nil {
+		return steps.ComparacionDeEsfuerzo{}, err
+	}
+
+	totalPorcentaje, totalCalculable := c.Total.DesviacionPorcentual()
+	resultado := steps.ComparacionDeEsfuerzo{
+		Total:            horasDelResumen(c.Total, totalPorcentaje, totalCalculable),
+		Comparables:      c.Comparables,
+		HorasSinComparar: c.HorasSinComparar,
+	}
+	for _, h := range c.Historias {
+		porcentaje, calculable := h.DesviacionPorcentual()
+		resultado.Historias = append(resultado.Historias, steps.HistoriaComparada{
+			Titulo: h.Titulo,
+			Horas:  horasDelResumen(h.Horas, porcentaje, calculable),
+		})
+	}
+	return resultado, nil
 }
 
 // RegistrarDefecto suma un defecto al contexto, en el orden en que llega. No valida nada: lo hace
