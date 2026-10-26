@@ -149,3 +149,84 @@ func TestRegistrarDefecto_VerificaDentroDelProyecto(t *testing.T) {
 		t.Errorf("el sprint se busco con %v: tiene que buscarse dentro del proyecto", repo.sprintConsult)
 	}
 }
+
+// US-022 / RN-022-4 / RN-022-9 / CA-022-7, CA-022-8, CA-022-12 / CL-022-6: con datos
+// invalidos se devuelven los errores del dominio tal cual, unidos y en orden, y no se
+// registra nada.
+func TestRegistrarDefecto_DatosInvalidos(t *testing.T) {
+	repo := todoExisteParaDefectos()
+	registrar := app.NuevoRegistrarDefecto(repo)
+
+	_, err := registrar.Ejecutar(context.Background(), "proyecto-1", "item-1", "sprint-1", "   ", "urgente")
+
+	for _, e := range []error{defecto.ErrDescripcionVacia, defecto.ErrSeveridadInvalida} {
+		if !errors.Is(err, e) {
+			t.Errorf("error = %v, quiero que incluya %v", err, e)
+		}
+	}
+	if len(repo.registrados) != 0 {
+		t.Errorf("se registraron %d defectos, quiero ninguno", len(repo.registrados))
+	}
+}
+
+// Los fallos del repositorio se devuelven envueltos con contexto y siguen reconociendose
+// con errors.Is. Cada consulta tiene el suyo.
+func TestRegistrarDefecto_ErroresDelRepositorio(t *testing.T) {
+	falla := errors.New("se corto la conexion")
+	casos := []struct {
+		nombre string
+		repo   *repositorioDefectosFalso
+	}{
+		{"al buscar el proyecto", &repositorioDefectosFalso{errProyecto: falla}},
+		{"al buscar la historia", &repositorioDefectosFalso{existeProyecto: true, errItem: falla}},
+		{"al buscar el sprint", &repositorioDefectosFalso{existeProyecto: true, existeItem: true, errSprint: falla}},
+		{"al registrar", &repositorioDefectosFalso{existeProyecto: true, existeItem: true, existeSprint: true, errRegistrar: falla}},
+	}
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			d, err := app.NuevoRegistrarDefecto(c.repo).Ejecutar(context.Background(), "proyecto-1", "item-1", "sprint-1", "Falla", defecto.SeveridadMedia)
+
+			if !errors.Is(err, falla) {
+				t.Fatalf("error = %v, quiero el del repositorio", err)
+			}
+			if !strings.Contains(err.Error(), "proyecto-1") {
+				t.Errorf("el error %q no indica el proyecto", err)
+			}
+			if d != (defecto.Defecto{}) {
+				t.Errorf("devolvio el defecto %+v, quiero el valor cero", d)
+			}
+		})
+	}
+}
+
+// US-022 / RN-022-10 / CL-022-15: si el proyecto, la historia o el sprint desaparecen entre
+// la lectura y el INSERT, el repositorio devuelve el error de inexistencia y el caso de uso
+// lo deja pasar reconocible.
+func TestRegistrarDefecto_LoQueDesapareceEnElMedio(t *testing.T) {
+	for _, e := range []error{app.ErrProyectoInexistente, app.ErrItemInexistente, app.ErrSprintInexistente} {
+		repo := todoExisteParaDefectos()
+		repo.errRegistrar = e
+
+		_, err := app.NuevoRegistrarDefecto(repo).Ejecutar(context.Background(), "proyecto-1", "item-1", "sprint-1", "Falla", defecto.SeveridadMedia)
+
+		if !errors.Is(err, e) {
+			t.Errorf("error = %v, quiero %v", err, e)
+		}
+	}
+}
+
+// US-022 / RN-022-8 / CL-022-13 / CA-022-5: dos defectos identicos son dos defectos: el caso
+// de uso no rechaza repetidos.
+func TestRegistrarDefecto_RepetidosSonValidos(t *testing.T) {
+	repo := todoExisteParaDefectos()
+	registrar := app.NuevoRegistrarDefecto(repo)
+
+	for i := 0; i < 2; i++ {
+		if _, err := registrar.Ejecutar(context.Background(), "proyecto-1", "item-1", "sprint-1", "Falla", defecto.SeveridadAlta); err != nil {
+			t.Fatalf("defecto %d: %v", i+1, err)
+		}
+	}
+	if len(repo.registrados) != 2 {
+		t.Errorf("se registraron %d defectos, quiero 2", len(repo.registrados))
+	}
+}
