@@ -82,7 +82,9 @@ jobs:
 
       - name: Login en el registro (ACR)
         if: env.PUBLICAR == 'true'
-        run: az acr login --name "${{ vars.ACR_NAME }}"
+        env:
+          ACR_NAME: ${{ vars.ACR_NAME }}
+        run: az acr login --name "$ACR_NAME"
 
       # docker/setup-buildx-action v4.4.1
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069
@@ -111,7 +113,12 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      # Los resultados de otros pasos llegan por variables de entorno y no escritos dentro del script:
+      # asi el shell nunca interpreta su contenido (y shellcheck no tiene nada que objetar).
       - name: Resumen
+        env:
+          DIGEST: ${{ steps.construir.outputs.digest }}
+          ETIQUETAS: ${{ steps.meta.outputs.tags }}
         run: |
           {
             echo "### Imagen Docker"
@@ -119,9 +126,11 @@ jobs:
             if [ "$PUBLICAR" = "true" ]; then
               echo "Publicada en \`${REGISTRO}/${IMAGEN}\`"
               echo ""
-              echo "- digest: \`${{ steps.construir.outputs.digest }}\`"
+              echo "- digest: \`${DIGEST}\`"
               echo "- etiquetas:"
-              echo '${{ steps.meta.outputs.tags }}' | sed 's/^/  - `/; s/$/`/'
+              while IFS= read -r etiqueta; do
+                echo "  - \`${etiqueta}\`"
+              done <<< "$ETIQUETAS"
             else
               echo "Construida y validada, **sin publicar**: falta configurar \`AZURE_CREDENTIALS\`, \`ACR_NAME\` o \`IMAGE_NAME\` (ver docs/ci-cd.md)."
             fi
