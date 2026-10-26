@@ -191,6 +191,11 @@ type PlanningPoker interface {
 	VotosRevelados(titulo string) ([]VotoRevelado, error)
 	// HayDivergencia dice si la ultima revelacion de la sesion detecto divergencia (RN-016-6).
 	HayDivergencia(titulo string) (bool, error)
+	// RegistrarEstimacionAcordada registra el valor acordado en la ultima sesion de la
+	// historia (US-018). Lo que no existe se manda con un ID que no esta en la base.
+	RegistrarEstimacionAcordada(integrante, titulo string, valor int) error
+	// EstimacionAcordada devuelve el valor acordado de la ultima sesion de la historia.
+	EstimacionAcordada(titulo string) (int, error)
 }
 
 // VotoRevelado es el voto de un integrante, ya revelado.

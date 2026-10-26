@@ -191,6 +191,17 @@ func (p *pokerSobreApp) votacion(titulo string) (planningpoker.Votacion, string,
 	return votacion, proyectoID, nil
 }
 
+// RegistrarEstimacionAcordada es de US-018.
+func (p *pokerSobreApp) RegistrarEstimacionAcordada(_, _ string, _ int) error {
+	return errAcuerdoSinConectar
+}
+
+// EstimacionAcordada es de US-018.
+func (p *pokerSobreApp) EstimacionAcordada(_ string) (int, error) { return 0, errAcuerdoSinConectar }
+
+// errAcuerdoSinConectar lo devuelve registrar la estimacion acordada mientras no esta conectado.
+var errAcuerdoSinConectar = errors.New("registrar la estimacion acordada todavia no esta conectado a la aplicacion")
+
 // sesion devuelve la sesion abierta de la historia y el proyecto de la historia.
 func (p *pokerSobreApp) sesion(titulo string) (planningpoker.SesionPlanningPoker, string, error) {
 	itemID, proyectoID := p.historia(titulo)
