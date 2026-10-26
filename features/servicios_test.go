@@ -32,6 +32,7 @@ func ahoraEnEscenarios() time.Time {
 //	Metricas:  US-025, US-026, US-027, US-028, US-029
 //	PlanningPoker: US-014 a US-018
 //	Esfuerzo:  US-019, US-020, US-021
+//	Defectos:  US-022
 //
 // Un area sin conectar hace fallar con ErrAreaSinConectar a cualquier escenario
 // que la use: preferimos rojo explicito a verde falso.
@@ -50,6 +51,8 @@ func nuevosServicios() (steps.Servicios, error) {
 		Metricas: nuevasMetricasEnMemoria(e),
 		// US-019: el caso de uso real sobre la base en memoria.
 		Esfuerzo: nuevoEsfuerzoSobreApp(e),
+		// US-022: el caso de uso real sobre la base en memoria.
+		Defectos: nuevoDefectosSobreApp(e),
 		// US-014: el caso de uso real sobre la base en memoria.
 		PlanningPoker: nuevoPokerSobreApp(e),
 	}, nil

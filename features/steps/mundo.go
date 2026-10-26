@@ -215,6 +215,22 @@ type ConsultaDeEsfuerzo struct {
 	FueraDeSprint float64
 }
 
+// Defectos es el area de US-022. Los defectos se nombran por su historia: las frases de consulta
+// leen el ultimo defecto registrado de esa historia.
+type Defectos interface {
+	// RegistrarDefecto registra un defecto en el proyecto. La historia y el sprint de deteccion
+	// se buscan por nombre DENTRO del proyecto ("Sprint N" existe en todos); lo que no esta ahi
+	// se manda con un ID que no existe, asi el rechazo lo produce la aplicacion.
+	RegistrarDefecto(proyecto, historia, sprint, severidad, descripcion string) error
+	CantidadDefectos(proyecto string) (int, error)
+	SeveridadDeDefecto(historia string) (string, error)
+	EstadoDeDefecto(historia string) (string, error)
+	// SprintDeDeteccionDeDefecto devuelve el nombre ("Sprint N") del sprint de deteccion.
+	SprintDeDeteccionDeDefecto(historia string) (string, error)
+	// DefectoSinResolver dice si el defecto no tiene sprint de resolucion.
+	DefectoSinResolver(historia string) (bool, error)
+}
+
 // PlanningPoker es el area de US-014 a US-018. La sesion se nombra por su historia,
 // que tiene como maximo una sesion abierta (RN-014-7).
 type PlanningPoker interface {
@@ -266,6 +282,8 @@ type Servicios struct {
 	Sprints   Sprints
 	Metricas  Metricas
 	Esfuerzo  Esfuerzo
+	// Defectos es de US-022.
+	Defectos Defectos
 	// PlanningPoker es de US-014 a US-018.
 	PlanningPoker PlanningPoker
 }
@@ -351,6 +369,15 @@ func (m *mundo) esfuerzo() (Esfuerzo, error) {
 		return nil, areaSinConectar("esfuerzo")
 	}
 	return m.servicios.Esfuerzo, nil
+}
+
+// areaDefectos se llama asi porque mundo ya tiene un campo defectos: el resultado de la consulta
+// de US-029.
+func (m *mundo) areaDefectos() (Defectos, error) {
+	if m.servicios.Defectos == nil {
+		return nil, areaSinConectar("defectos")
+	}
+	return m.servicios.Defectos, nil
 }
 
 func (m *mundo) planningPoker() (PlanningPoker, error) {
