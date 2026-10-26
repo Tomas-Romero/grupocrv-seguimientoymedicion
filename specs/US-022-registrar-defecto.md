@@ -7,7 +7,7 @@
 | **Issue** | #30 |
 | **Escenarios BDD** | `features/US-022-registrar-defecto.feature` |
 | **Código** | `internal/domain/defecto/`, caso de uso en `internal/app/`, repositorios en `internal/adapters/postgres/` y `internal/adapters/memoria/`, migración nueva `migraciones/00012_defectos.sql` |
-| **Última actualización** | 2026-10-25 |
+| **Última actualización** | 2026-10-26 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
 > implementación. Si durante la implementación descubrís que algo de acá está
@@ -199,6 +199,10 @@ Entre paréntesis, la capa que la hace cumplir.
   `app.ErrProyectoInexistente`, `app.ErrItemInexistente` y
   `app.ErrSprintInexistente` ya están registrados como `no_encontrado`. No hay
   exclusiones nuevas.
+  Los nombres de campo del catálogo son una lista cerrada (RN-T005-8 de T-005, que
+  comprueba `TestCatalogo_EntradasValidas`), y `descripcion` y `severidad` no
+  estaban: el PR de implementación los suma a esa regla y a la lista del test, sin
+  tocar ninguna otra entrada.
 - **Área nueva en los steps.** Los escenarios de defectos necesitan un área
   propia, `Defectos`, en `features/steps/mundo.go` (se agrega a `Servicios`, con
   sus steps en `features/steps/defectos.go`, y se conecta en
