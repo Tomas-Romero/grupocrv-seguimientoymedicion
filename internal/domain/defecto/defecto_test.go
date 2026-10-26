@@ -169,3 +169,47 @@ func TestNuevo_SeveridadInvalida(t *testing.T) {
 		})
 	}
 }
+
+// US-022 / CA-022-12 / CL-022-6 / RN-022-4: con la descripcion vacia y la severidad
+// invalida el dominio devuelve los dos errores juntos, primero el de la descripcion, y
+// errors.Is reconoce cada uno. De la descripcion se devuelve uno solo.
+func TestNuevo_TodosLosErroresJuntos(t *testing.T) {
+	casos := []struct {
+		nombre      string
+		descripcion string
+		severidad   defecto.Severidad
+		quiere      []error
+	}{
+		{"vacia y severidad invalida", "", "urgente", []error{defecto.ErrDescripcionVacia, defecto.ErrSeveridadInvalida}},
+		{"muy larga y severidad vacia", strings.Repeat("a", 2001), "", []error{defecto.ErrDescripcionMuyLarga, defecto.ErrSeveridadInvalida}},
+		{"solo la descripcion", " ", defecto.SeveridadBaja, []error{defecto.ErrDescripcionVacia}},
+	}
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			_, err := defecto.Nuevo("p", "i", "s", c.descripcion, c.severidad)
+			if err == nil {
+				t.Fatal("Nuevo() devolvio nil, quiero un error")
+			}
+			for _, quiere := range c.quiere {
+				if !errors.Is(err, quiere) {
+					t.Errorf("Nuevo() = %v, quiero que incluya %v", err, quiere)
+				}
+			}
+
+			// El orden del mensaje es el de la spec: un error por linea, descripcion primero.
+			var esperado []string
+			for _, quiere := range c.quiere {
+				esperado = append(esperado, quiere.Error())
+			}
+			lineas := strings.Split(err.Error(), "\n")
+			if len(lineas) != len(esperado) {
+				t.Fatalf("el mensaje tiene %d lineas, quiero %d: %q", len(lineas), len(esperado), err)
+			}
+			for i, linea := range lineas {
+				if !strings.HasPrefix(linea, esperado[i]) {
+					t.Errorf("linea %d = %q, quiero que empiece con %q", i, linea, esperado[i])
+				}
+			}
+		})
+	}
+}
