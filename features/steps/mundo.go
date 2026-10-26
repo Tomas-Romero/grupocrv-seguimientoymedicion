@@ -149,6 +149,11 @@ type Metricas interface {
 	// completadas del sprint, sobre los mismos items que arma AgregarItemAlSprint.
 	PorcentajeHistoriasCompletadas(sprint string) (float64, error)
 
+	// CompararEsfuerzo es la comparacion de US-021: por historia del proyecto, lo estimado contra
+	// lo trabajado. Usa el caso de uso real sobre la base del escenario. El proyecto que el
+	// escenario nombra y no existe se manda con un ID que no esta en la base.
+	CompararEsfuerzo(proyecto string) (ComparacionDeEsfuerzo, error)
+
 	// RegistrarDefecto arma el contexto de US-029: suma un defecto detectado en un sprint y
 	// resuelto en otro (0 si sigue sin resolver). Los sprints se escriben por su numero y no se
 	// validan: 0, un numero negativo o una resolucion anterior a la deteccion son justo los datos
@@ -161,6 +166,22 @@ type Metricas interface {
 type ResumenDeDefectos struct {
 	Detectados int
 	Resueltos  int
+}
+
+// HistoriaComparada es una historia de la comparacion de US-021 con sus horas.
+type HistoriaComparada struct {
+	Titulo string
+	Horas  HorasDelSprint
+}
+
+// ComparacionDeEsfuerzo es lo que los Entonces de US-021 comprueban.
+type ComparacionDeEsfuerzo struct {
+	// Historias salen en el orden de la comparacion.
+	Historias []HistoriaComparada
+	// Total son las horas de las historias comparables.
+	Total            HorasDelSprint
+	Comparables      int
+	HorasSinComparar float64
 }
 
 // Esfuerzo es el area de US-019 (US-020 y US-021 la amplian).
@@ -285,6 +306,7 @@ type mundo struct {
 	puntosCompletados   int
 	velocidad           float64
 	horas               HorasDelSprint
+	comparacion         ComparacionDeEsfuerzo
 	porcentajeHistorias float64
 	defectos            ResumenDeDefectos
 	anteriores          SprintsAnteriores

@@ -35,6 +35,17 @@ func registrarMetricas(sc *godog.ScenarioContext, m *mundo) {
 	sc.Step(`^se consulta el porcentaje de historias completadas del sprint "([^"]*)"$`, m.cuandoSeConsultaPorcentajeDeHistorias)
 	sc.Step(`^el porcentaje de historias completadas es (\d+(?:[.,]\d+)?)$`, m.entoncesPorcentajeDeHistoriasEs)
 
+	// US-021: comparar el esfuerzo estimado contra el real, historia por historia.
+	sc.Step(`^se compara el esfuerzo del proyecto "([^"]*)"$`, m.cuandoSeComparaElEsfuerzo)
+	sc.Step(`^la comparación tiene (\d+) historias?$`, m.entoncesLaComparacionTieneHistorias)
+	sc.Step(`^la primera historia de la comparación es "([^"]*)"$`, m.entoncesLaPrimeraHistoriaDeLaComparacionEs)
+	sc.Step(`^la historia "([^"]*)" tiene (-?\d+(?:[.,]\d+)?) horas estimadas y (-?\d+(?:[.,]\d+)?) reales en la comparación$`, m.entoncesHorasDeLaHistoriaComparada)
+	sc.Step(`^la desviación de la historia "([^"]*)" en la comparación es (-?\d+(?:[.,]\d+)?)$`, m.entoncesDesviacionDeLaHistoriaComparada)
+	sc.Step(`^la desviación porcentual de la historia "([^"]*)" en la comparación es (-?\d+(?:[.,]\d+)?)$`, m.entoncesPorcentajeDeLaHistoriaComparada)
+	sc.Step(`^la desviación porcentual de la historia "([^"]*)" en la comparación no se puede calcular$`, m.entoncesPorcentajeDeLaHistoriaComparadaNoSePuedeCalcular)
+	sc.Step(`^el total comparable tiene (\d+) historias?$`, m.entoncesElTotalComparableTieneHistorias)
+	sc.Step(`^las horas sin comparar son (\d+(?:[.,]\d+)?)$`, m.entoncesLasHorasSinCompararSon)
+
 	sc.Step(`^un defecto detectado en el sprint (-?\d+) y resuelto en el sprint (-?\d+)$`, m.dadoDefectoResuelto)
 	sc.Step(`^un defecto detectado en el sprint (-?\d+) sin resolver$`, m.dadoDefectoSinResolver)
 	sc.Step(`^se consultan los defectos del sprint (-?\d+)$`, m.cuandoSeConsultanLosDefectos)
@@ -228,6 +239,99 @@ func compararCifra(nombre, esperada string, obtenida float64) error {
 		return fmt.Errorf("%s: se esperaba %g, se obtuvo %g", nombre, quiero, obtenida)
 	}
 	return nil
+}
+
+// cuandoSeComparaElEsfuerzo guarda la comparacion aunque haya error. Deja ademas el total de las
+// historias comparables en el resultado de horas, para reutilizar las frases de US-027
+// (`las horas estimadas son N`, `la desviación porcentual es N`...).
+func (m *mundo) cuandoSeComparaElEsfuerzo(proyecto string) error {
+	metricas, err := m.metricas()
+	if err != nil {
+		return err
+	}
+	comparacion, err := metricas.CompararEsfuerzo(proyecto)
+	m.comparacion = comparacion
+	m.horas = comparacion.Total
+	return m.registrarAccion(err)
+}
+
+func (m *mundo) entoncesLaComparacionTieneHistorias(esperadas int) error {
+	if obtenidas := len(m.comparacion.Historias); obtenidas != esperadas {
+		return fmt.Errorf("historias de la comparación: se esperaban %d, hay %d", esperadas, obtenidas)
+	}
+	return nil
+}
+
+func (m *mundo) entoncesLaPrimeraHistoriaDeLaComparacionEs(titulo string) error {
+	if len(m.comparacion.Historias) == 0 {
+		return fmt.Errorf("la comparación no tiene historias y se esperaba %q primero", titulo)
+	}
+	if primera := m.comparacion.Historias[0].Titulo; primera != titulo {
+		return fmt.Errorf("primera historia de la comparación: se esperaba %q, es %q", titulo, primera)
+	}
+	return nil
+}
+
+// historiaComparada busca la historia por titulo en la comparacion.
+func (m *mundo) historiaComparada(titulo string) (HistoriaComparada, error) {
+	for _, h := range m.comparacion.Historias {
+		if h.Titulo == titulo {
+			return h, nil
+		}
+	}
+	return HistoriaComparada{}, fmt.Errorf("la historia %q no aparece en la comparación", titulo)
+}
+
+func (m *mundo) entoncesHorasDeLaHistoriaComparada(titulo, estimadas, reales string) error {
+	h, err := m.historiaComparada(titulo)
+	if err != nil {
+		return err
+	}
+	if err := compararCifra("horas estimadas de "+titulo, estimadas, h.Horas.Estimadas); err != nil {
+		return err
+	}
+	return compararCifra("horas reales de "+titulo, reales, h.Horas.Reales)
+}
+
+func (m *mundo) entoncesDesviacionDeLaHistoriaComparada(titulo, esperada string) error {
+	h, err := m.historiaComparada(titulo)
+	if err != nil {
+		return err
+	}
+	return compararCifra("desviación de "+titulo, esperada, h.Horas.Desviacion)
+}
+
+func (m *mundo) entoncesPorcentajeDeLaHistoriaComparada(titulo, esperado string) error {
+	h, err := m.historiaComparada(titulo)
+	if err != nil {
+		return err
+	}
+	if !h.Horas.PorcentajeCalculable {
+		return fmt.Errorf("la desviación porcentual de %q no se puede calcular y se esperaba %s", titulo, esperado)
+	}
+	return compararCifra("desviación porcentual de "+titulo, esperado, h.Horas.Porcentaje)
+}
+
+func (m *mundo) entoncesPorcentajeDeLaHistoriaComparadaNoSePuedeCalcular(titulo string) error {
+	h, err := m.historiaComparada(titulo)
+	if err != nil {
+		return err
+	}
+	if h.Horas.PorcentajeCalculable {
+		return fmt.Errorf("la desviación porcentual de %q se pudo calcular (%g) y se esperaba que no", titulo, h.Horas.Porcentaje)
+	}
+	return nil
+}
+
+func (m *mundo) entoncesElTotalComparableTieneHistorias(esperadas int) error {
+	if obtenidas := m.comparacion.Comparables; obtenidas != esperadas {
+		return fmt.Errorf("historias comparables: se esperaban %d, hay %d", esperadas, obtenidas)
+	}
+	return nil
+}
+
+func (m *mundo) entoncesLasHorasSinCompararSon(esperadas string) error {
+	return compararCifra("horas sin comparar", esperadas, m.comparacion.HorasSinComparar)
 }
 
 // dadoDefectoResuelto y dadoDefectoSinResolver arman los defectos del contexto de US-029. Aceptan
