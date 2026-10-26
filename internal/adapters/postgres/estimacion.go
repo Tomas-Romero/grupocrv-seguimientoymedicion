@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/app"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/backlog"
@@ -88,13 +89,26 @@ func completarItem(item backlog.ItemBacklog, prioridad, estado string, storyPoin
 // existe, o el ID no es un UUID, devuelve app.ErrItemInexistente; si esta
 // completado, backlog.ErrItemCompletado.
 func (r *RepositorioBacklog) GuardarEstimacion(ctx context.Context, itemID string, puntos backlog.StoryPoints) error {
+	return guardarEstimacion(ctx, r.pool, itemID, puntos)
+}
+
+// ejecutor es lo que guardarEstimacion necesita: lo cumplen el pool y una transaccion.
+type ejecutor interface {
+	consultor
+	Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error)
+}
+
+// guardarEstimacion es la sentencia de GuardarEstimacion con el pool o dentro de una
+// transaccion: US-018 la usa para estimar la historia en la misma transaccion que finaliza la
+// sesion (RN-018-9).
+func guardarEstimacion(ctx context.Context, q ejecutor, itemID string, puntos backlog.StoryPoints) error {
 	var valor any // nil se guarda como NULL
 	if p, estimado := puntos.Valor(); estimado {
 		valor = p
 	}
 
 	const actualizar = `UPDATE items_backlog SET story_points = $2 WHERE id = $1 AND estado <> 'completado'`
-	resultado, err := r.pool.Exec(ctx, actualizar, itemID, valor)
+	resultado, err := q.Exec(ctx, actualizar, itemID, valor)
 	if esIDMalFormado(err) {
 		return fmt.Errorf("%w (id %s)", app.ErrItemInexistente, itemID)
 	}
@@ -107,7 +121,7 @@ func (r *RepositorioBacklog) GuardarEstimacion(ctx context.Context, itemID strin
 
 	// Ninguna fila actualizada: o el item no existe o esta completado.
 	var estado string
-	err = r.pool.QueryRow(ctx, `SELECT estado FROM items_backlog WHERE id = $1`, itemID).Scan(&estado)
+	err = q.QueryRow(ctx, `SELECT estado FROM items_backlog WHERE id = $1`, itemID).Scan(&estado)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return fmt.Errorf("%w (id %s)", app.ErrItemInexistente, itemID)
 	}
