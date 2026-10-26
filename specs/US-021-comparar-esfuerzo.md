@@ -270,9 +270,7 @@ o estimaciones no es un error (CL-021-3 a CL-021-6, CL-021-13 y CL-021-14).
   consulta de US-020: son agregaciones distintas y así las dos historias quedan
   independientes.
 - **Frases nuevas del diccionario** (se aprueban en el PR de implementación), área
-  Métricas: `la historia "H" con N horas registradas` (contexto: suma un
-  registro de esfuerzo a la historia, sin pasar por US-019),
-  `se compara el esfuerzo del proyecto "P"`,
+  Métricas: `se compara el esfuerzo del proyecto "P"`,
   `la comparación tiene N historias`,
   `la primera historia de la comparación es "H"`,
   `la historia "H" tiene N horas estimadas y M reales en la comparación`,
@@ -281,7 +279,18 @@ o estimaciones no es un error (CL-021-3 a CL-021-6, CL-021-13 y CL-021-14).
   `la desviación porcentual de la historia "H" en la comparación no se puede
   calcular`, `el total comparable tiene N historias` y
   `las horas sin comparar son N`. Los números aceptan coma o punto decimal y un
-  signo negativo.
+  signo negativo. Después de comparar, las frases de US-027 (`las horas estimadas
+  son N`, `las horas reales son N`, `la desviación de horas es N`, `la desviación
+  porcentual es N` y `la desviación porcentual no se puede calcular`) se refieren
+  al **total de las historias comparables**.
+- **El contexto usa las frases que ya existen.** La primera versión de esta spec
+  proponía una frase de contexto `la historia "H" con N horas registradas` que sumaba
+  horas sin pasar por US-019. No hizo falta: las historias, su estimación, su
+  completado y las horas se arman con las frases de proyecto, historia, sprint y
+  `el integrante "X" ya registró N horas ...`, que recorren los mismos casos de uso
+  que la aplicación. El caso de datos inválidos (CA-021-9) no tiene escenario porque
+  ningún flujo puede guardar horas o Story Points negativos: lo cubren los tests del
+  dominio.
 
 ## Uso de IA en esta especificación
 
