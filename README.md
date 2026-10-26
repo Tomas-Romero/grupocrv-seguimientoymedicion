@@ -91,6 +91,7 @@ Interfaz web renderizada en el servidor con `templ` y HTMX. PostgreSQL.
 | [`docs/retros/`](docs/retros/) | Actas de retrospectiva |
 | [`docs/plantillas/`](docs/plantillas/) | Plantillas de spec SDD, escenario BDD y acta de retro |
 | [`docs/uso-de-ia.md`](docs/uso-de-ia.md) | Política de uso de inteligencia artificial |
+| [`docs/ci-cd.md`](docs/ci-cd.md) | Integración y entrega continua: qué verifica el CI, cómo se protege `main` y cómo se publica la imagen en Azure |
 | [`docs/trazabilidad.md`](docs/trazabilidad.md) | Historia → Spec → Criterios → BDD → Tests → Código |
 
 ## Metodología

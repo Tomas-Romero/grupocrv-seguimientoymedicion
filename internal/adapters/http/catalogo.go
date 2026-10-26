@@ -57,6 +57,7 @@ var entradasDelCatalogo = []entradaDelCatalogo{
 	{"planningpoker.ErrParticipantesInsuficientes", planningpoker.ErrParticipantesInsuficientes, errores.Conflicto, ""},
 	{"planningpoker.ErrVotacionCerrada", planningpoker.ErrVotacionCerrada, errores.Conflicto, ""},
 	{"planningpoker.ErrNoEsParticipante", planningpoker.ErrNoEsParticipante, errores.Conflicto, ""},
+	{"planningpoker.ErrSesionNoRevelada", planningpoker.ErrSesionNoRevelada, errores.Conflicto, ""},
 	{"planningpoker.ErrSinVotos", planningpoker.ErrSinVotos, errores.Conflicto, ""},
 
 	// proyecto

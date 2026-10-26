@@ -61,6 +61,9 @@ type SesionPlanningPoker struct {
 	// Participantes son los IDs de los integrantes del proyecto al iniciar, en orden
 	// de alta (RN-014-4). Quien se registre despues no participa.
 	Participantes []string
+	// ValorAcordado es la estimacion acordada al finalizar la sesion (US-018). Su valor
+	// cero es "sin acordar": solo una sesion finalizada lo tiene.
+	ValorAcordado backlog.StoryPoints
 }
 
 // DatosDeLaHistoria son los datos minimos de la historia que necesita iniciar la

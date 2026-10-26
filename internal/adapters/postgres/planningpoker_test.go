@@ -195,7 +195,7 @@ func TestRegistrarSesion_Reglas(t *testing.T) {
 		if err != nil {
 			t.Fatalf("primera sesion: %v", err)
 		}
-		if _, err := e.pool.Exec(ctx, `UPDATE sesiones_planning_poker SET estado = 'finalizada' WHERE id = $1`, primera.ID); err != nil {
+		if _, err := e.pool.Exec(ctx, `UPDATE sesiones_planning_poker SET estado = 'finalizada', valor_acordado = 5 WHERE id = $1`, primera.ID); err != nil {
 			t.Fatalf("finalizar la sesion: %v", err)
 		}
 		if abierta, _ := e.repo.TieneSesionAbierta(ctx, e.item); abierta {
@@ -263,7 +263,8 @@ func TestMigracion_UnaSesionAbiertaPorHistoria(t *testing.T) {
 	ctx := contexto(t)
 	e := nuevoEscenarioPoker(ctx, t, "ana", "beto")
 	insertar := `INSERT INTO sesiones_planning_poker (item_id, estado) VALUES ($1, $2)`
-	if _, err := e.pool.Exec(ctx, insertar, e.item, "finalizada"); err != nil {
+	// Desde US-018 una sesion finalizada tiene su valor acordado.
+	if _, err := e.pool.Exec(ctx, `INSERT INTO sesiones_planning_poker (item_id, estado, valor_acordado) VALUES ($1, 'finalizada', 5)`, e.item); err != nil {
 		t.Fatalf("insertar una finalizada: %v", err)
 	}
 	if _, err := e.pool.Exec(ctx, insertar, e.item, "votando"); err != nil {

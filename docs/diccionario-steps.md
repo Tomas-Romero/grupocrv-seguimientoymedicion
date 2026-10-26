@@ -213,6 +213,7 @@ inexistente (CA-005-8, CA-008-10); con esa frase el escenario no lleva
 | `Cuando el integrante "Ana" vota 5 en la sesión de la historia "Crear proyecto"` | `^el integrante "([^"]*)" vota (-?\d+) en la sesión de la historia "([^"]*)"$` |
 | `Cuando se consultan las horas del sprint "Sprint 1"` | `^se consultan las horas del sprint "([^"]*)"$` |
 | `Cuando el integrante "Ana" revela los votos de la sesión de la historia "Crear proyecto"` | `^el integrante "([^"]*)" revela los votos de la sesión de la historia "([^"]*)"$` |
+| `Cuando el integrante "Ana" registra la estimación acordada de 5 en la sesión de la historia "Crear proyecto"` | `^el integrante "([^"]*)" registra la estimación acordada de (-?\d+) en la sesión de la historia "([^"]*)"$` |
 | `Cuando el integrante "Ana" registra 2,5 horas de "Desarrollo" en la historia "Crear proyecto" el 2026-10-05` | `^el integrante "([^"]*)" registra (-?\d+(?:[.,]\d+)?) horas de "([^"]*)" en la historia "([^"]*)" el (\S+)$` |
 
 **Propuesta US-003:** `se registra al integrante "X" con email "..." y rol "Y"`
@@ -325,6 +326,7 @@ cuenta caracteres y no bytes.
 | `Y los votos de la sesión de la historia "Crear proyecto" son:` + tabla `integrante \| voto` | `^los votos de la sesión de la historia "([^"]*)" son:$` |
 | `Y hay divergencia en la sesión de la historia "Crear proyecto"` | `^hay divergencia en la sesión de la historia "([^"]*)"$` |
 | `Y no hay divergencia en la sesión de la historia "Crear proyecto"` | `^no hay divergencia en la sesión de la historia "([^"]*)"$` |
+| `Y la estimación acordada de la sesión de la historia "Crear proyecto" es 5` | `^la estimación acordada de la sesión de la historia "([^"]*)" es (\d+)$` |
 
 `la operación es exitosa` y `la operación se rechaza` miran el error que dejó el
 último `Cuando`. Son los dos steps que más vas a usar: todo escenario de error
@@ -364,6 +366,12 @@ solo incluye a quienes votaron: los que faltan se comprueban con `faltan votar`.
 sesión todavía votando (por ejemplo, después de un revelado rechazado), pedir los votos
 falla: es la misma garantía de `están ocultos`. `hay divergencia` y `no hay divergencia`
 leen lo que devolvió la última revelación de esa historia.
+
+**Estimación acordada (US-018):** `el integrante "X" registra la estimación acordada de N`
+finaliza la sesión de la historia con ese valor y la deja estimada. Una sesión finalizada
+ya no está abierta, así que las frases de la sesión (estado, participantes, votos y
+estimación acordada) leen la **última** sesión de la historia. El número acepta negativos
+para poder escribir el rechazo de un valor fuera de la escala.
 
 `está sin estimar` y `tiene N story points` no son lo mismo: una historia recién
 creada está sin estimar, no tiene 0 story points (RN-005-7). Los estados se
