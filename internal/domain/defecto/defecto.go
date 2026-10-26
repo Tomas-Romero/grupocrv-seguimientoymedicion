@@ -71,27 +71,37 @@ type Defecto struct {
 
 // Nuevo arma el defecto, sin ID, siempre abierto y sin sprint de resolucion (RN-022-3).
 //
+// RN-022-4: valida todo y devuelve todos los errores unidos con errors.Join, en orden
+// fijo: descripcion y despues severidad. De la descripcion se devuelve un solo error: el
+// de vacia y el de muy larga no pueden darse a la vez. Si hay algun error no devuelve
+// defecto.
+//
 // Los IDs se copian tal cual: que existan y sean del proyecto lo verifica la capa de
 // aplicacion (RN-022-5), nunca el dominio.
 func Nuevo(proyectoID, itemID, sprintDeteccionID, descripcion string, severidad Severidad) (Defecto, error) {
+	var errs []error
+
 	// RN-022-1: se recorta antes de validar y se guarda recortada. El limite se mide en
 	// caracteres y no en bytes. Una descripcion de solo espacios queda vacia: es
 	// ErrDescripcionVacia aunque tenga 3000, nunca ErrDescripcionMuyLarga.
 	descripcion = strings.TrimSpace(descripcion)
 	switch largo := utf8.RuneCountInString(descripcion); {
 	case largo == 0:
-		return Defecto{}, ErrDescripcionVacia
+		errs = append(errs, ErrDescripcionVacia)
 	case largo > MaxLargoDescripcion:
-		return Defecto{}, fmt.Errorf("%w (tiene %d)", ErrDescripcionMuyLarga, largo)
+		errs = append(errs, fmt.Errorf("%w (tiene %d)", ErrDescripcionMuyLarga, largo))
 	}
 
 	// RN-022-2: valores exactos; no se pasa a minuscula ni se recorta.
 	switch severidad {
 	case SeveridadCritica, SeveridadAlta, SeveridadMedia, SeveridadBaja:
 	default:
-		return Defecto{}, fmt.Errorf("%w (se recibio %q)", ErrSeveridadInvalida, string(severidad))
+		errs = append(errs, fmt.Errorf("%w (se recibio %q)", ErrSeveridadInvalida, string(severidad)))
 	}
 
+	if err := errors.Join(errs...); err != nil {
+		return Defecto{}, err
+	}
 	return Defecto{
 		ProyectoID:        proyectoID,
 		ItemID:            itemID,
