@@ -4,7 +4,7 @@
 > No se edita a mano: se regenera. Enlaza Historia → Spec → Criterios de aceptación →
 > Escenarios BDD → Tests → Código (la guía de la cátedra la pide como evidencia).
 
-Total: 30 especificaciones, 215 criterios de aceptación, 147 con escenario BDD y 158 con test.
+Total: 30 especificaciones, 215 criterios de aceptación, 155 con escenario BDD y 167 con test.
 
 Un criterio sin escenario BDD o sin test se muestra con `—`: o falta la evidencia, o el criterio
 se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no llevan `.feature`).
@@ -30,7 +30,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | US-018 | [specs/US-018-registrar-estimacion-acordada.md](../specs/US-018-registrar-estimacion-acordada.md) | borrador | 8 | 8 | 8 | `internal/domain/planningpoker/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`, `migraciones/00011_sesiones_valor_acordado.sql` |
 | US-019 | [specs/US-019-registrar-esfuerzo.md](../specs/US-019-registrar-esfuerzo.md) | borrador | 11 | 9 | 7 | `internal/domain/esfuerzo/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/` |
 | US-020 | [specs/US-020-consultar-esfuerzo.md](../specs/US-020-consultar-esfuerzo.md) | borrador | 9 | 9 | 9 | `internal/domain/esfuerzo/`, `internal/app/consultar_esfuerzo.go` |
-| US-021 | [specs/US-021-comparar-esfuerzo.md](../specs/US-021-comparar-esfuerzo.md) | borrador | 9 | 0 | 0 | `internal/domain/metricas/`, `internal/app/comparar_esfuerzo.go` |
+| US-021 | [specs/US-021-comparar-esfuerzo.md](../specs/US-021-comparar-esfuerzo.md) | borrador | 9 | 8 | 9 | `internal/domain/metricas/`, `internal/app/comparar_esfuerzo.go` |
 | US-022 | [specs/US-022-registrar-defecto.md](../specs/US-022-registrar-defecto.md) | borrador | 12 | 0 | 0 | `internal/domain/defecto/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`, `migraciones/00012_defectos.sql` |
 | US-023 | [specs/US-023-cambiar-estado-defecto.md](../specs/US-023-cambiar-estado-defecto.md) | borrador | 14 | 0 | 0 | `internal/domain/defecto/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`, `migraciones/00013_defectos_estado.sql` |
 | US-025 | [specs/US-025-story-points-sprint.md](../specs/US-025-story-points-sprint.md) | borrador | 4 | 4 | 1 | `internal/domain/metricas/` |
@@ -346,21 +346,21 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 ### US-021 — Comparar el esfuerzo estimado contra el esfuerzo real
 
 - **Spec:** [specs/US-021-comparar-esfuerzo.md](../specs/US-021-comparar-esfuerzo.md) · **Issue:** #24
-- **Escenarios BDD:** ninguno
+- **Escenarios BDD:** [features/US-021-comparar-esfuerzo.feature](../features/US-021-comparar-esfuerzo.feature)
 - **Código:** `internal/domain/metricas/`, `internal/app/comparar_esfuerzo.go`
-- **Tests que la citan:** 0
+- **Tests que la citan:** 22
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
-| CA-021-1 | normal | — | — |
-| CA-021-2 | normal | — | — |
-| CA-021-3 | alternativo | — | — |
-| CA-021-4 | límite | — | — |
-| CA-021-5 | límite | — | — |
-| CA-021-6 | límite | — | — |
-| CA-021-7 | límite | — | — |
-| CA-021-8 | error | — | — |
-| CA-021-9 | error | — | — |
+| CA-021-1 | normal | Una historia completada se compara contra las horas que se registraron | TestCompararHistorias_UnaHistoria |
+| CA-021-2 | normal | Se trabajó menos de lo estimado | TestCompararHistorias_UnaHistoria |
+| CA-021-3 | alternativo | La historia donde más nos equivocamos sale primero y el total suma las dos | TestCompararEsfuerzo, TestCompararHistorias_Orden |
+| CA-021-4 | límite | Una historia completada y estimada sin horas aparece con la desviación de sus estimadas | TestCompararHistorias_UnaHistoria |
+| CA-021-5 | límite | Una historia sin estimar con horas aparece sin porcentaje y no suma al total | TestCompararHistorias_UnaHistoria, TestCompararHistorias_SoloLasCompletadasYEstimadasSumanAlTotal |
+| CA-021-6 | límite | Una historia pendiente sin horas no aparece y una en curso con horas no suma al total | TestCompararEsfuerzo, TestCompararHistorias_QueAparece, TestCompararHistorias_SoloLasCompletadasYEstimadasSumanAlTotal |
+| CA-021-7 | límite | Un proyecto sin historias da una comparación vacía y no es un error | TestCompararEsfuerzo_SinHistorias, TestCompararHistorias_SinHistorias |
+| CA-021-8 | error | Un proyecto inexistente se rechaza | TestCompararEsfuerzo_ProyectoInexistente |
+| CA-021-9 | error | — | TestCompararEsfuerzo_DatosInvalidos, TestCompararHistorias_DatosInvalidos |
 
 ### US-022 — Registrar un defecto con severidad, historia relacionada y sprint de detección
 
@@ -441,7 +441,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 - **Spec:** [specs/US-027-horas-estimadas-reales.md](../specs/US-027-horas-estimadas-reales.md) · **Issue:** #33
 - **Escenarios BDD:** [features/US-027-horas-estimadas-reales.feature](../features/US-027-horas-estimadas-reales.feature)
 - **Código:** `internal/domain/metricas/`
-- **Tests que la citan:** 3
+- **Tests que la citan:** 4
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
