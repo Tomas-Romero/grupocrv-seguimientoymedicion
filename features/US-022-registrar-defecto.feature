@@ -185,6 +185,7 @@ Característica: Registrar un defecto con severidad, historia relacionada y spri
   Escenario: No se registra un defecto detectado en un sprint de otro proyecto
     Dado un proyecto "Otro"
     Y un sprint "Sprint 1" con el objetivo "MVP navegable"
+    Y el sprint "Sprint 1" cerrado
     Y un sprint "Sprint 2" con el objetivo "Listados"
     Y un proyecto "Demo"
     Y una historia "Crear proyecto" con prioridad "must"
