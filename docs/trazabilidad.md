@@ -4,7 +4,7 @@
 > No se edita a mano: se regenera. Enlaza Historia → Spec → Criterios de aceptación →
 > Escenarios BDD → Tests → Código (la guía de la cátedra la pide como evidencia).
 
-Total: 25 especificaciones, 163 criterios de aceptación, 130 con escenario BDD y 141 con test.
+Total: 30 especificaciones, 215 criterios de aceptación, 147 con escenario BDD y 158 con test.
 
 Un criterio sin escenario BDD o sin test se muestra con `—`: o falta la evidencia, o el criterio
 se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no llevan `.feature`).
@@ -27,7 +27,12 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | US-014 | [specs/US-014-iniciar-sesion-planning-poker.md](../specs/US-014-iniciar-sesion-planning-poker.md) | borrador | 7 | 7 | 7 | `internal/domain/planningpoker/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/00009_sesiones_planning_poker.sql` |
 | US-015 | [specs/US-015-voto-individual-oculto.md](../specs/US-015-voto-individual-oculto.md) | borrador | 7 | 7 | 7 | `internal/domain/planningpoker/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/00010_votos_planning_poker.sql` |
 | US-016 | [specs/US-016-revelar-estimaciones.md](../specs/US-016-revelar-estimaciones.md) | borrador | 8 | 8 | 8 | `internal/domain/planningpoker/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/` |
+| US-018 | [specs/US-018-registrar-estimacion-acordada.md](../specs/US-018-registrar-estimacion-acordada.md) | borrador | 8 | 8 | 8 | `internal/domain/planningpoker/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`, `migraciones/00011_sesiones_valor_acordado.sql` |
 | US-019 | [specs/US-019-registrar-esfuerzo.md](../specs/US-019-registrar-esfuerzo.md) | borrador | 11 | 9 | 7 | `internal/domain/esfuerzo/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/` |
+| US-020 | [specs/US-020-consultar-esfuerzo.md](../specs/US-020-consultar-esfuerzo.md) | borrador | 9 | 9 | 9 | `internal/domain/esfuerzo/`, `internal/app/consultar_esfuerzo.go` |
+| US-021 | [specs/US-021-comparar-esfuerzo.md](../specs/US-021-comparar-esfuerzo.md) | borrador | 9 | 0 | 0 | `internal/domain/metricas/`, `internal/app/comparar_esfuerzo.go` |
+| US-022 | [specs/US-022-registrar-defecto.md](../specs/US-022-registrar-defecto.md) | borrador | 12 | 0 | 0 | `internal/domain/defecto/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`, `migraciones/00012_defectos.sql` |
+| US-023 | [specs/US-023-cambiar-estado-defecto.md](../specs/US-023-cambiar-estado-defecto.md) | borrador | 14 | 0 | 0 | `internal/domain/defecto/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`, `migraciones/00013_defectos_estado.sql` |
 | US-025 | [specs/US-025-story-points-sprint.md](../specs/US-025-story-points-sprint.md) | borrador | 4 | 4 | 1 | `internal/domain/metricas/` |
 | US-026 | [specs/US-026-velocidad-equipo.md](../specs/US-026-velocidad-equipo.md) | borrador | 4 | 4 | 1 | `internal/domain/metricas/` |
 | US-027 | [specs/US-027-horas-estimadas-reales.md](../specs/US-027-horas-estimadas-reales.md) | borrador | 6 | 6 | 6 | `internal/domain/metricas/` |
@@ -217,7 +222,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 - **Spec:** [specs/US-013-estimar-historia-fibonacci.md](../specs/US-013-estimar-historia-fibonacci.md) · **Issue:** #21
 - **Escenarios BDD:** [features/US-013-estimar-historia-fibonacci.feature](../features/US-013-estimar-historia-fibonacci.feature)
 - **Código:** `internal/domain/backlog/`, `internal/app/`, `internal/adapters/postgres/`
-- **Tests que la citan:** 29
+- **Tests que la citan:** 31
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
@@ -233,7 +238,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 - **Spec:** [specs/US-014-iniciar-sesion-planning-poker.md](../specs/US-014-iniciar-sesion-planning-poker.md) · **Issue:** #25
 - **Escenarios BDD:** [features/US-014-iniciar-sesion-planning-poker.feature](../features/US-014-iniciar-sesion-planning-poker.feature)
 - **Código:** `internal/domain/planningpoker/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/00009_sesiones_planning_poker.sql`
-- **Tests que la citan:** 24
+- **Tests que la citan:** 26
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
@@ -280,6 +285,24 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | CA-016-7 | error | Una sesión ya revelada no se revela de nuevo | TestBase_GuardarRevelado_Rechazos, TestBase_GuardarRevelado_DespuesNoSeVota, TestGuardarRevelado_Reglas, TestGuardarRevelado_DespuesNoSeVota, +2 más |
 | CA-016-8 | error | Revelar en una historia sin sesión se rechaza, Un integrante que no existe no revela | TestRevelarVotos_LoQueNoExiste |
 
+### US-018 — Registrar la estimación acordada como valor final de la historia
+
+- **Spec:** [specs/US-018-registrar-estimacion-acordada.md](../specs/US-018-registrar-estimacion-acordada.md) · **Issue:** #29
+- **Escenarios BDD:** [features/US-018-registrar-estimacion-acordada.feature](../features/US-018-registrar-estimacion-acordada.feature)
+- **Código:** `internal/domain/planningpoker/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`, `migraciones/00011_sesiones_valor_acordado.sql`
+- **Tests que la citan:** 23
+
+| Criterio | Tipo | Escenarios BDD | Tests |
+|---|---|---|---|
+| CA-018-1 | normal | La sesión queda finalizada con el valor acordado y la historia, estimada | TestBase_GuardarAcuerdo, TestGuardarAcuerdo, TestRegistrarEstimacionAcordada_Registra, TestAcordar |
+| CA-018-2 | alternativo | Se acuerda un valor que nadie votó, aunque haya divergencia | TestBase_GuardarAcuerdo, TestGuardarAcuerdo, TestAcordar |
+| CA-018-3 | alternativo | Una historia ya estimada queda con el valor acordado | TestBase_GuardarAcuerdo_HistoriaYaEstimada, TestGuardarAcuerdo_HistoriaYaEstimada |
+| CA-018-4 | límite | Solo se acuerda un valor de la escala, Un valor fuera de la escala deja la sesión revelada y la historia sin estimar | TestRegistrarEstimacionAcordada_ReglasDelDominio, TestAcordar_Rechazos |
+| CA-018-5 | error | Con la sesión votando no se registra | TestAcordar_Rechazos |
+| CA-018-6 | error | Un integrante que no participa de la sesión no registra | TestAcordar_Rechazos |
+| CA-018-7 | error | Si la historia se completó, no se registra y la sesión sigue revelada | TestBase_GuardarAcuerdo_HistoriaCompletada, TestRegistrarEstimacionAcordada_ReglasDelDominio, TestAcordar_HistoriaCompletada |
+| CA-018-8 | error | Registrar en una historia sin sesión se rechaza, Un integrante que no existe no registra | TestBase_GuardarAcuerdo_SesionInexistente, TestGuardarAcuerdo_SesionInexistente, TestRegistrarEstimacionAcordada_LoQueNoExiste |
+
 ### US-019 — Registrar esfuerzo con integrante, fecha, actividad y horas
 
 - **Spec:** [specs/US-019-registrar-esfuerzo.md](../specs/US-019-registrar-esfuerzo.md) · **Issue:** #22
@@ -300,6 +323,90 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | CA-019-11 | alternativo | — | — |
 | CA-019-9 | error | Un integrante de otro proyecto no puede registrar esfuerzo, No se registra esfuerzo sobre una historia de otro proyecto | TestRegistrarEsfuerzo_LoQueDesaparece, TestRegistrarEsfuerzo_LoQueNoExiste |
 | CA-019-10 | error | Registrar esfuerzo en un proyecto que no existe se rechaza | TestRegistrarEsfuerzo_LoQueDesaparece, TestRegistrarEsfuerzo_LoQueNoExiste |
+
+### US-020 — Consultar el esfuerzo registrado por historia, integrante y sprint
+
+- **Spec:** [specs/US-020-consultar-esfuerzo.md](../specs/US-020-consultar-esfuerzo.md) · **Issue:** #23
+- **Escenarios BDD:** [features/US-020-consultar-esfuerzo.feature](../features/US-020-consultar-esfuerzo.feature)
+- **Código:** `internal/domain/esfuerzo/`, `internal/app/consultar_esfuerzo.go`
+- **Tests que la citan:** 29
+
+| Criterio | Tipo | Escenarios BDD | Tests |
+|---|---|---|---|
+| CA-020-1 | normal | Sin filtros se devuelven todos los registros, del más reciente al más antiguo | TestConsultarEsfuerzo_SinFiltros |
+| CA-020-2 | normal | Filtrar por una historia deja solo sus registros, Los filtros se combinan: solo los registros que cumplen todos | TestConsultarEsfuerzo_FiltroPorHistoria |
+| CA-020-3 | normal | Filtrar por un integrante deja sus registros de todas las historias | TestConsultarEsfuerzo_FiltroPorIntegrante |
+| CA-020-4 | normal | Filtrar por un sprint deja los registros cuya fecha cae en él, con el primer y el último día incluidos, Las horas de una historia se reparten entre los sprints según la fecha del trabajo | TestConsultarEsfuerzo_FiltroPorSprint, TestSprintDeLaFecha_DentroDelRango |
+| CA-020-5 | alternativo | Los totales por historia, por integrante y por sprint suman el total | TestConsultarEsfuerzo_TotalesPorGrupo |
+| CA-020-6 | límite | Un registro cuya fecha no cae en ningún sprint se cuenta aparte | TestConsultarEsfuerzo_CadaRegistroLlevaSuDetalle |
+| CA-020-7 | límite | Un proyecto sin registros da una consulta vacía y no es un error, Filtros sin coincidencias dan una consulta vacía y no es un error | TestConsultarEsfuerzo_SinRegistros |
+| CA-020-8 | error | Una historia de otro proyecto como filtro se rechaza, Un integrante de otro proyecto como filtro se rechaza, Un sprint que no es del proyecto como filtro se rechaza | TestConsultarEsfuerzo_Inexistentes |
+| CA-020-9 | error | Un proyecto inexistente se rechaza | TestConsultarEsfuerzo_Inexistentes |
+
+### US-021 — Comparar el esfuerzo estimado contra el esfuerzo real
+
+- **Spec:** [specs/US-021-comparar-esfuerzo.md](../specs/US-021-comparar-esfuerzo.md) · **Issue:** #24
+- **Escenarios BDD:** ninguno
+- **Código:** `internal/domain/metricas/`, `internal/app/comparar_esfuerzo.go`
+- **Tests que la citan:** 0
+
+| Criterio | Tipo | Escenarios BDD | Tests |
+|---|---|---|---|
+| CA-021-1 | normal | — | — |
+| CA-021-2 | normal | — | — |
+| CA-021-3 | alternativo | — | — |
+| CA-021-4 | límite | — | — |
+| CA-021-5 | límite | — | — |
+| CA-021-6 | límite | — | — |
+| CA-021-7 | límite | — | — |
+| CA-021-8 | error | — | — |
+| CA-021-9 | error | — | — |
+
+### US-022 — Registrar un defecto con severidad, historia relacionada y sprint de detección
+
+- **Spec:** [specs/US-022-registrar-defecto.md](../specs/US-022-registrar-defecto.md) · **Issue:** #30
+- **Escenarios BDD:** ninguno
+- **Código:** `internal/domain/defecto/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`, `migraciones/00012_defectos.sql`
+- **Tests que la citan:** 0
+
+| Criterio | Tipo | Escenarios BDD | Tests |
+|---|---|---|---|
+| CA-022-1 | normal | — | — |
+| CA-022-2 | alternativo | — | — |
+| CA-022-3 | alternativo | — | — |
+| CA-022-4 | alternativo | — | — |
+| CA-022-5 | alternativo | — | — |
+| CA-022-6 | límite | — | — |
+| CA-022-7 | error | — | — |
+| CA-022-8 | error | — | — |
+| CA-022-9 | error | — | — |
+| CA-022-10 | error | — | — |
+| CA-022-11 | error | — | — |
+| CA-022-12 | error | — | — |
+
+### US-023 — Cambiar el estado de un defecto y registrar su sprint de resolución
+
+- **Spec:** [specs/US-023-cambiar-estado-defecto.md](../specs/US-023-cambiar-estado-defecto.md) · **Issue:** #31
+- **Escenarios BDD:** ninguno
+- **Código:** `internal/domain/defecto/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`, `migraciones/00013_defectos_estado.sql`
+- **Tests que la citan:** 0
+
+| Criterio | Tipo | Escenarios BDD | Tests |
+|---|---|---|---|
+| CA-023-1 | normal | — | — |
+| CA-023-2 | alternativo | — | — |
+| CA-023-3 | alternativo | — | — |
+| CA-023-4 | alternativo | — | — |
+| CA-023-5 | límite | — | — |
+| CA-023-6 | error | — | — |
+| CA-023-7 | error | — | — |
+| CA-023-8 | error | — | — |
+| CA-023-9 | error | — | — |
+| CA-023-10 | error | — | — |
+| CA-023-11 | error | — | — |
+| CA-023-12 | error | — | — |
+| CA-023-13 | error | — | — |
+| CA-023-14 | error | — | — |
 
 ### US-025 — Calcular Story Points planificados y completados de un Sprint
 
