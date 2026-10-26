@@ -19,6 +19,7 @@ func registrarPlanningPoker(sc *godog.ScenarioContext, m *mundo) {
 	sc.Step(`^se inicia una sesión de Planning Poker sobre la historia "([^"]*)"$`, m.cuandoSeIniciaSesion)
 	sc.Step(`^el integrante "([^"]*)" vota (-?\d+) en la sesión de la historia "([^"]*)"$`, m.cuandoVota)
 	sc.Step(`^el integrante "([^"]*)" revela los votos de la sesión de la historia "([^"]*)"$`, m.cuandoRevela)
+	sc.Step(`^el integrante "([^"]*)" registra la estimación acordada de (-?\d+) en la sesión de la historia "([^"]*)"$`, m.cuandoRegistraAcuerdo)
 
 	sc.Step(`^la sesión de la historia "([^"]*)" está "([^"]*)" en la ronda (\d+)$`, m.entoncesEstadoDeLaSesion)
 	sc.Step(`^los participantes de la sesión de la historia "([^"]*)" son:$`, m.entoncesParticipantes)
@@ -28,6 +29,7 @@ func registrarPlanningPoker(sc *godog.ScenarioContext, m *mundo) {
 	sc.Step(`^los votos de la sesión de la historia "([^"]*)" son:$`, m.entoncesVotosSon)
 	sc.Step(`^hay divergencia en la sesión de la historia "([^"]*)"$`, m.entoncesHayDivergencia)
 	sc.Step(`^no hay divergencia en la sesión de la historia "([^"]*)"$`, m.entoncesNoHayDivergencia)
+	sc.Step(`^la estimación acordada de la sesión de la historia "([^"]*)" es (\d+)$`, m.entoncesEstimacionAcordada)
 }
 
 func (m *mundo) dadoUnVoto(integrante string, valor int, titulo string) error {
@@ -215,6 +217,29 @@ func (m *mundo) comprobarDivergencia(titulo string, esperada bool) error {
 	}
 	if hay != esperada {
 		return fmt.Errorf("divergencia en la sesion de %q: se esperaba %t, es %t", titulo, esperada, hay)
+	}
+	return nil
+}
+
+func (m *mundo) cuandoRegistraAcuerdo(integrante string, valor int, titulo string) error {
+	poker, err := m.planningPoker()
+	if err != nil {
+		return err
+	}
+	return m.registrarAccion(poker.RegistrarEstimacionAcordada(integrante, titulo, valor))
+}
+
+func (m *mundo) entoncesEstimacionAcordada(titulo string, esperada int) error {
+	poker, err := m.planningPoker()
+	if err != nil {
+		return err
+	}
+	valor, err := poker.EstimacionAcordada(titulo)
+	if err != nil {
+		return fmt.Errorf("consultar la estimacion acordada de la sesion de %q: %w", titulo, err)
+	}
+	if valor != esperada {
+		return fmt.Errorf("estimacion acordada de la sesion de %q: se esperaba %d, es %d", titulo, esperada, valor)
 	}
 	return nil
 }
