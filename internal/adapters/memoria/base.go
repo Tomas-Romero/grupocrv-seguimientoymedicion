@@ -12,6 +12,7 @@ import (
 	"sync"
 
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/backlog"
+	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/defecto"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/esfuerzo"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/integrante"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/planningpoker"
@@ -45,6 +46,9 @@ type Base struct {
 	// (US-019).
 	esfuerzos map[string][]esfuerzo.RegistroEsfuerzo
 
+	// defectos guarda los defectos de cada proyecto, en orden de alta (US-022).
+	defectos map[string][]defecto.Defecto
+
 	// asignaciones guarda las filas de la relacion entre cada item y sus sprints, en
 	// orden de alta (US-009). Un item tiene como mucho una pendiente.
 	asignaciones map[string][]asignacion
@@ -67,6 +71,7 @@ func NuevaBase() *Base {
 		integrantes:    map[string][]integrante.Integrante{},
 		sprints:        map[string][]sprint.Sprint{},
 		esfuerzos:      map[string][]esfuerzo.RegistroEsfuerzo{},
+		defectos:       map[string][]defecto.Defecto{},
 		votos:          map[claveDeVoto]int{},
 		asignaciones:   map[string][]asignacion{},
 	}
