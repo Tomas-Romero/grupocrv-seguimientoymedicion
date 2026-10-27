@@ -7,10 +7,13 @@ import (
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/defecto"
 )
 
-// segundoSprint suma el Sprint 2 al proyecto "Demo" de la base (empieza despues de que termina el
-// Sprint 1, RN-008-13) y devuelve su ID.
+// segundoSprint cierra el Sprint 1 del proyecto "Demo" y suma el Sprint 2 (que empieza despues de
+// que termina el 1, RN-008-13). Devuelve su ID.
 func (b baseConDefectos) segundoSprint(t *testing.T) string {
 	t.Helper()
+	if _, err := b.base.GuardarCierre(context.Background(), b.sprint); err != nil {
+		t.Fatalf("GuardarCierre: %v", err)
+	}
 	s, err := b.base.RegistrarSprint(context.Background(), sprintParaProyecto(t, b.demo, diaDeSprint(10, 20), diaDeSprint(11, 2)))
 	if err != nil {
 		t.Fatalf("RegistrarSprint: %v", err)
