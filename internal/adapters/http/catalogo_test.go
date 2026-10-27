@@ -127,7 +127,7 @@ func TestCatalogo_CubreTodosLosErrores(t *testing.T) {
 func TestCatalogo_EntradasValidas(t *testing.T) {
 	camposValidos := map[string]bool{"": true, "nombre": true, "email": true, "rol": true, "titulo": true, "prioridad": true,
 		"criterios": true, "estimacion": true, "sprint_goal": true, "fecha_inicio": true, "fecha_fin": true, "fecha": true,
-		"actividad": true, "horas": true, "descripcion": true, "severidad": true}
+		"actividad": true, "horas": true, "descripcion": true, "severidad": true, "estado": true, "sprint_resolucion": true}
 	tipos := map[errores.Tipo]bool{errores.Validacion: true, errores.NoEncontrado: true, errores.Conflicto: true}
 
 	for _, e := range entradasDelCatalogo {
