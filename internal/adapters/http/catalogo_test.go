@@ -16,6 +16,7 @@ import (
 
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/app"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/backlog"
+	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/defecto"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/esfuerzo"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/integrante"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/metricas"
@@ -182,6 +183,39 @@ func TestCatalogoDeErrores_Clasifica(t *testing.T) {
 	for _, c := range casos {
 		t.Run(c.nombre, func(t *testing.T) {
 			problema := catalogo.Clasificar(c.err)
+			if problema.Tipo != c.tipo || len(problema.Errores) != 1 || problema.Errores[0].Campo != c.campo {
+				t.Fatalf("Clasificar() = %+v, quiero tipo %s con un error del campo %q", problema, c.tipo, c.campo)
+			}
+			if got := EstadoHTTP(problema.Tipo); got != c.estado {
+				t.Errorf("EstadoHTTP = %d, quiero %d", got, c.estado)
+			}
+		})
+	}
+}
+
+// US-023 / spec seccion 5 (catalogo): los siete errores del cambio de estado de un defecto se
+// clasifican con el tipo y el campo de la spec. El de sprint anterior es un conflicto porque
+// compara contra el sprint guardado (RN-T005-2), y los de inexistencia y modificacion no llevan campo.
+func TestCatalogoDeErrores_CambioDeEstadoDeDefecto(t *testing.T) {
+	casos := []struct {
+		nombre string
+		err    error
+		tipo   errores.Tipo
+		campo  string
+		estado int
+	}{
+		{"estado invalido", defecto.ErrEstadoInvalido, errores.Validacion, "estado", http.StatusUnprocessableEntity},
+		{"transicion invalida", defecto.ErrTransicionInvalida, errores.Conflicto, "estado", http.StatusConflict},
+		{"resuelto sin sprint", defecto.ErrSprintResolucionFaltante, errores.Validacion, "sprint_resolucion", http.StatusUnprocessableEntity},
+		{"sprint con otro estado", defecto.ErrSprintResolucionNoCorresponde, errores.Validacion, "sprint_resolucion", http.StatusUnprocessableEntity},
+		{"sprint anterior al de deteccion", defecto.ErrSprintResolucionAnterior, errores.Conflicto, "sprint_resolucion", http.StatusConflict},
+		{"defecto inexistente", app.ErrDefectoInexistente, errores.NoEncontrado, "", http.StatusNotFound},
+		{"defecto modificado", app.ErrDefectoModificado, errores.Conflicto, "", http.StatusConflict},
+	}
+	catalogo := CatalogoDeErrores()
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			problema := catalogo.Clasificar(fmt.Errorf("cambiar el estado: %w", c.err))
 			if problema.Tipo != c.tipo || len(problema.Errores) != 1 || problema.Errores[0].Campo != c.campo {
 				t.Fatalf("Clasificar() = %+v, quiero tipo %s con un error del campo %q", problema, c.tipo, c.campo)
 			}
