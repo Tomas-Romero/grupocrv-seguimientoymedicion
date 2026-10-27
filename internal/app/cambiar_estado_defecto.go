@@ -43,20 +43,33 @@ func NuevoCambiarEstadoDefecto(repo RepositorioCambioDeEstadoDefecto) *CambiarEs
 // proyecto, verifica el sprint de resolucion si se informo, traduce los sprints a su numero,
 // valida con el dominio y guarda con un UPDATE condicionado al estado leido.
 func (c *CambiarEstadoDefecto) Ejecutar(ctx context.Context, proyectoID, defectoID string, estado defecto.Estado, sprintResolucionID string) (defecto.Defecto, error) {
-	if _, err := c.repo.ExisteProyecto(ctx, proyectoID); err != nil {
+	existe, err := c.repo.ExisteProyecto(ctx, proyectoID)
+	if err != nil {
 		return defecto.Defecto{}, fmt.Errorf("consultar el proyecto %s: %w", proyectoID, err)
 	}
+	if !existe {
+		return defecto.Defecto{}, fmt.Errorf("%w (id %s)", ErrProyectoInexistente, proyectoID)
+	}
 
-	actual, _, err := c.repo.DefectoEnProyecto(ctx, proyectoID, defectoID)
+	// RN-023-8: el estado actual sale del defecto guardado, nunca del formulario.
+	actual, existe, err := c.repo.DefectoEnProyecto(ctx, proyectoID, defectoID)
 	if err != nil {
 		return defecto.Defecto{}, fmt.Errorf("consultar el defecto %s del proyecto %s: %w", defectoID, proyectoID, err)
+	}
+	if !existe {
+		return defecto.Defecto{}, fmt.Errorf("%w (id %s, proyecto %s)", ErrDefectoInexistente, defectoID, proyectoID)
 	}
 
 	var resolucion defecto.SprintDeResolucion
 	if sprintResolucionID != "" {
-		numero, _, err := c.repo.NumeroDeSprintEnProyecto(ctx, proyectoID, sprintResolucionID)
+		// Un ID vacio es "sin sprint de resolucion" y no se verifica: con resuelto lo rechaza el
+		// dominio (RN-023-3). Uno informado tiene que ser un sprint de este proyecto.
+		numero, existe, err := c.repo.NumeroDeSprintEnProyecto(ctx, proyectoID, sprintResolucionID)
 		if err != nil {
 			return defecto.Defecto{}, fmt.Errorf("consultar el sprint %s del proyecto %s: %w", sprintResolucionID, proyectoID, err)
+		}
+		if !existe {
+			return defecto.Defecto{}, fmt.Errorf("%w (id %s)", ErrSprintInexistente, sprintResolucionID)
 		}
 		resolucion = defecto.SprintDeResolucion{ID: sprintResolucionID, Numero: numero}
 	}
