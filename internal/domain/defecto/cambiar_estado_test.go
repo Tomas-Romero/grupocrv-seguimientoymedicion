@@ -210,3 +210,50 @@ func TestCambiarEstado_SprintDeResolucionNoAnteriorAlDeDeteccion(t *testing.T) {
 		})
 	}
 }
+
+// US-023 / CA-023-13 / CL-023-9 / RN-023-6: el dominio devuelve todos los errores juntos, unidos con
+// errors.Join, en el orden fijo transicion, sprint faltante o que no corresponde, y sprint
+// anterior. Nunca hay mas de dos: faltante, no corresponde y anterior se excluyen entre si.
+func TestCambiarEstado_UneLosErroresEnOrden(t *testing.T) {
+	sprint2 := defecto.SprintDeResolucion{ID: "sprint-2", Numero: 2}
+	casos := []struct {
+		nombre     string
+		actual     defecto.Defecto
+		nuevo      defecto.Estado
+		resolucion defecto.SprintDeResolucion
+		deteccion  int
+		esperados  []error
+	}{
+		{"descartado a resuelto sin sprint", defectoEn(defecto.EstadoDescartado, ""), defecto.EstadoResuelto, defecto.SprintDeResolucion{}, 1,
+			[]error{defecto.ErrTransicionInvalida, defecto.ErrSprintResolucionFaltante}},
+		{"resuelto a resuelto en un sprint anterior", defectoEn(defecto.EstadoResuelto, "sprint-3"), defecto.EstadoResuelto, sprint2, 3,
+			[]error{defecto.ErrTransicionInvalida, defecto.ErrSprintResolucionAnterior}},
+		{"resuelto a en_correccion con sprint", defectoEn(defecto.EstadoResuelto, "sprint-3"), defecto.EstadoEnCorreccion, sprint2, 1,
+			[]error{defecto.ErrTransicionInvalida, defecto.ErrSprintResolucionNoCorresponde}},
+	}
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			d, err := c.actual.CambiarEstado(c.nuevo, c.resolucion, c.deteccion)
+
+			unidos, ok := err.(interface{ Unwrap() []error })
+			if !ok {
+				t.Fatalf("CambiarEstado() devolvio %v, quiero los errores unidos con errors.Join", err)
+			}
+			encontrados := unidos.Unwrap()
+			if len(encontrados) != len(c.esperados) {
+				t.Fatalf("CambiarEstado() unio %d errores (%v), quiero %d", len(encontrados), err, len(c.esperados))
+			}
+			for i, esperado := range c.esperados {
+				if !errors.Is(encontrados[i], esperado) {
+					t.Errorf("error %d = %v, quiero %v", i, encontrados[i], esperado)
+				}
+				if !errors.Is(err, esperado) {
+					t.Errorf("errors.Is(err, %v) = false, quiero true", esperado)
+				}
+			}
+			if d != (defecto.Defecto{}) {
+				t.Errorf("CambiarEstado() devolvio el defecto %+v, quiero ninguno", d)
+			}
+		})
+	}
+}
