@@ -70,3 +70,80 @@ func TestDefectos_LosCheckDelEstado(t *testing.T) {
 		})
 	}
 }
+
+// US-023 / RN-023-7 / RN-023-8 / CL-023-10: el defecto se busca DENTRO del proyecto y se devuelve
+// tal como esta guardado, de donde sale su estado actual. Uno de otro proyecto, un ID inexistente,
+// mal formado o vacio no cuenta, y no es un error.
+func TestRepositorioDefectos_DefectoEnProyecto(t *testing.T) {
+	ctx := contexto(t)
+	e := nuevoEscenarioDefectos(ctx, t)
+	guardado, err := e.repo.RegistrarDefecto(ctx, e.defecto(t, "Falla al guardar", defecto.SeveridadAlta, 1))
+	if err != nil {
+		t.Fatalf("RegistrarDefecto: %v", err)
+	}
+
+	casos := []struct {
+		nombre   string
+		proyecto string
+		id       string
+		existe   bool
+	}{
+		{"de su proyecto", e.proyecto, guardado.ID, true},
+		{"de otro proyecto", e.otro, guardado.ID, false},
+		{"un ID que no existe", e.proyecto, idSinDueno, false},
+		{"un ID mal formado", e.proyecto, "no-es-un-uuid", false},
+		{"un ID vacio", e.proyecto, "", false},
+		{"un proyecto mal formado", "no-es-un-uuid", guardado.ID, false},
+	}
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			d, existe, err := e.repo.DefectoEnProyecto(ctx, c.proyecto, c.id)
+			if err != nil {
+				t.Fatalf("DefectoEnProyecto: %v", err)
+			}
+			if existe != c.existe {
+				t.Fatalf("existe = %v, quiero %v", existe, c.existe)
+			}
+			if c.existe && d != guardado {
+				t.Errorf("defecto = %+v, quiero %+v", d, guardado)
+			}
+			if !c.existe && d != (defecto.Defecto{}) {
+				t.Errorf("defecto = %+v, quiero el valor cero", d)
+			}
+		})
+	}
+}
+
+// US-023 / CL-023-17 / RN-023-8: el sprint se busca DENTRO del proyecto y se traduce a su numero
+// (sprint.Numero), que es lo que compara el dominio: el ID del Sprint 3 da 3. Uno de otro proyecto,
+// un ID inexistente, mal formado o vacio no cuenta.
+func TestRepositorioDefectos_NumeroDeSprintEnProyecto(t *testing.T) {
+	ctx := contexto(t)
+	e := nuevoEscenarioDefectos(ctx, t)
+
+	casos := []struct {
+		nombre   string
+		proyecto string
+		id       string
+		numero   int
+		existe   bool
+	}{
+		{"el Sprint 1", e.proyecto, e.sprints[0], 1, true},
+		{"el Sprint 3", e.proyecto, e.sprints[2], 3, true},
+		{"un sprint de otro proyecto", e.proyecto, e.sprintOtro, 0, false},
+		{"un ID que no existe", e.proyecto, idSinDueno, 0, false},
+		{"un ID mal formado", e.proyecto, "no-es-un-uuid", 0, false},
+		{"un ID vacio", e.proyecto, "", 0, false},
+	}
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			numero, existe, err := e.repo.NumeroDeSprintEnProyecto(ctx, c.proyecto, c.id)
+			if err != nil {
+				t.Fatalf("NumeroDeSprintEnProyecto: %v", err)
+			}
+			if numero != c.numero || existe != c.existe {
+				t.Errorf("numero, existe = %d, %v; quiero %d, %v", numero, existe, c.numero, c.existe)
+			}
+		})
+	}
+}
