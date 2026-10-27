@@ -1,6 +1,10 @@
 package defecto
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+	"slices"
+)
 
 // Errores del cambio de estado (spec US-023, seccion 7). Son valores para compararlos con
 // errors.Is.
@@ -30,11 +34,23 @@ type SprintDeResolucion struct {
 	Numero int
 }
 
+// transicionesPermitidas es la tabla de RN-023-2: lo que no esta listado esta prohibido, incluido
+// pasar de un estado a si mismo. Desde resuelto y descartado solo se reabre.
+var transicionesPermitidas = map[Estado][]Estado{
+	EstadoAbierto:      {EstadoEnCorreccion, EstadoResuelto, EstadoDescartado},
+	EstadoEnCorreccion: {EstadoAbierto, EstadoResuelto, EstadoDescartado},
+	EstadoResuelto:     {EstadoAbierto},
+	EstadoDescartado:   {EstadoAbierto},
+}
+
 // CambiarEstado devuelve una copia del defecto con el estado pedido. Solo resuelto lleva sprint
 // de resolucion; en cualquier otro estado el defecto queda sin sprint, sin conservar el anterior
 // (RN-023-5). No lee la base, no genera IDs y no sabe si los sprints existen: recibe sus
 // numeros ya traducidos (RN-023-8).
 func (d Defecto) CambiarEstado(nuevo Estado, resolucion SprintDeResolucion, _ int) (Defecto, error) {
+	if !slices.Contains(transicionesPermitidas[d.Estado], nuevo) {
+		return Defecto{}, fmt.Errorf("%w (de %s a %s)", ErrTransicionInvalida, d.Estado, nuevo)
+	}
 	d.Estado = nuevo
 	d.SprintResolucionID = resolucion.ID
 	return d, nil
