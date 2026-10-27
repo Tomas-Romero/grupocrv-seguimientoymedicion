@@ -472,7 +472,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 - **Spec:** [specs/US-029-defectos-por-sprint.md](../specs/US-029-defectos-por-sprint.md) · **Issue:** #35
 - **Escenarios BDD:** [features/US-029-defectos-por-sprint.feature](../features/US-029-defectos-por-sprint.feature)
 - **Código:** `internal/domain/metricas/`
-- **Tests que la citan:** 4
+- **Tests que la citan:** 5
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
