@@ -47,7 +47,7 @@ var transicionesPermitidas = map[Estado][]Estado{
 // de resolucion; en cualquier otro estado el defecto queda sin sprint, sin conservar el anterior
 // (RN-023-5). No lee la base, no genera IDs y no sabe si los sprints existen: recibe sus
 // numeros ya traducidos (RN-023-8).
-func (d Defecto) CambiarEstado(nuevo Estado, resolucion SprintDeResolucion, _ int) (Defecto, error) {
+func (d Defecto) CambiarEstado(nuevo Estado, resolucion SprintDeResolucion, numeroDeteccion int) (Defecto, error) {
 	// RN-023-1: valores exactos; no se recorta ni se pasa a minuscula. Con un estado invalido no
 	// se sabe a que estado se pasa, asi que ninguna otra regla se puede evaluar (RN-023-6).
 	switch nuevo {
@@ -66,6 +66,13 @@ func (d Defecto) CambiarEstado(nuevo Estado, resolucion SprintDeResolucion, _ in
 		return Defecto{}, ErrSprintResolucionFaltante
 	case nuevo != EstadoResuelto && resolucion.ID != "":
 		return Defecto{}, fmt.Errorf("%w (se pidio el estado %s)", ErrSprintResolucionNoCorresponde, nuevo)
+	}
+
+	// RN-023-4: se compara por numero, no por ID. Igual se acepta; uno anterior, no. Solo se
+	// evalua con resuelto y un sprint informado.
+	if nuevo == EstadoResuelto && resolucion.ID != "" && resolucion.Numero < numeroDeteccion {
+		return Defecto{}, fmt.Errorf("%w (resolucion en el sprint %d, deteccion en el sprint %d)",
+			ErrSprintResolucionAnterior, resolucion.Numero, numeroDeteccion)
 	}
 
 	d.Estado = nuevo
