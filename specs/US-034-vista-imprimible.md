@@ -184,4 +184,4 @@ No hay errores nuevos. Los del reporte son los de US-033 (sección 7).
   estilos `@media print` sobre el reporte de US-033, ocultar navegación y
   botones, no partir tablas, encabezado con proyecto y fecha, botón con
   `window.print`), usando las specs de US-033 y T-016 como modelo
-- Revisado y entendido por:
+- Revisado y entendido por: Juan Ignacio Vergara
