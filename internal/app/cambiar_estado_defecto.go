@@ -73,9 +73,12 @@ func (c *CambiarEstadoDefecto) Ejecutar(ctx context.Context, proyectoID, defecto
 		}
 		resolucion = defecto.SprintDeResolucion{ID: sprintResolucionID, Numero: numero}
 	}
-	numeroDeteccion, _, err := c.repo.NumeroDeSprintEnProyecto(ctx, proyectoID, actual.SprintDeteccionID)
+	numeroDeteccion, existe, err := c.repo.NumeroDeSprintEnProyecto(ctx, proyectoID, actual.SprintDeteccionID)
 	if err != nil {
 		return defecto.Defecto{}, fmt.Errorf("consultar el sprint %s del proyecto %s: %w", actual.SprintDeteccionID, proyectoID, err)
+	}
+	if !existe {
+		return defecto.Defecto{}, fmt.Errorf("%w (id %s, sprint de deteccion)", ErrSprintInexistente, actual.SprintDeteccionID)
 	}
 
 	nuevo, err := actual.CambiarEstado(estado, resolucion, numeroDeteccion)
