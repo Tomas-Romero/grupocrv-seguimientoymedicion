@@ -103,3 +103,39 @@ func TestBase_NumeroDeSprintEnProyecto(t *testing.T) {
 		})
 	}
 }
+
+// US-023 / CA-023-1 / CL-023-12 / RN-023-9 / RN-023-11: guardar el cambio actualiza el estado y el
+// sprint de resolucion y nada mas: la descripcion, la severidad, la historia, el sprint de deteccion
+// y el ID quedan como estaban, y los demas defectos no se tocan.
+func TestBase_ActualizarEstadoDefecto_Guarda(t *testing.T) {
+	ctx := context.Background()
+	b := nuevaBaseConDefectos(t)
+	sprint2 := b.segundoSprint(t)
+	guardado := b.registrado(t)
+	otro := b.registrado(t)
+
+	resuelto, err := guardado.CambiarEstado(defecto.EstadoResuelto, defecto.SprintDeResolucion{ID: sprint2, Numero: 2}, 1)
+	if err != nil {
+		t.Fatalf("CambiarEstado: %v", err)
+	}
+	if err := b.base.ActualizarEstadoDefecto(ctx, resuelto, defecto.EstadoAbierto); err != nil {
+		t.Fatalf("ActualizarEstadoDefecto: %v", err)
+	}
+
+	defectos := b.base.Defectos(b.demo)
+	if len(defectos) != 2 || defectos[0] != resuelto || defectos[1] != otro {
+		t.Errorf("defectos = %+v, quiero el primero resuelto en el Sprint 2 y el segundo igual", defectos)
+	}
+
+	// Reabrir deja el sprint vacio y no conserva el anterior (RN-023-5, CL-023-7).
+	reabierto, err := resuelto.CambiarEstado(defecto.EstadoAbierto, defecto.SprintDeResolucion{}, 1)
+	if err != nil {
+		t.Fatalf("CambiarEstado (reapertura): %v", err)
+	}
+	if err := b.base.ActualizarEstadoDefecto(ctx, reabierto, defecto.EstadoResuelto); err != nil {
+		t.Fatalf("ActualizarEstadoDefecto (reapertura): %v", err)
+	}
+	if d, _, _ := b.base.DefectoEnProyecto(ctx, b.demo, guardado.ID); d != reabierto {
+		t.Errorf("defecto = %+v, quiero %+v (abierto y sin sprint de resolucion)", d, reabierto)
+	}
+}
