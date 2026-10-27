@@ -33,3 +33,19 @@ func (b *Base) NumeroDeSprintEnProyecto(_ context.Context, proyectoID, sprintID 
 	}
 	return 0, false, nil
 }
+
+// ActualizarEstadoDefecto guarda el estado y el sprint de resolucion del defecto y nada mas
+// (RN-023-9, RN-023-11).
+func (b *Base) ActualizarEstadoDefecto(_ context.Context, d defecto.Defecto, _ defecto.Estado) error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	defectos := b.defectos[d.ProyectoID]
+	for i := range defectos {
+		if defectos[i].ID == d.ID {
+			defectos[i].Estado = d.Estado
+			defectos[i].SprintResolucionID = d.SprintResolucionID
+		}
+	}
+	return nil
+}
