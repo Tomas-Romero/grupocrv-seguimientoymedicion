@@ -383,20 +383,6 @@ func TestRegistrarDefecto_LaTablaAceptaElLimite(t *testing.T) {
 	}
 }
 
-// US-022 / Decisiones: el estado no tiene CHECK con lista de valores, porque los define US-023. La
-// base acepta cualquier texto: lo protege el dominio hasta entonces.
-func TestDefectos_EstadoSinCheckDeValores(t *testing.T) {
-	ctx := contexto(t)
-	e := nuevoEscenarioDefectos(ctx, t)
-
-	const insertar = `
-INSERT INTO defectos (proyecto_id, item_id, sprint_deteccion_id, descripcion, severidad, estado)
-VALUES ($1, $2, $3, 'Falla', 'alta', $4)`
-	if _, err := e.pool.Exec(ctx, insertar, e.proyecto, e.item, e.sprints[0], "en_correccion"); err != nil {
-		t.Errorf("la tabla rechazo un estado distinto de abierto: %v (lo define US-023)", err)
-	}
-}
-
 // US-022 / RN-022-10 / CL-022-17: los defectos se borran junto con su proyecto (ON DELETE CASCADE)
 // sin error, y los de otro proyecto no se tocan.
 func TestRegistrarDefecto_SeBorraConElProyecto(t *testing.T) {
@@ -432,10 +418,13 @@ func TestDefectos_SprintDeResolucionConClaveForanea(t *testing.T) {
 		t.Fatalf("RegistrarDefecto: %v", err)
 	}
 
-	if _, err := e.pool.Exec(ctx, `UPDATE defectos SET sprint_resolucion_id = $2 WHERE id = $1`, guardado.ID, e.sprints[1]); err != nil {
+	// Desde US-023 hay sprint de resolucion si y solo si el estado es resuelto (RN-023-12), asi que
+	// se completa junto con el estado.
+	const resolver = `UPDATE defectos SET estado = 'resuelto', sprint_resolucion_id = $2 WHERE id = $1`
+	if _, err := e.pool.Exec(ctx, resolver, guardado.ID, e.sprints[1]); err != nil {
 		t.Errorf("completar el sprint de resolucion con un sprint real: %v", err)
 	}
-	if _, err := e.pool.Exec(ctx, `UPDATE defectos SET sprint_resolucion_id = $2 WHERE id = $1`, guardado.ID, idSinDueno); err == nil {
+	if _, err := e.pool.Exec(ctx, resolver, guardado.ID, idSinDueno); err == nil {
 		t.Error("se acepto un sprint de resolucion que no existe, quiero que la clave foranea lo rechace")
 	}
 }
