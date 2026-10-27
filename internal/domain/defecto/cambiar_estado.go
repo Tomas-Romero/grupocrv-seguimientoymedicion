@@ -56,23 +56,33 @@ func (d Defecto) CambiarEstado(nuevo Estado, resolucion SprintDeResolucion, nume
 		return Defecto{}, fmt.Errorf("%w (se recibio %q)", ErrEstadoInvalido, string(nuevo))
 	}
 
+	// RN-023-6: orden fijo y todos juntos con errors.Join. Faltante, no corresponde y anterior se
+	// excluyen entre si (el primero pide resuelto sin sprint, el segundo otro estado con sprint, el
+	// tercero resuelto con sprint), asi que nunca hay mas de dos errores.
+	var errs []error
+
 	if !slices.Contains(transicionesPermitidas[d.Estado], nuevo) {
-		return Defecto{}, fmt.Errorf("%w (de %s a %s)", ErrTransicionInvalida, d.Estado, nuevo)
+		errs = append(errs, fmt.Errorf("%w (de %s a %s)", ErrTransicionInvalida, d.Estado, nuevo))
 	}
+
 	// RN-023-3: solo resuelto lleva sprint de resolucion, y ahi es obligatorio. Informar uno con
 	// otro estado se rechaza para no descartarlo en silencio.
 	switch {
 	case nuevo == EstadoResuelto && resolucion.ID == "":
-		return Defecto{}, ErrSprintResolucionFaltante
+		errs = append(errs, ErrSprintResolucionFaltante)
 	case nuevo != EstadoResuelto && resolucion.ID != "":
-		return Defecto{}, fmt.Errorf("%w (se pidio el estado %s)", ErrSprintResolucionNoCorresponde, nuevo)
+		errs = append(errs, fmt.Errorf("%w (se pidio el estado %s)", ErrSprintResolucionNoCorresponde, nuevo))
 	}
 
 	// RN-023-4: se compara por numero, no por ID. Igual se acepta; uno anterior, no. Solo se
 	// evalua con resuelto y un sprint informado.
 	if nuevo == EstadoResuelto && resolucion.ID != "" && resolucion.Numero < numeroDeteccion {
-		return Defecto{}, fmt.Errorf("%w (resolucion en el sprint %d, deteccion en el sprint %d)",
-			ErrSprintResolucionAnterior, resolucion.Numero, numeroDeteccion)
+		errs = append(errs, fmt.Errorf("%w (resolucion en el sprint %d, deteccion en el sprint %d)",
+			ErrSprintResolucionAnterior, resolucion.Numero, numeroDeteccion))
+	}
+
+	if err := errors.Join(errs...); err != nil {
+		return Defecto{}, err
 	}
 
 	d.Estado = nuevo
