@@ -165,3 +165,48 @@ func TestCambiarEstado_SprintDeResolucionSegunEstado(t *testing.T) {
 		})
 	}
 }
+
+// US-023 / CA-023-5 / CA-023-8 / CL-023-5 / RN-023-4: resolver en un sprint anterior al de deteccion
+// se rechaza con ErrSprintResolucionAnterior indicando los dos numeros; el mismo sprint o uno
+// posterior se acepta, y el borde inferior (detectado y resuelto en el Sprint 1) tambien. Se
+// compara por numero: los IDs de los sprints no dicen cual es anterior.
+func TestCambiarEstado_SprintDeResolucionNoAnteriorAlDeDeteccion(t *testing.T) {
+	casos := []struct {
+		nombre     string
+		deteccion  int
+		resolucion int
+		anterior   bool
+	}{
+		{"resuelto en el Sprint 2, detectado en el 3", 3, 2, true},
+		{"resuelto en el Sprint 1, detectado en el 3", 3, 1, true},
+		{"resuelto en el mismo sprint (3)", 3, 3, false},
+		{"resuelto en el Sprint 4, detectado en el 3", 3, 4, false},
+		{"detectado y resuelto en el Sprint 1 (borde inferior)", 1, 1, false},
+	}
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			resolucion := defecto.SprintDeResolucion{ID: "sprint-resolucion", Numero: c.resolucion}
+			d, err := defectoEn(defecto.EstadoAbierto, "").CambiarEstado(defecto.EstadoResuelto, resolucion, c.deteccion)
+
+			if !c.anterior {
+				if err != nil {
+					t.Fatalf("CambiarEstado() devolvio %v, quiero nil", err)
+				}
+				if d.Estado != defecto.EstadoResuelto || d.SprintResolucionID != "sprint-resolucion" {
+					t.Errorf("CambiarEstado() = %+v, quiero resuelto con el sprint de resolucion", d)
+				}
+				return
+			}
+			if !errors.Is(err, defecto.ErrSprintResolucionAnterior) {
+				t.Fatalf("CambiarEstado() devolvio %v, quiero ErrSprintResolucionAnterior", err)
+			}
+			esperado := fmt.Sprintf("sprint %d", c.resolucion)
+			if !strings.Contains(err.Error(), esperado) || !strings.Contains(err.Error(), fmt.Sprintf("sprint %d", c.deteccion)) {
+				t.Errorf("el error es %q, quiero que indique los sprints %d y %d", err, c.resolucion, c.deteccion)
+			}
+			if d != (defecto.Defecto{}) {
+				t.Errorf("CambiarEstado() devolvio el defecto %+v, quiero ninguno", d)
+			}
+		})
+	}
+}
