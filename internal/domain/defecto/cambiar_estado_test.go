@@ -1,6 +1,8 @@
 package defecto_test
 
 import (
+	"errors"
+	"strings"
 	"testing"
 
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/defecto"
@@ -54,6 +56,43 @@ func TestCambiarEstado_TransicionesPermitidas(t *testing.T) {
 			esperado.SprintResolucionID = c.sprintEsperado
 			if d != esperado {
 				t.Errorf("CambiarEstado() = %+v, quiero %+v", d, esperado)
+			}
+		})
+	}
+}
+
+// US-023 / CA-023-6 / CL-023-2 / RN-023-2: las transiciones que la tabla no lista, y pedir el estado
+// actual (que no es un no-op, ni siquiera con otro sprint), se rechazan con ErrTransicionInvalida
+// indicando el estado actual y el pedido. No se devuelve ningun defecto.
+func TestCambiarEstado_TransicionesProhibidas(t *testing.T) {
+	sprint2 := defecto.SprintDeResolucion{ID: "sprint-2", Numero: 2}
+	casos := []struct {
+		nombre     string
+		actual     defecto.Defecto
+		nuevo      defecto.Estado
+		resolucion defecto.SprintDeResolucion
+		mensaje    string
+	}{
+		{"resuelto a en_correccion", defectoEn(defecto.EstadoResuelto, "sprint-2"), defecto.EstadoEnCorreccion, defecto.SprintDeResolucion{}, "de resuelto a en_correccion"},
+		{"resuelto a descartado", defectoEn(defecto.EstadoResuelto, "sprint-2"), defecto.EstadoDescartado, defecto.SprintDeResolucion{}, "de resuelto a descartado"},
+		{"descartado a en_correccion", defectoEn(defecto.EstadoDescartado, ""), defecto.EstadoEnCorreccion, defecto.SprintDeResolucion{}, "de descartado a en_correccion"},
+		{"descartado a resuelto", defectoEn(defecto.EstadoDescartado, ""), defecto.EstadoResuelto, sprint2, "de descartado a resuelto"},
+		{"abierto a abierto", defectoEn(defecto.EstadoAbierto, ""), defecto.EstadoAbierto, defecto.SprintDeResolucion{}, "de abierto a abierto"},
+		{"en_correccion a en_correccion", defectoEn(defecto.EstadoEnCorreccion, ""), defecto.EstadoEnCorreccion, defecto.SprintDeResolucion{}, "de en_correccion a en_correccion"},
+		{"resuelto a resuelto con otro sprint", defectoEn(defecto.EstadoResuelto, "sprint-1"), defecto.EstadoResuelto, sprint2, "de resuelto a resuelto"},
+		{"descartado a descartado", defectoEn(defecto.EstadoDescartado, ""), defecto.EstadoDescartado, defecto.SprintDeResolucion{}, "de descartado a descartado"},
+	}
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			d, err := c.actual.CambiarEstado(c.nuevo, c.resolucion, 1)
+			if !errors.Is(err, defecto.ErrTransicionInvalida) {
+				t.Fatalf("CambiarEstado() devolvio %v, quiero ErrTransicionInvalida", err)
+			}
+			if !strings.Contains(err.Error(), c.mensaje) {
+				t.Errorf("el error es %q, quiero que indique %q", err, c.mensaje)
+			}
+			if d != (defecto.Defecto{}) {
+				t.Errorf("CambiarEstado() devolvio el defecto %+v, quiero ninguno", d)
 			}
 		})
 	}
