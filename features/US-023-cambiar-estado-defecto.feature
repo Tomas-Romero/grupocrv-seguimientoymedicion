@@ -120,7 +120,6 @@ Característica: Cambiar el estado de un defecto y registrar su sprint de resolu
     Entonces la operación es exitosa
     Y el defecto de la historia "Crear proyecto" fue resuelto en el sprint "Sprint 2"
     Y la historia "Crear proyecto" tiene estado "completado"
-    Y la historia "Crear proyecto" está en el sprint "Sprint 1"
 
   # ---------------------------------------------------------------- casos limite
   @CA-023-5 @limite

@@ -90,7 +90,7 @@ definidas en `features/steps/mundo.go`. Cada área se conecta en
 | Sprints | `Sprints` | US-008, US-009, US-010, US-011, US-012 | `features/steps/sprints.go` |
 | Métricas | `Metricas` | US-025, US-026, US-027, US-028, US-029 | `features/steps/metricas.go` |
 | Planning Poker | `PlanningPoker` | US-014 a US-018 | `features/steps/planningpoker.go` |
-| Defectos | `Defectos` | US-022 | `features/steps/defectos.go` |
+| Defectos | `Defectos` | US-022, US-023 | `features/steps/defectos.go` |
 
 Un escenario solo necesita las áreas que usa. Un `.feature` de proyectos no
 exige que existan backlog, sprints ni métricas, así que el CI no se pone rojo por
@@ -128,6 +128,8 @@ conectada, falla con `area sin conectar a los steps: <área>`: es a propósito.
 | `Y un defecto detectado en el sprint 2 sin resolver` | `^un defecto detectado en el sprint (-?\d+) sin resolver$` |
 | `Y el integrante "Ana" ya registró 3 horas de "Desarrollo" en la historia "Crear proyecto" el 2026-10-05` | `^el integrante "([^"]*)" ya registró (-?\d+(?:[.,]\d+)?) horas de "([^"]*)" en la historia "([^"]*)" el (\S+)$` |
 | `Y un defecto de severidad "alta" con la descripción "Falla al guardar" en la historia "Crear proyecto" detectado en el sprint "Sprint 1"` | `^un defecto de severidad "([^"]*)" con la descripción "([^"]*)" en la historia "([^"]*)" detectado en el sprint "([^"]*)"$` |
+| `Y el defecto de la historia "Crear proyecto" en estado "en_correccion"` | `^el defecto de la historia "([^"]*)" en estado "([^"]*)"$` |
+| `Y el defecto de la historia "Crear proyecto" resuelto en el sprint "Sprint 2"` | `^el defecto de la historia "([^"]*)" resuelto en el sprint "([^"]*)"$` |
 
 Un escenario **no repite títulos de historias**: el área Backlog las identifica
 por título, y la spec de US-005 permite repetirlos entre sí, así que dos historias
@@ -217,6 +219,8 @@ inexistente (CA-005-8, CA-008-10); con esa frase el escenario no lleva
 | `Cuando se consultan las horas del sprint "Sprint 1"` | `^se consultan las horas del sprint "([^"]*)"$` |
 | `Cuando se registra un defecto de severidad "alta" con la descripción "Falla al guardar" en la historia "Crear proyecto" detectado en el sprint "Sprint 1"` | `^se registra un defecto de severidad "([^"]*)" con la descripción "([^"]*)" en la historia "([^"]*)" detectado en el sprint "([^"]*)"$` |
 | `Cuando se registra un defecto de severidad "alta" con una descripción de 2001 caracteres en la historia "Crear proyecto" detectado en el sprint "Sprint 1"` | `^se registra un defecto de severidad "([^"]*)" con una descripción de (\d+) caracteres en la historia "([^"]*)" detectado en el sprint "([^"]*)"$` |
+| `Cuando se cambia el estado del defecto de la historia "Crear proyecto" a "en_correccion"` | `^se cambia el estado del defecto de la historia "([^"]*)" a "([^"]*)"$` |
+| `Cuando se cambia el estado del defecto de la historia "Crear proyecto" a "resuelto" con el sprint de resolución "Sprint 2"` | `^se cambia el estado del defecto de la historia "([^"]*)" a "([^"]*)" con el sprint de resolución "([^"]*)"$` |
 | `Cuando el integrante "Ana" revela los votos de la sesión de la historia "Crear proyecto"` | `^el integrante "([^"]*)" revela los votos de la sesión de la historia "([^"]*)"$` |
 | `Cuando el integrante "Ana" registra la estimación acordada de 5 en la sesión de la historia "Crear proyecto"` | `^el integrante "([^"]*)" registra la estimación acordada de (-?\d+) en la sesión de la historia "([^"]*)"$` |
 | `Cuando el integrante "Ana" registra 2,5 horas de "Desarrollo" en la historia "Crear proyecto" el 2026-10-05` | `^el integrante "([^"]*)" registra (-?\d+(?:[.,]\d+)?) horas de "([^"]*)" en la historia "([^"]*)" el (\S+)$` |
@@ -271,6 +275,20 @@ escribir los escenarios de error. `con una descripción de N caracteres` arma la
 solo espacios no tiene frase y la cubren los tests del dominio. Los Entonces de consulta
 (`el defecto de la historia "H" tiene severidad ...`, `tiene estado ...`, `fue detectado en el sprint ...`
 y `está sin resolver`) leen el último defecto registrado de esa historia.
+
+**Cambiar el estado de un defecto (US-023):** `se cambia el estado del defecto de la historia "H" a "E"`
+cambia el último defecto de esa historia con el caso de uso real, y la variante `... con el sprint de
+resolución "Sprint N"` informa además el sprint. El estado se escribe con el valor del dominio
+(`abierto`, `en_correccion`, `resuelto` o `descartado`) y se manda tal cual, así que `cerrado`,
+`Resuelto` o vacío son la forma de escribir los escenarios de error; resolver sin sprint es la primera
+frase con `"resuelto"`. El defecto se busca por su historia y el sprint por su nombre dentro del proyecto
+de esa historia: lo que no existe (la historia, su defecto o el sprint) se manda con un ID que no existe y
+lo rechaza la aplicación, no los steps. Un defecto "de otro proyecto" no se puede escribir con estas
+frases: lo prueban el caso de uso y el repositorio, igual que el cambio simultáneo (CA-023-14) y los
+`CHECK`. Las frases de contexto `el defecto de la historia "H" en estado "E"` y `... resuelto en el sprint
+"Sprint N"` dejan el defecto en ese estado con el mismo caso de uso (un escenario tiene un solo `Cuando`);
+`en estado` no pasa a `resuelto` (no lleva sprint) y pedir el estado actual se rechaza, como en el
+dominio. `fue resuelto en el sprint "Sprint N"` lee el sprint de resolución del último defecto.
 
 **Consultar el esfuerzo (US-020):** `se consulta el esfuerzo del proyecto "P"` acepta tres
 filtros opcionales que van en este orden: `de la historia "H"`, `del integrante "I"` y
@@ -378,6 +396,7 @@ cuenta caracteres y no bytes.
 | `Y el defecto de la historia "Crear proyecto" tiene estado "abierto"` | `^el defecto de la historia "([^"]*)" tiene estado "([^"]*)"$` |
 | `Y el defecto de la historia "Crear proyecto" fue detectado en el sprint "Sprint 1"` | `^el defecto de la historia "([^"]*)" fue detectado en el sprint "([^"]*)"$` |
 | `Y el defecto de la historia "Crear proyecto" está sin resolver` | `^el defecto de la historia "([^"]*)" está sin resolver$` |
+| `Y el defecto de la historia "Crear proyecto" fue resuelto en el sprint "Sprint 2"` | `^el defecto de la historia "([^"]*)" fue resuelto en el sprint "([^"]*)"$` |
 | `Y la sesión de la historia "Crear proyecto" está "votando" en la ronda 1` | `^la sesión de la historia "([^"]*)" está "([^"]*)" en la ronda (\d+)$` |
 | `Y los participantes de la sesión de la historia "Crear proyecto" son:` + tabla de nombres | `^los participantes de la sesión de la historia "([^"]*)" son:$` |
 | `Y en la sesión de la historia "Crear proyecto" votaron:` + tabla de nombres | `^en la sesión de la historia "([^"]*)" votaron:$` |
