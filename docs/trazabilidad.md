@@ -4,7 +4,7 @@
 > No se edita a mano: se regenera. Enlaza Historia → Spec → Criterios de aceptación →
 > Escenarios BDD → Tests → Código (la guía de la cátedra la pide como evidencia).
 
-Total: 30 especificaciones, 215 criterios de aceptación, 167 con escenario BDD y 179 con test.
+Total: 30 especificaciones, 215 criterios de aceptación, 180 con escenario BDD y 193 con test.
 
 Un criterio sin escenario BDD o sin test se muestra con `—`: o falta la evidencia, o el criterio
 se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no llevan `.feature`).
@@ -32,7 +32,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | US-020 | [specs/US-020-consultar-esfuerzo.md](../specs/US-020-consultar-esfuerzo.md) | borrador | 9 | 9 | 9 | `internal/domain/esfuerzo/`, `internal/app/consultar_esfuerzo.go` |
 | US-021 | [specs/US-021-comparar-esfuerzo.md](../specs/US-021-comparar-esfuerzo.md) | borrador | 9 | 8 | 9 | `internal/domain/metricas/`, `internal/app/comparar_esfuerzo.go` |
 | US-022 | [specs/US-022-registrar-defecto.md](../specs/US-022-registrar-defecto.md) | borrador | 12 | 12 | 12 | `internal/domain/defecto/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`, `migraciones/00012_defectos.sql` |
-| US-023 | [specs/US-023-cambiar-estado-defecto.md](../specs/US-023-cambiar-estado-defecto.md) | borrador | 14 | 0 | 0 | `internal/domain/defecto/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`, `migraciones/00013_defectos_estado.sql` |
+| US-023 | [specs/US-023-cambiar-estado-defecto.md](../specs/US-023-cambiar-estado-defecto.md) | borrador | 14 | 13 | 14 | `internal/domain/defecto/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`, `migraciones/00013_defectos_estado.sql` |
 | US-025 | [specs/US-025-story-points-sprint.md](../specs/US-025-story-points-sprint.md) | borrador | 4 | 4 | 1 | `internal/domain/metricas/` |
 | US-026 | [specs/US-026-velocidad-equipo.md](../specs/US-026-velocidad-equipo.md) | borrador | 4 | 4 | 1 | `internal/domain/metricas/` |
 | US-027 | [specs/US-027-horas-estimadas-reales.md](../specs/US-027-horas-estimadas-reales.md) | borrador | 6 | 6 | 6 | `internal/domain/metricas/` |
@@ -367,7 +367,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 - **Spec:** [specs/US-022-registrar-defecto.md](../specs/US-022-registrar-defecto.md) · **Issue:** #30
 - **Escenarios BDD:** [features/US-022-registrar-defecto.feature](../features/US-022-registrar-defecto.feature)
 - **Código:** `internal/domain/defecto/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`, `migraciones/00012_defectos.sql`
-- **Tests que la citan:** 33
+- **Tests que la citan:** 32
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
@@ -387,26 +387,26 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 ### US-023 — Cambiar el estado de un defecto y registrar su sprint de resolución
 
 - **Spec:** [specs/US-023-cambiar-estado-defecto.md](../specs/US-023-cambiar-estado-defecto.md) · **Issue:** #31
-- **Escenarios BDD:** ninguno
+- **Escenarios BDD:** [features/US-023-cambiar-estado-defecto.feature](../features/US-023-cambiar-estado-defecto.feature)
 - **Código:** `internal/domain/defecto/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`, `migraciones/00013_defectos_estado.sql`
-- **Tests que la citan:** 1
+- **Tests que la citan:** 27
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
-| CA-023-1 | normal | — | — |
-| CA-023-2 | alternativo | — | — |
-| CA-023-3 | alternativo | — | — |
-| CA-023-4 | alternativo | — | — |
-| CA-023-5 | límite | — | — |
-| CA-023-6 | error | — | — |
-| CA-023-7 | error | — | — |
-| CA-023-8 | error | — | — |
-| CA-023-9 | error | — | — |
-| CA-023-10 | error | — | — |
-| CA-023-11 | error | — | — |
-| CA-023-12 | error | — | — |
-| CA-023-13 | error | — | — |
-| CA-023-14 | error | — | — |
+| CA-023-1 | normal | Un defecto abierto se resuelve en un sprint posterior al de detección | TestBase_ActualizarEstadoDefecto_Guarda, TestActualizarEstadoDefecto_Guarda, TestCambiarEstadoDefecto_Resuelve |
+| CA-023-2 | alternativo | Un defecto abierto pasa a en_correccion y queda sin sprint de resolución, Un defecto en corrección se resuelve en un sprint, Un defecto abierto se descarta y queda sin sprint de resolución | TestCambiarEstadoDefecto_SoloCambiaEstadoYSprintDeResolucion, TestCambiarEstado_TransicionesPermitidas |
+| CA-023-3 | alternativo | Un defecto resuelto se reabre y queda sin sprint de resolución, Un defecto descartado se reabre y queda sin sprint de resolución, Un defecto reabierto se puede resolver de nuevo en otro sprint | TestActualizarEstadoDefecto_Guarda, TestCambiarEstado_TransicionesPermitidas |
+| CA-023-4 | alternativo | Un defecto de una historia completada se resuelve en un sprint cerrado y la historia no cambia | TestCambiarEstadoDefecto_SoloCambiaEstadoYSprintDeResolucion |
+| CA-023-5 | límite | Un sprint de resolución igual al de detección se acepta, Un sprint de resolución anterior al de detección se rechaza | TestCambiarEstado_SprintDeResolucionNoAnteriorAlDeDeteccion |
+| CA-023-6 | error | Una transición no permitida se rechaza y el defecto no cambia, Pedir el estado actual se rechaza y no es un cambio nulo | TestCambiarEstado_TransicionesProhibidas |
+| CA-023-7 | error | Resolver sin sprint de resolución se rechaza, Informar un sprint de resolución con un estado distinto de resuelto se rechaza | TestCambiarEstado_SprintDeResolucionSegunEstado |
+| CA-023-8 | error | Un sprint de resolución anterior al de detección indica los dos números | TestCambiarEstado_SprintDeResolucionNoAnteriorAlDeDeteccion |
+| CA-023-9 | error | Un estado fuera de los cuatro se rechaza | TestCambiarEstado_EstadoInvalido |
+| CA-023-10 | error | No se cambia el estado de un defecto que no existe | TestBase_DefectoEnProyecto, TestRepositorioDefectos_DefectoEnProyecto, TestCambiarEstadoDefecto_LoQueNoExiste |
+| CA-023-11 | error | No se resuelve un defecto en un sprint que no existe, No se resuelve un defecto en un sprint de otro proyecto | TestBase_NumeroDeSprintEnProyecto, TestRepositorioDefectos_NumeroDeSprintEnProyecto, TestCambiarEstadoDefecto_LoQueNoExiste |
+| CA-023-12 | error | Cambiar el estado de un defecto en un proyecto que no existe se rechaza | TestCambiarEstadoDefecto_LoQueNoExiste |
+| CA-023-13 | error | Con una transición prohibida y sin sprint de resolución se informan los dos errores | TestCambiarEstadoDefecto_DatosInvalidos, TestCambiarEstado_UneLosErroresEnOrden |
+| CA-023-14 | error | — | TestBase_ActualizarEstadoDefecto_RechazaElEstadoQueYaNoEsElGuardado, TestDefectos_LosCheckDelEstado, TestActualizarEstadoDefecto_RechazaUnEstadoAnteriorQueYaNoEsElGuardado, TestActualizarEstadoDefecto_CambiosSimultaneos, +1 más |
 
 ### US-025 — Calcular Story Points planificados y completados de un Sprint
 
@@ -503,7 +503,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 - **Spec:** [specs/T-005-validaciones-errores-uniformes.md](../specs/T-005-validaciones-errores-uniformes.md) · **Issue:** #15
 - **Escenarios BDD:** ninguno
 - **Código:** `internal/platform/errores/`, `internal/adapters/http/`
-- **Tests que la citan:** 37
+- **Tests que la citan:** 38
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
