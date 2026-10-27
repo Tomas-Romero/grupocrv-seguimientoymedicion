@@ -197,4 +197,4 @@ No hay reglas de dominio nuevas. Son reglas de comportamiento de la interfaz.
   tarea y de las decisiones del equipo (pantalla por sesión, botones según el
   estado, votar eligiendo integrante y carta, errores por el catálogo), usando
   las specs de T-011, T-015, T-016 y US-014 a US-018 como modelo
-- Revisado y entendido por:
+- Revisado y entendido por: Juan Ignacio Vergara
