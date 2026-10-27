@@ -33,7 +33,7 @@ func (b baseConDefectos) registrado(t *testing.T) defecto.Defecto {
 	return d
 }
 
-// US-023 / RN-023-7 / CL-023-10: el defecto se busca DENTRO del proyecto: uno de otro proyecto,
+// US-023 / CA-023-10 / RN-023-7 / CL-023-10: el defecto se busca DENTRO del proyecto: uno de otro proyecto,
 // un ID que no esta o uno vacio no cuentan. Devuelve el defecto guardado, de donde sale su estado
 // actual (RN-023-8).
 func TestBase_DefectoEnProyecto(t *testing.T) {
@@ -72,7 +72,7 @@ func TestBase_DefectoEnProyecto(t *testing.T) {
 	}
 }
 
-// US-023 / RN-023-7 / RN-023-8 / CL-023-17: el sprint se busca DENTRO del proyecto y se traduce a su
+// US-023 / CA-023-11 / RN-023-7 / RN-023-8 / CL-023-17: el sprint se busca DENTRO del proyecto y se traduce a su
 // numero (sprint.Numero), que es lo que compara el dominio. Uno de otro proyecto, un ID que no
 // esta o uno vacio no cuentan.
 func TestBase_NumeroDeSprintEnProyecto(t *testing.T) {

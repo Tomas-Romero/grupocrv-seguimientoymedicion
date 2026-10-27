@@ -24,7 +24,7 @@ func defectoEn(estado defecto.Estado, sprintResolucionID string) defecto.Defecto
 	}
 }
 
-// US-023 / CL-023-1 / RN-023-2 / RN-023-5: las transiciones permitidas dejan el defecto con el
+// US-023 / CA-023-2 / CA-023-3 / CL-023-1 / RN-023-2 / RN-023-5: las transiciones permitidas dejan el defecto con el
 // estado pedido, con el sprint de resolucion solo si es resuelto, y sin tocar nada mas. Reabrir un
 // resuelto deja el sprint vacio y no conserva el anterior.
 func TestCambiarEstado_TransicionesPermitidas(t *testing.T) {

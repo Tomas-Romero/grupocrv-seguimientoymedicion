@@ -74,7 +74,7 @@ func TestDefectos_LosCheckDelEstado(t *testing.T) {
 	}
 }
 
-// US-023 / RN-023-7 / RN-023-8 / CL-023-10: el defecto se busca DENTRO del proyecto y se devuelve
+// US-023 / CA-023-10 / RN-023-7 / RN-023-8 / CL-023-10: el defecto se busca DENTRO del proyecto y se devuelve
 // tal como esta guardado, de donde sale su estado actual. Uno de otro proyecto, un ID inexistente,
 // mal formado o vacio no cuenta, y no es un error.
 func TestRepositorioDefectos_DefectoEnProyecto(t *testing.T) {
@@ -117,7 +117,7 @@ func TestRepositorioDefectos_DefectoEnProyecto(t *testing.T) {
 	}
 }
 
-// US-023 / CL-023-17 / RN-023-8: el sprint se busca DENTRO del proyecto y se traduce a su numero
+// US-023 / CA-023-11 / CL-023-17 / RN-023-8: el sprint se busca DENTRO del proyecto y se traduce a su numero
 // (sprint.Numero), que es lo que compara el dominio: el ID del Sprint 3 da 3. Uno de otro proyecto,
 // un ID inexistente, mal formado o vacio no cuenta.
 func TestRepositorioDefectos_NumeroDeSprintEnProyecto(t *testing.T) {
