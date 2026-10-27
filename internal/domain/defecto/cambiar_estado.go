@@ -48,6 +48,14 @@ var transicionesPermitidas = map[Estado][]Estado{
 // (RN-023-5). No lee la base, no genera IDs y no sabe si los sprints existen: recibe sus
 // numeros ya traducidos (RN-023-8).
 func (d Defecto) CambiarEstado(nuevo Estado, resolucion SprintDeResolucion, _ int) (Defecto, error) {
+	// RN-023-1: valores exactos; no se recorta ni se pasa a minuscula. Con un estado invalido no
+	// se sabe a que estado se pasa, asi que ninguna otra regla se puede evaluar (RN-023-6).
+	switch nuevo {
+	case EstadoAbierto, EstadoEnCorreccion, EstadoResuelto, EstadoDescartado:
+	default:
+		return Defecto{}, fmt.Errorf("%w (se recibio %q)", ErrEstadoInvalido, string(nuevo))
+	}
+
 	if !slices.Contains(transicionesPermitidas[d.Estado], nuevo) {
 		return Defecto{}, fmt.Errorf("%w (de %s a %s)", ErrTransicionInvalida, d.Estado, nuevo)
 	}
