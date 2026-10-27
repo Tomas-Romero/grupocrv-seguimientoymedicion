@@ -322,7 +322,7 @@ func TestCambiarEstadoDefecto_ErroresDelRepositorio(t *testing.T) {
 	}
 }
 
-// US-023 / CL-023-1 / CL-023-12 / RN-023-9: el cambio solo modifica el estado y el sprint de
+// US-023 / CA-023-2 / CA-023-4 / CL-023-1 / CL-023-12 / RN-023-9: el cambio solo modifica el estado y el sprint de
 // resolucion; la descripcion, la severidad, la historia y el sprint de deteccion quedan como
 // estaban. En_correccion no consulta el sprint de resolucion: no se informo.
 func TestCambiarEstadoDefecto_SoloCambiaEstadoYSprintDeResolucion(t *testing.T) {
