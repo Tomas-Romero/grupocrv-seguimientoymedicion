@@ -129,3 +129,39 @@ func TestCambiarEstado_EstadoInvalido(t *testing.T) {
 		}
 	}
 }
+
+// US-023 / CA-023-7 / CL-023-4 / RN-023-3: resuelto exige sprint de resolucion
+// (ErrSprintResolucionFaltante) y cualquier otro estado lo rechaza
+// (ErrSprintResolucionNoCorresponde, indicando el estado pedido): no se descarta en silencio.
+func TestCambiarEstado_SprintDeResolucionSegunEstado(t *testing.T) {
+	sprint2 := defecto.SprintDeResolucion{ID: "sprint-2", Numero: 2}
+	casos := []struct {
+		nombre     string
+		actual     defecto.Defecto
+		nuevo      defecto.Estado
+		resolucion defecto.SprintDeResolucion
+		esperado   error
+		mensaje    string
+	}{
+		{"abierto a resuelto sin sprint", defectoEn(defecto.EstadoAbierto, ""), defecto.EstadoResuelto, defecto.SprintDeResolucion{}, defecto.ErrSprintResolucionFaltante, ""},
+		{"en_correccion a resuelto sin sprint", defectoEn(defecto.EstadoEnCorreccion, ""), defecto.EstadoResuelto, defecto.SprintDeResolucion{}, defecto.ErrSprintResolucionFaltante, ""},
+		{"abierto a en_correccion con sprint", defectoEn(defecto.EstadoAbierto, ""), defecto.EstadoEnCorreccion, sprint2, defecto.ErrSprintResolucionNoCorresponde, "en_correccion"},
+		{"abierto a descartado con sprint", defectoEn(defecto.EstadoAbierto, ""), defecto.EstadoDescartado, sprint2, defecto.ErrSprintResolucionNoCorresponde, "descartado"},
+		{"en_correccion a abierto con sprint", defectoEn(defecto.EstadoEnCorreccion, ""), defecto.EstadoAbierto, sprint2, defecto.ErrSprintResolucionNoCorresponde, "abierto"},
+		{"resuelto a abierto con sprint", defectoEn(defecto.EstadoResuelto, "sprint-2"), defecto.EstadoAbierto, sprint2, defecto.ErrSprintResolucionNoCorresponde, "abierto"},
+	}
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			d, err := c.actual.CambiarEstado(c.nuevo, c.resolucion, 1)
+			if !errors.Is(err, c.esperado) {
+				t.Fatalf("CambiarEstado() devolvio %v, quiero %v", err, c.esperado)
+			}
+			if !strings.Contains(err.Error(), c.mensaje) {
+				t.Errorf("el error es %q, quiero que indique %q", err, c.mensaje)
+			}
+			if d != (defecto.Defecto{}) {
+				t.Errorf("CambiarEstado() devolvio el defecto %+v, quiero ninguno", d)
+			}
+		})
+	}
+}
