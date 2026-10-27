@@ -59,6 +59,15 @@ func (d Defecto) CambiarEstado(nuevo Estado, resolucion SprintDeResolucion, _ in
 	if !slices.Contains(transicionesPermitidas[d.Estado], nuevo) {
 		return Defecto{}, fmt.Errorf("%w (de %s a %s)", ErrTransicionInvalida, d.Estado, nuevo)
 	}
+	// RN-023-3: solo resuelto lleva sprint de resolucion, y ahi es obligatorio. Informar uno con
+	// otro estado se rechaza para no descartarlo en silencio.
+	switch {
+	case nuevo == EstadoResuelto && resolucion.ID == "":
+		return Defecto{}, ErrSprintResolucionFaltante
+	case nuevo != EstadoResuelto && resolucion.ID != "":
+		return Defecto{}, fmt.Errorf("%w (se pidio el estado %s)", ErrSprintResolucionNoCorresponde, nuevo)
+	}
+
 	d.Estado = nuevo
 	d.SprintResolucionID = resolucion.ID
 	return d, nil
