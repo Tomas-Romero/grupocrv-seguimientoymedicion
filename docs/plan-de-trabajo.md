@@ -381,7 +381,8 @@ y T-016: el layout, el router, `Responder` y el manejo de errores existen, y cad
 formulario o una tabla sobre un caso de uso que ya está en `main`.
 
 **Qué queda afuera** (sin sprint): US-007 (listar y filtrar el backlog), US-031 (burndown) y US-032
-(gráficos de velocidad y defectos). No los exige la guía.
+(gráficos de velocidad y defectos). No los exige la guía: el dashboard (US-030) lleva sus dos
+gráficos simples, que cubren la «representación gráfica» del requerimiento 8.
 
 **Antes de empezar cada tarea.** Su spec está mergeada en `main` (Definition of Ready). Cada persona
 escribe las de lo que implementa. Las de US-023 y la parte de dominio de US-022 ya existen. Los
@@ -429,10 +430,10 @@ decide en el momento, escrito en el acta:
 
 1. US-024 (objetivo estirado; no entra al compromiso).
 2. US-004: se absorbe en el dashboard, que ya muestra el estado del proyecto.
-3. El dashboard sin gráficos: solo tarjetas y tablas.
-4. US-034 como un botón «Imprimir» sin hoja de estilos propia.
-5. Nunca se recortan los tests, las specs, T-008 ni T-009. US-017 (nueva ronda) es parte de lo que
-   exige la guía: se recorta solo con acuerdo del Product Architect.
+3. US-034 como un botón «Imprimir» sin hoja de estilos propia.
+4. Nunca se recortan los tests, las specs, T-008 ni T-009. Tampoco los dos gráficos del dashboard (US-030):
+   el requerimiento 8 de la guía pide un dashboard con representaciones gráficas. US-017 (nueva ronda) es
+   parte de lo que exige la guía: se recorta solo con acuerdo del Product Architect.
 
 ## Cómo se reparte y por qué
 
