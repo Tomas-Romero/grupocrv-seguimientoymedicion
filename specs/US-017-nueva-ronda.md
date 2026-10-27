@@ -214,4 +214,4 @@ misma función. En ningún caso cambia nada.
   la historia y de las decisiones del equipo (solo con divergencia y la sesión
   revelada, mismos participantes, votos anteriores visibles, mismo candado),
   usando las specs de US-014, US-015, US-016 y US-018 como modelo
-- Revisado y entendido por:
+- Revisado y entendido por: Juan Ignacio Vergara
