@@ -117,7 +117,7 @@ func TestRepositorioDefectos_DefectoEnProyecto(t *testing.T) {
 	}
 }
 
-// US-023 / CA-023-11 / CL-023-17 / RN-023-8: el sprint se busca DENTRO del proyecto y se traduce a su numero
+// US-023 / CA-023-11 / CL-023-17 / RN-023-8 / RN-023-13: el sprint se busca DENTRO del proyecto y se traduce a su numero
 // (sprint.Numero), que es lo que compara el dominio: el ID del Sprint 3 da 3. Uno de otro proyecto,
 // un ID inexistente, mal formado o vacio no cuenta.
 func TestRepositorioDefectos_NumeroDeSprintEnProyecto(t *testing.T) {
@@ -151,10 +151,13 @@ func TestRepositorioDefectos_NumeroDeSprintEnProyecto(t *testing.T) {
 	}
 }
 
-// US-023 / CA-023-1 / CA-023-3 / CL-023-7 / CL-023-12 / RN-023-9 / RN-023-11: el UPDATE guarda el
+// US-023 / CA-023-1 / CA-023-3 / CL-023-6 / CL-023-7 / CL-023-8 / CL-023-12 / RN-023-9 / RN-023-11 / RN-023-13: el UPDATE guarda el
 // estado y el sprint de resolucion y nada mas: la descripcion, la severidad, la historia, el sprint
 // de deteccion y la fecha de carga quedan como estaban, y los demas defectos no se tocan. Reabrir un
-// resuelto deja el sprint en NULL, y se puede volver a resolver en otro sprint.
+// resuelto deja el sprint en NULL, y se puede volver a resolver en otro sprint. Resuelve en un sprint
+// cerrado y en uno abierto que todavia no empezo (CL-023-6: el cambio no mira el reloj). Que un
+// defecto reabierto o descartado quede con el sprint en NULL es lo que necesita la consulta de
+// US-029 (CL-023-8, RN-023-13): su SprintResolucion es 0 y solo uno resuelto tiene sprint.
 func TestActualizarEstadoDefecto_Guarda(t *testing.T) {
 	ctx := contexto(t)
 	e := nuevoEscenarioDefectos(ctx, t)
@@ -271,7 +274,7 @@ func TestActualizarEstadoDefecto_RechazaUnEstadoAnteriorQueYaNoEsElGuardado(t *t
 	}
 }
 
-// US-023 / CL-023-15 / CL-023-10 / RN-023-11: el defecto que no existe en el proyecto (se borro su
+// US-023 / CL-023-13 / CL-023-15 / CL-023-10 / RN-023-11: el defecto que no existe en el proyecto (se borro su
 // proyecto, es de otro, o el ID esta mal formado o vacio) se distingue de uno modificado:
 // ErrDefectoInexistente. No se guarda nada.
 func TestActualizarEstadoDefecto_DefectoQueNoEsta(t *testing.T) {
@@ -308,7 +311,7 @@ func TestActualizarEstadoDefecto_DefectoQueNoEsta(t *testing.T) {
 	}
 }
 
-// US-023 / CL-023-15 / RN-023-11: si el sprint de resolucion desaparecio entre la lectura y el
+// US-023 / CL-023-13 / CL-023-15 / RN-023-11: si el sprint de resolucion desaparecio entre la lectura y el
 // UPDATE, la clave foranea lo rechaza y se devuelve ErrSprintInexistente, sin guardar nada: ni el
 // estado. Un ID de sprint mal formado se traduce igual, sin llegar a la base.
 func TestActualizarEstadoDefecto_SprintDeResolucionQueNoEsta(t *testing.T) {

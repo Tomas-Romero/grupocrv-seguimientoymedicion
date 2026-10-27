@@ -104,7 +104,7 @@ func TestCambiarEstadoDefecto_Resuelve(t *testing.T) {
 	}
 }
 
-// US-023 / CA-023-10 / CA-023-11 / CA-023-12 / CL-023-10 / RN-023-7 / RN-023-10: se verifica en el
+// US-023 / CA-023-10 / CA-023-11 / CA-023-12 / CL-023-10 / CL-023-13 / RN-023-7 / RN-023-10: se verifica en el
 // orden proyecto, defecto, sprint de resolucion. Lo primero que no existe se devuelve solo,
 // reconocible con errors.Is y con el ID recibido, sin validar los datos (el estado es invalido a
 // proposito) y sin guardar nada.
@@ -179,7 +179,7 @@ func TestCambiarEstadoDefecto_SprintDeDeteccionQueNoEsta(t *testing.T) {
 	}
 }
 
-// US-023 / CA-023-13 / CL-023-9 / RN-023-6 / RN-023-8: los errores de validacion los devuelve el
+// US-023 / CA-023-13 / CL-023-9 / CL-023-13 / RN-023-6 / RN-023-8 / RN-023-10: los errores de validacion los devuelve el
 // dominio tal cual, unidos y en orden, y los numeros de sprint se comparan ya traducidos: un
 // defecto detectado en el Sprint 3 y resuelto de nuevo en el 2 devuelve transicion y sprint
 // anterior. Un resuelto sin sprint no consulta el sprint de resolucion (ID vacio). No se guarda nada.
