@@ -1,11 +1,12 @@
 // Package defecto contiene las reglas de un defecto: lo que se registra de una falla
 // del producto, con su severidad, la historia donde se introdujo y el sprint en el que
-// se detecto (US-022).
+// se detecto (US-022), y su ciclo de vida: los estados, las transiciones permitidas y el
+// sprint en el que se resuelve (US-023).
 //
 // Es dominio puro: no importa nada fuera de la biblioteca estandar, no accede a la
 // base, no genera IDs y no lee el reloj (la fecha de carga la pone la base). Que el
-// proyecto, la historia y el sprint existan y se correspondan lo verifica la capa de
-// aplicacion.
+// proyecto, la historia y los sprints existan y se correspondan lo verifica la capa de
+// aplicacion, que tambien traduce los sprints a su numero antes de llamar al dominio.
 package defecto
 
 import (
@@ -69,8 +70,8 @@ type Defecto struct {
 	Descripcion       string
 	Severidad         Severidad
 	Estado            Estado
-	// SprintResolucionID esta vacio mientras el defecto no se resuelve; solo lo
-	// completa US-023 (RN-022-3).
+	// SprintResolucionID esta vacio mientras el defecto no esta resuelto: solo el estado
+	// resuelto lleva sprint de resolucion (RN-022-3, RN-023-3).
 	SprintResolucionID string
 }
 
