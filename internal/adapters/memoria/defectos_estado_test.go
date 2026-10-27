@@ -2,8 +2,10 @@ package memoria_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
+	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/app"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/defecto"
 )
 
@@ -137,5 +139,73 @@ func TestBase_ActualizarEstadoDefecto_Guarda(t *testing.T) {
 	}
 	if d, _, _ := b.base.DefectoEnProyecto(ctx, b.demo, guardado.ID); d != reabierto {
 		t.Errorf("defecto = %+v, quiero %+v (abierto y sin sprint de resolucion)", d, reabierto)
+	}
+}
+
+// US-023 / CA-023-14 / CL-023-14 / RN-023-11: el guardado esta condicionado al estado que leyo el
+// caso de uso. Si el defecto ya no esta en ese estado (otro cambio se adelanto) se devuelve
+// ErrDefectoModificado sin guardar nada: no queda "descartado" con el sprint del otro cambio.
+func TestBase_ActualizarEstadoDefecto_RechazaElEstadoQueYaNoEsElGuardado(t *testing.T) {
+	ctx := context.Background()
+	b := nuevaBaseConDefectos(t)
+	sprint2 := b.segundoSprint(t)
+	guardado := b.registrado(t)
+
+	// El primer cambio gana: lo descarta.
+	descartado, err := guardado.CambiarEstado(defecto.EstadoDescartado, defecto.SprintDeResolucion{}, 1)
+	if err != nil {
+		t.Fatalf("CambiarEstado: %v", err)
+	}
+	if err := b.base.ActualizarEstadoDefecto(ctx, descartado, defecto.EstadoAbierto); err != nil {
+		t.Fatalf("ActualizarEstadoDefecto del primero: %v", err)
+	}
+
+	// El segundo leyo "abierto" antes del primero y lo quiere resolver en el Sprint 2.
+	resuelto, err := guardado.CambiarEstado(defecto.EstadoResuelto, defecto.SprintDeResolucion{ID: sprint2, Numero: 2}, 1)
+	if err != nil {
+		t.Fatalf("CambiarEstado: %v", err)
+	}
+	err = b.base.ActualizarEstadoDefecto(ctx, resuelto, defecto.EstadoAbierto)
+
+	if !errors.Is(err, app.ErrDefectoModificado) {
+		t.Fatalf("error = %v, quiero ErrDefectoModificado", err)
+	}
+	if d, _, _ := b.base.DefectoEnProyecto(ctx, b.demo, guardado.ID); d != descartado {
+		t.Errorf("defecto = %+v, quiero el que dejo el primero: %+v", d, descartado)
+	}
+}
+
+// US-023 / CL-023-15 / RN-023-11: el defecto que no esta en el proyecto (se borro, o es de otro) se
+// rechaza con ErrDefectoInexistente, y un sprint de resolucion que desaparecio, con
+// ErrSprintInexistente (la clave foranea de Postgres). En los dos casos no se guarda nada.
+func TestBase_ActualizarEstadoDefecto_RechazaLoQueNoEsta(t *testing.T) {
+	ctx := context.Background()
+	b := nuevaBaseConDefectos(t)
+	guardado := b.registrado(t)
+
+	resuelto := guardado
+	resuelto.Estado = defecto.EstadoResuelto
+	resuelto.SprintResolucionID = b.sprint
+
+	casos := []struct {
+		nombre   string
+		cambio   func(d defecto.Defecto) defecto.Defecto
+		esperado error
+	}{
+		{"el defecto no esta", func(d defecto.Defecto) defecto.Defecto { d.ID = "no-existe"; return d }, app.ErrDefectoInexistente},
+		{"el defecto es de otro proyecto", func(d defecto.Defecto) defecto.Defecto { d.ProyectoID = b.otro; return d }, app.ErrDefectoInexistente},
+		{"el sprint de resolucion no esta", func(d defecto.Defecto) defecto.Defecto { d.SprintResolucionID = "no-existe"; return d }, app.ErrSprintInexistente},
+	}
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			err := b.base.ActualizarEstadoDefecto(ctx, c.cambio(resuelto), defecto.EstadoAbierto)
+
+			if !errors.Is(err, c.esperado) {
+				t.Fatalf("error = %v, quiero %v", err, c.esperado)
+			}
+			if d, _, _ := b.base.DefectoEnProyecto(ctx, b.demo, guardado.ID); d != guardado {
+				t.Errorf("defecto = %+v, quiero que no cambie: %+v", d, guardado)
+			}
+		})
 	}
 }
