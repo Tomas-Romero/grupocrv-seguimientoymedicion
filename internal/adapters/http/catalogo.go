@@ -42,6 +42,13 @@ var entradasDelCatalogo = []entradaDelCatalogo{
 	{"defecto.ErrDescripcionVacia", defecto.ErrDescripcionVacia, errores.Validacion, "descripcion"},
 	{"defecto.ErrDescripcionMuyLarga", defecto.ErrDescripcionMuyLarga, errores.Validacion, "descripcion"},
 	{"defecto.ErrSeveridadInvalida", defecto.ErrSeveridadInvalida, errores.Validacion, "severidad"},
+	{"defecto.ErrEstadoInvalido", defecto.ErrEstadoInvalido, errores.Validacion, "estado"},
+	{"defecto.ErrTransicionInvalida", defecto.ErrTransicionInvalida, errores.Conflicto, "estado"},
+	{"defecto.ErrSprintResolucionFaltante", defecto.ErrSprintResolucionFaltante, errores.Validacion, "sprint_resolucion"},
+	{"defecto.ErrSprintResolucionNoCorresponde", defecto.ErrSprintResolucionNoCorresponde, errores.Validacion, "sprint_resolucion"},
+	// Conflicto y no validacion: compara contra el sprint de deteccion guardado (RN-T005-2). No
+	// reutiliza metricas.ErrResolucionAnteriorADeteccion, que es un dato corrupto del sistema.
+	{"defecto.ErrSprintResolucionAnterior", defecto.ErrSprintResolucionAnterior, errores.Conflicto, "sprint_resolucion"},
 
 	// esfuerzo
 	{"esfuerzo.ErrFechaVacia", esfuerzo.ErrFechaVacia, errores.Validacion, "fecha"},
@@ -96,6 +103,8 @@ var entradasDelCatalogo = []entradaDelCatalogo{
 	{"app.ErrIntegranteInexistente", app.ErrIntegranteInexistente, errores.NoEncontrado, ""},
 	{"app.ErrSprintInexistente", app.ErrSprintInexistente, errores.NoEncontrado, ""},
 	{"app.ErrSesionInexistente", app.ErrSesionInexistente, errores.NoEncontrado, ""},
+	{"app.ErrDefectoInexistente", app.ErrDefectoInexistente, errores.NoEncontrado, ""},
+	{"app.ErrDefectoModificado", app.ErrDefectoModificado, errores.Conflicto, ""},
 	{"app.ErrEmailDuplicado", app.ErrEmailDuplicado, errores.Conflicto, "email"},
 }
 
