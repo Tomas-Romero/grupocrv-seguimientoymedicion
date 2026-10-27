@@ -4,7 +4,7 @@
 > No se edita a mano: se regenera. Enlaza Historia → Spec → Criterios de aceptación →
 > Escenarios BDD → Tests → Código (la guía de la cátedra la pide como evidencia).
 
-Total: 30 especificaciones, 215 criterios de aceptación, 155 con escenario BDD y 167 con test.
+Total: 30 especificaciones, 215 criterios de aceptación, 167 con escenario BDD y 179 con test.
 
 Un criterio sin escenario BDD o sin test se muestra con `—`: o falta la evidencia, o el criterio
 se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no llevan `.feature`).
@@ -31,7 +31,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | US-019 | [specs/US-019-registrar-esfuerzo.md](../specs/US-019-registrar-esfuerzo.md) | borrador | 11 | 9 | 7 | `internal/domain/esfuerzo/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/` |
 | US-020 | [specs/US-020-consultar-esfuerzo.md](../specs/US-020-consultar-esfuerzo.md) | borrador | 9 | 9 | 9 | `internal/domain/esfuerzo/`, `internal/app/consultar_esfuerzo.go` |
 | US-021 | [specs/US-021-comparar-esfuerzo.md](../specs/US-021-comparar-esfuerzo.md) | borrador | 9 | 8 | 9 | `internal/domain/metricas/`, `internal/app/comparar_esfuerzo.go` |
-| US-022 | [specs/US-022-registrar-defecto.md](../specs/US-022-registrar-defecto.md) | borrador | 12 | 0 | 0 | `internal/domain/defecto/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`, `migraciones/00012_defectos.sql` |
+| US-022 | [specs/US-022-registrar-defecto.md](../specs/US-022-registrar-defecto.md) | borrador | 12 | 12 | 12 | `internal/domain/defecto/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`, `migraciones/00012_defectos.sql` |
 | US-023 | [specs/US-023-cambiar-estado-defecto.md](../specs/US-023-cambiar-estado-defecto.md) | borrador | 14 | 0 | 0 | `internal/domain/defecto/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`, `migraciones/00013_defectos_estado.sql` |
 | US-025 | [specs/US-025-story-points-sprint.md](../specs/US-025-story-points-sprint.md) | borrador | 4 | 4 | 1 | `internal/domain/metricas/` |
 | US-026 | [specs/US-026-velocidad-equipo.md](../specs/US-026-velocidad-equipo.md) | borrador | 4 | 4 | 1 | `internal/domain/metricas/` |
@@ -365,31 +365,31 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 ### US-022 — Registrar un defecto con severidad, historia relacionada y sprint de detección
 
 - **Spec:** [specs/US-022-registrar-defecto.md](../specs/US-022-registrar-defecto.md) · **Issue:** #30
-- **Escenarios BDD:** ninguno
+- **Escenarios BDD:** [features/US-022-registrar-defecto.feature](../features/US-022-registrar-defecto.feature)
 - **Código:** `internal/domain/defecto/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`, `migraciones/00012_defectos.sql`
-- **Tests que la citan:** 0
+- **Tests que la citan:** 33
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
-| CA-022-1 | normal | — | — |
-| CA-022-2 | alternativo | — | — |
-| CA-022-3 | alternativo | — | — |
-| CA-022-4 | alternativo | — | — |
-| CA-022-5 | alternativo | — | — |
-| CA-022-6 | límite | — | — |
-| CA-022-7 | error | — | — |
-| CA-022-8 | error | — | — |
-| CA-022-9 | error | — | — |
-| CA-022-10 | error | — | — |
-| CA-022-11 | error | — | — |
-| CA-022-12 | error | — | — |
+| CA-022-1 | normal | Se registra un defecto abierto, sin sprint de resolución | TestBase_RegistrarDefecto, TestRegistrarDefecto_Guarda, TestRegistrarDefecto_Registra, TestNuevo_NaceAbiertoYSinResolver |
+| CA-022-2 | alternativo | Se pueden registrar defectos de las cuatro severidades | TestRegistrarDefecto_CuatroSeveridades, TestNuevo_CuatroSeveridades |
+| CA-022-3 | alternativo | El sprint de detección puede ser distinto del sprint de la historia, El sprint de detección puede estar cerrado | TestRegistrarDefecto_GuardaElIDDelSprintDeDeteccion |
+| CA-022-4 | alternativo | Se puede registrar un defecto sobre una historia completada y la historia no cambia, Se puede registrar un defecto sobre una historia que no está en ningún sprint | TestRegistrarDefecto_SobreHistoriaEnCualquierEstado |
+| CA-022-5 | alternativo | Se pueden registrar varios defectos sobre la misma historia, incluso idénticos | TestRegistrarDefecto_Repetidos, TestRegistrarDefecto_RepetidosSonValidos |
+| CA-022-6 | límite | La descripción admite hasta 2000 caracteres, Una descripción de más de 2000 caracteres se rechaza y no se registra nada | TestNuevo_LargoDeLaDescripcion, TestNuevo_ElLargoSeMideRecortado |
+| CA-022-7 | error | Una descripción vacía se rechaza y no se registra nada | TestRegistrarDefecto_DatosInvalidos, TestNuevo_DescripcionVacia |
+| CA-022-8 | error | Una severidad fuera de critica, alta, media y baja se rechaza | TestRegistrarDefecto_DatosInvalidos, TestNuevo_SeveridadInvalida |
+| CA-022-9 | error | No se registra un defecto sobre una historia que no existe, No se registra un defecto sobre una historia de otro proyecto | TestRegistrarDefecto_LoQueDesaparece, TestRegistrarDefecto_LoQueNoExiste |
+| CA-022-10 | error | No se registra un defecto detectado en un sprint que no existe, No se registra un defecto detectado en un sprint de otro proyecto | TestRegistrarDefecto_LoQueNoExiste |
+| CA-022-11 | error | Registrar un defecto en un proyecto que no existe se rechaza | TestRegistrarDefecto_LoQueDesaparece, TestRegistrarDefecto_LoQueNoExiste |
+| CA-022-12 | error | Con la descripción vacía y la severidad inválida se informan los dos errores | TestRegistrarDefecto_DatosInvalidos, TestNuevo_TodosLosErroresJuntos |
 
 ### US-023 — Cambiar el estado de un defecto y registrar su sprint de resolución
 
 - **Spec:** [specs/US-023-cambiar-estado-defecto.md](../specs/US-023-cambiar-estado-defecto.md) · **Issue:** #31
 - **Escenarios BDD:** ninguno
 - **Código:** `internal/domain/defecto/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`, `migraciones/00013_defectos_estado.sql`
-- **Tests que la citan:** 0
+- **Tests que la citan:** 1
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
@@ -472,7 +472,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 - **Spec:** [specs/US-029-defectos-por-sprint.md](../specs/US-029-defectos-por-sprint.md) · **Issue:** #35
 - **Escenarios BDD:** [features/US-029-defectos-por-sprint.feature](../features/US-029-defectos-por-sprint.feature)
 - **Código:** `internal/domain/metricas/`
-- **Tests que la citan:** 3
+- **Tests que la citan:** 4
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
