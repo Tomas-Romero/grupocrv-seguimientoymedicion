@@ -8,7 +8,7 @@
 | **Depende de** | US-022 (tabla `defectos`, paquete `defecto`, estado inicial y errores base): se implementa después de que esa historia esté en `main`; esta spec se puede mergear antes, como la de US-019 |
 | **Escenarios BDD** | `features/US-023-cambiar-estado-defecto.feature` |
 | **Código** | `internal/domain/defecto/` (los estados nuevos y `CambiarEstado`), caso de uso en `internal/app/`, repositorios en `internal/adapters/postgres/` y `internal/adapters/memoria/`, migración nueva `migraciones/00013_defectos_estado.sql` |
-| **Última actualización** | 2026-10-25 |
+| **Última actualización** | 2026-10-26 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
 > implementación. Si durante la implementación descubrís que algo de acá está
@@ -180,12 +180,25 @@ Entre paréntesis, la capa que la hace cumplir.
   resolucion_segun_estado CHECK ((estado = 'resuelto') = (sprint_resolucion_id IS
   NOT NULL))`; su `Down` las borra. Al aplicarse no hay defectos que las violen.
 - **Número de la migración.** La `00011` es de US-018 (PR #170) y la `00012`, de
-  US-022 (PR #179). Al 2026-10-25 `main` llega a la `00010` y ninguna rama ni PR
-  abierto usa la `00013`. Antes de abrir la rama hay que confirmar que sigue libre
-  y que la `00012` ya está en `main`: esta migración modifica esa tabla, y
+  US-022 (PR #179). Al 2026-10-26, con US-022 ya en `main`, la `00012` está en
+  `main` y ninguna rama ni PR abierto usa la `00013`: la implementación lo
+  confirmó antes de crearla. Esta migración modifica la tabla de la `00012`, y
   `goose -allow-missing` (T-012) no la aplica antes de que exista.
+  Con los `CHECK` nuevos, el test de US-022 que afirmaba que `estado` no tenía
+  `CHECK` de valores (`TestDefectos_EstadoSinCheckDeValores`) deja de tener sentido y
+  se reemplaza por los de CL-023-16; el de la clave foránea del sprint de resolución
+  (`TestDefectos_SprintDeResolucionConClaveForanea`) pasa a escribir el estado
+  `resuelto` junto con el sprint, porque la base ya no admite uno sin el otro. Se
+  ajustan en este PR; ningún nombre público de US-022 cambia.
 - **Dependencias.** US-022 (tabla, paquete, `Estado`, área `Defectos` de los
   steps) y US-008 (`sprints`, con su número). No depende de US-024 ni US-029.
+- **Puertos y caso de uso.** El caso de uso es `app.CambiarEstadoDefecto`
+  (`NuevoCambiarEstadoDefecto`, `Ejecutar(ctx, proyectoID, defectoID, estado,
+  sprintResolucionID)`) y su puerto, `app.RepositorioCambioDeEstadoDefecto`, con
+  `ExisteProyecto`, `DefectoEnProyecto` (devuelve el defecto guardado y si existe en
+  ese proyecto), `NumeroDeSprintEnProyecto` (verifica que el sprint sea del proyecto
+  y devuelve su `sprint.Numero`) y `ActualizarEstadoDefecto(ctx, defecto,
+  estadoAnterior)`. Lo implementan `postgres.RepositorioDefectos` y `memoria.Base`.
 - **Catálogo de errores (T-005).** Los siete errores nuevos se registran en
   `internal/adapters/http/catalogo.go` en el PR de implementación, sin
   exclusiones nuevas. En el bloque `// defecto` (el segundo PR que llegue a
@@ -198,7 +211,11 @@ Entre paréntesis, la capa que la hace cumplir.
   reutiliza `metricas.ErrResolucionAnteriorADeteccion`, que se excluye del
   catálogo por ser un dato corrupto del sistema. En el bloque `// app`:
   `ErrDefectoInexistente` (`no_encontrado`) y `ErrDefectoModificado`
-  (`conflicto`), sin campo.
+  (`conflicto`), sin campo. Los nombres de campo del catálogo son una lista
+  cerrada (RN-T005-8): `estado` y `sprint_resolucion` no estaban, y el PR de
+  implementación los suma a esa regla (spec de T-005) y a la lista de
+  `TestCatalogo_EntradasValidas`, sin tocar ninguna otra entrada, como hizo US-022
+  con `descripcion` y `severidad`.
 - **Steps.** Esta historia no crea un área: suma a la interfaz `Defectos` de
   US-022 los métodos `CambiarEstadoDeDefecto(historia, estado, sprintResolucion
   string) error` y `SprintDeResolucionDeDefecto(historia string) (sprint string,
@@ -210,10 +227,13 @@ Entre paréntesis, la capa que la hace cumplir.
   - `Y el defecto de la historia "Crear proyecto" resuelto en el sprint "Sprint 2"` (contexto)
   - `Y el defecto de la historia "Crear proyecto" fue resuelto en el sprint "Sprint 2"`
 
-  Las de contexto existen porque el escenario tiene un solo `Cuando`. Todas
-  operan sobre el último defecto de la historia y buscan los sprints por nombre en
-  el proyecto actual; lo que no existe se manda con un ID inexistente, así el
-  rechazo lo produce la aplicación. "De otro proyecto", el cambio simultáneo y los
+  Las de contexto existen porque el escenario tiene un solo `Cuando`. Todas operan sobre el último defecto de la historia y buscan los sprints por nombre en
+  el proyecto de esa historia (los métodos no reciben el proyecto); lo que no existe
+  (la historia, su defecto o el sprint) se manda con un ID inexistente, así el
+  rechazo lo produce la aplicación. Las dos de contexto usan el mismo caso de uso: la
+  de `en estado` sirve para `en_correccion`, `descartado` y la reapertura (no lleva
+  sprint, así que no pasa a `resuelto`) y pedir el estado en el que el defecto ya
+  está se rechaza, como en el dominio. "De otro proyecto", el cambio simultáneo y los
   `CHECK` los prueban el caso de uso y el repositorio.
 - **Fuera de alcance.** Registrar (US-022) y listar (US-024) defectos, la
   pantalla (T-004), editar o borrar defectos, el historial de cambios y las
@@ -273,11 +293,18 @@ Entre paréntesis, la capa que la hace cumplir.
   (uno a `resuelto` con el Sprint 2 y otro a `descartado`): el segundo `UPDATE` no
   actualiza ninguna fila y se rechaza con `ErrDefectoModificado`. El defecto
   queda como lo dejó el primero, sin mezclar (no queda `descartado` con el Sprint
-  2). Se prueba con un test concurrente contra Postgres real y llamando al
-  repositorio con un estado anterior que ya no es el guardado.
+  2). La prueba principal es determinista: llama al repositorio con un
+  estado anterior que ya no es el guardado y comprueba `ErrDefectoModificado` sin
+  guardar nada. Un test con dos goroutines contra Postgres real la complementa y se
+  escribe sin depender de tiempos ni de quién llega primero: exactamente un cambio
+  guarda, el otro recibe `ErrDefectoModificado` y el defecto queda como lo dejó el que
+  ganó.
 - **CL-023-15** (RN-023-11) — El defecto (se borró su proyecto) o el sprint de
   resolución desaparecen entre la lectura y el `UPDATE`: `ErrDefectoInexistente`
-  o `ErrSprintInexistente`, sin guardar nada. Se prueba en el repositorio.
+  o `ErrSprintInexistente`, sin guardar nada. Se prueba en el repositorio. Si lo que
+  falta entre la lectura y la comparación es el sprint de detección del defecto
+  guardado, no hay número contra el que comparar: el caso de uso devuelve
+  `ErrSprintInexistente` en vez de comparar contra un `0`.
 - **CL-023-16** (RN-023-12) — Un `UPDATE` directo en la base que deja un
   `resuelto` sin sprint, un `en_correccion` con sprint o un estado fuera de los
   cuatro: la base lo rechaza con el `CHECK`. Se prueba en el repositorio.
