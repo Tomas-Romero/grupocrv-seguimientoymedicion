@@ -15,8 +15,8 @@ Sprint Planning y cualquier cambio se anota en el acta del sprint.
 | 1 | 21/09 – 05/10 | El MVP: proyectos, backlog, sprints y primeras métricas | 5 de 33 | cerrado, ver `docs/retros/sprint-1.md` |
 | 2 | 06/10 – 12/10 | Las cinco historias con spec mergeada, implementadas con TDD y BDD | 16 de 16 | cerrado, ver `docs/retros/sprint-2.md` |
 | 3 | 13/10 – 19/10 | El ciclo proyecto → backlog → sprint funciona en dominio y aplicación; layout base de la UI | 31 de 21 comprometidos (techo 36) | cerrado, ver `docs/retros/sprint-3.md` |
-| 4 | 20/10 – 26/10 | El ciclo completo se usa desde el navegador, base de Planning Poker y métricas de esfuerzo y completitud | 35 comprometidos, techo 46 | en curso, ver "Compromiso del Sprint 4" |
-| 5 | 27/10 – 02/11 | Cierre: dashboard, reporte PDF, documentación y ensayo de la presentación | 43 | |
+| 4 | 20/10 – 26/10 | El ciclo completo se usa desde el navegador, base de Planning Poker y métricas de esfuerzo y completitud | 77 de 35 comprometidos (techo 46); 48 en el tablero original | cerrado, ver `docs/retros/sprint-4.md` |
+| 5 | 27/10 – 02/11 | El proyecto se muestra completo desde el navegador y desplegado en Azure; documentación terminada y presentación ensayada | 48 comprometidos | en curso, ver "Compromiso del Sprint 5" |
 | — | 02/11 | **Presentación final** | — | |
 
 Los sprints cierran los **lunes a la noche** con Review y Retrospective, y el
@@ -300,6 +300,139 @@ etiquetas `@CA-011-k` de los escenarios se mezclarían.
 | Viernes 23/10 | Revisión cruzada de todo lo abierto |
 | Fin de semana | Colchón: todo mergeado o replanificado |
 | Lunes 26/10 | Review con demo y Retro. El acta se commitea el mismo lunes. Planning del Sprint 5: estimación de las pantallas (T-015 en adelante) |
+
+### Compromiso del Sprint 5 (Planning del 27/10)
+
+**Dónde estamos.** El Sprint 4 cerró con **77 SP** (48 en el tablero original; ver
+`docs/retros/sprint-4.md`). El dominio y la aplicación de casi todos los requerimientos de la guía
+están en `main`, con TDD y BDD, y el CI/CD llega hasta el despliegue en la Container App. Lo que
+falta es **que se vea y se use desde el navegador**: hoy Planning Poker, esfuerzo, defectos y
+métricas no tienen ninguna pantalla ni ruta HTTP.
+
+| Requerimiento de la guía | Qué hay hoy | Qué falta | SP |
+|---|---|---|---|
+| 1. Estado de un proyecto | Proyectos, integrantes, backlog y sprints en el navegador | US-004 | 2 |
+| 4. Planning Poker | Iniciar, votar oculto, revelar, divergencias y estimación acordada, sin pantalla | US-017 (nueva ronda) y T-020 (pantallas) | 11 |
+| 5. Esfuerzo | Registrar, consultar por historia, integrante y sprint, y comparar estimado contra real, sin pantalla | T-019 | 5 |
+| 6. Defectos | Registrar un defecto, sin pantalla | US-023 (cambiar estado) y T-021 (pantallas) | 8 |
+| 7. Métricas y 8. Dashboard | Los cálculos (Story Points, velocidad, horas, completitud, defectos por sprint), sin pantalla | US-030 | 5 |
+| 9. Reportes y PDF | — | US-033 (reporte en pantalla) y US-034 (vista imprimible) | 7 |
+| Entregables | CI/CD, matriz de trazabilidad y actas | T-008 (documentación) y T-009 (presentación) | 10 |
+| **Total** | | | **48** |
+
+**Lo que la cátedra confirmó el 26/10** (queda en el acta del Sprint 4):
+
+- **PDF:** alcanza con que el navegador genere la vista y se imprima como PDF. US-034 pasa de 8 a
+  2 SP: una hoja de estilos de impresión y un botón.
+- **Presentación:** formato libre; se pueden mostrar capturas de apoyo, pero hay que mostrar el
+  proyecto andando.
+- **Automatización:** está bien con el CI/CD que tenemos; no hace falta escáner de vulnerabilidades
+  ni telemetría.
+- **Despliegue continuo:** cada merge a `main` actualiza la Container App
+  `grupo03-grupocrv-seguimiento` del grupo de recursos `frsrutn`, que usa el registro compartido
+  `ingcalidad2026`. La cuenta es compartida y los créditos son limitados: 0,25 vCPU, 0,5 GiB y mínimo
+  de réplicas en 0 (T-018 ya lo hace).
+- **Base de datos:** no puede ser un contenedor de Azure (consume mucho): se usa Neon, con la cadena
+  de conexión como secreto de un Environment limitado a `main`. El JSON de credenciales de Azure lo
+  entrega la cátedra más tarde.
+
+**Sprint Goal:** el proyecto se puede mostrar completo, de punta a punta, desde el navegador y
+desplegado en Azure: Planning Poker, esfuerzo, defectos, dashboard y reporte imprimible, con la
+documentación terminada, el recorrido de trazabilidad ensayado y datos propios cargados.
+
+**Congelamiento de funcionalidades: sábado 31/10.** Del sábado a la presentación del lunes 02/11 es
+solo corrección de defectos, documentación y ensayo.
+
+**Compromiso del Sprint 5: 48 SP** (38 de funcionalidad y 10 de documentación y presentación, que se
+hacen después del congelamiento). Se compromete bastante menos que los 77 SP del Sprint 4, porque
+aquel incluyó 29 SP de trabajo adelantado o no previsto y este tiene solo cinco días de
+funcionalidad.
+
+| ID | Tarea | SP | Responsable | Depende de | En `main` |
+|---|---|---|---|---|---|
+| T-019 | Pantallas de esfuerzo: cargar horas, consultar y comparar | 5 | Tomás | US-019, US-020, US-021 | **miércoles 28** |
+| US-004 | Consultar el estado general de un proyecto | 2 | Tomás | — | viernes 30 |
+| US-030 | Dashboard con el estado del proyecto y sus métricas | 5 | Tomás (era de Conforti) | T-019 para tener horas reales | viernes 30 |
+| US-033 | Reporte completo de un proyecto o sprint en pantalla | 5 | Tomás (era de Vergara) | US-030 | viernes 30 |
+| US-017 | Abrir una nueva ronda de votación cuando hay divergencia | 3 | Vergara | US-014 a US-018 | jueves 29 |
+| T-020 | Pantallas de Planning Poker: iniciar, votar, revelar y acordar | 8 | Vergara | US-014 a US-018; US-017 para el botón de nueva ronda | viernes 30 |
+| US-034 | Vista imprimible del reporte (guardar como PDF desde el navegador) | 2 | Vergara (era de Conforti) | US-033 | sábado 31 a la mañana |
+| US-023 | Cambiar el estado de un defecto y registrar su sprint de resolución | 3 | Conforti | US-022 | jueves 29 |
+| T-021 | Pantallas de defectos: registrar, listar y cambiar el estado | 5 | Conforti | US-022; US-023 para cambiar el estado | viernes 30 |
+| T-008 | Documentación técnica, manual de usuario e informe de métricas y cobertura | 5 | Vergara | todo lo anterior | domingo 1/11 |
+| T-009 | Presentación final y ensayo del recorrido de trazabilidad | 5 | Tomás | todo lo anterior | domingo 1/11 |
+
+**Carga:** Tomás 22 (17 de funcionalidad y 5 de presentación), Vergara 18 (13 y 5) y Conforti 8.
+Objetivo estirado de Conforti: **US-024** (listar defectos filtrando por sprint y severidad, 3 SP),
+que mejora la pantalla de defectos. En el Sprint 4: Tomás 52, Vergara 18 y Conforti 7.
+
+**Cambios de responsable** (el campo *Assignees* del tablero y de cada issue se actualiza con el
+Planning):
+
+| ID | Antes | Ahora | Por qué |
+|---|---|---|---|
+| US-030 | Conforti | Tomás | Conforti prioriza dejar US-023 y las pantallas de defectos; el dashboard junta cálculos que Tomás implementó (US-025 a US-029) |
+| US-033 | Vergara | Tomás | Va con el dashboard: usa las mismas métricas |
+| US-034 | Conforti | Vergara | Pasa de 8 a 2 SP y depende de US-033, así que se hace después del reporte |
+
+**Qué entra como tarea nueva.** Las pantallas de Planning Poker, esfuerzo y defectos no tenían SP
+propios (es el riesgo R13 del acta del Sprint 4). Se estiman acá con lo que ya hicieron T-011, T-015
+y T-016: el layout, el router, `Responder` y el manejo de errores existen, y cada pantalla es un
+formulario o una tabla sobre un caso de uso que ya está en `main`.
+
+**Qué queda afuera** (sin sprint): US-007 (listar y filtrar el backlog), US-031 (burndown) y US-032
+(gráficos de velocidad y defectos). No los exige la guía.
+
+**Antes de empezar cada tarea.** Su spec está mergeada en `main` (Definition of Ready). Cada persona
+escribe las de lo que implementa. Las de US-023 y la parte de dominio de US-022 ya existen. Los
+identificadores de las tareas llevan la `T` (`RN-T019-k`, `CL-T019-k`, `CA-T019-k`).
+
+**Migraciones del Sprint 5.** La `00012` ya está en `main` (US-022) y la `00013` es de US-023 (dos
+`CHECK` sobre la tabla `defectos`). Las pantallas y US-017 no llevan migración; si alguna spec descubre
+que la necesita, lo avisa en el PR de su spec.
+
+**Calendario.**
+
+| Día | Qué pasa |
+|---|---|
+| Martes 27/10 | Planning. Cambios de responsable. **Specs**: cada uno abre como PR las de lo que implementa (Tomás: T-019, US-004, US-030 y US-033; Vergara: US-017, T-020 y US-034; Conforti: T-021) antes de las 22:00. Daily escrita |
+| Miércoles 28/10 | Specs mergeadas por la mañana (revisión en menos de 12 horas). **T-019 en `main` a las 22:00** (acción de la retro del Sprint 4). **Todas las demás tareas con su PR abierto y el RED a la vista a las 22:00**; US-023 sin PR abierto pasa a Vergara. Tomás crea el proyecto en Neon y deja listo el Environment `azure` |
+| Jueves 29/10 | **Cada integrante carga sus horas** en la pantalla nueva y Tomás revisa que haya de los tres. US-017 y US-023 en `main`. Revisión cruzada de todo lo abierto |
+| Viernes 30/10 | Todo lo funcional en `main`: T-020, T-021, US-004, US-030 y US-033. Datos de demostración cargados. Ensayo técnico del despliegue (si la cátedra ya entregó las credenciales, primera ejecución real del CD con *Run workflow*) |
+| Sábado 31/10 | **Congelamiento.** US-034 a la mañana, solo corrección de defectos y ajustes de diseño. T-008 en curso. Primer ensayo de la presentación |
+| Domingo 01/11 | T-008 y T-009 terminadas. Ensayo del recorrido de trazabilidad con datos reales. Sin código nuevo |
+| Lunes 02/11 | **Presentación final.** Review y Retro del Sprint 5; el acta `docs/retros/sprint-5.md` se commitea el mismo día |
+
+**Acciones de la retro del Sprint 4** (las dos, con su fecha):
+
+- **Horas reales:** T-019 está en `main` el miércoles 28/10 y desde ahí cada integrante carga sus horas
+  todos los días; el jueves 29/10 se revisa que haya horas de los tres (Tomás).
+- **Cada tarea de punta a punta con su PR abierto el miércoles 28/10 a las 22:00,** con el RED a la
+  vista. Quien no lo tiene pasa su tarea a quien tenga capacidad; decide Tomás en el momento.
+
+**Reglas de la semana.**
+
+- **US-023** es la tarea con más riesgo de no llegar (no se alcanzó a implementar en el Sprint 4): si
+  el miércoles 28/10 a las 22:00 no tiene PR abierto, la toma Vergara y Conforti sigue con T-021.
+- **Cuidado de los créditos de Azure.** Cada merge a `main` que cambia la imagen despliega la Container
+  App; los cambios solo de documentación, specs y escenarios no. No se disparan ejecuciones a mano
+  sin necesidad, y la URL de la app (sin login, repositorio público) se comparte solo en la presentación.
+- **Revisión:** sigue la rotación (Tomás lo revisa Vergara, a Vergara lo revisa Conforti, a Conforti lo
+  revisa Tomás). Los PR de dominio necesitan además a uno de los dos code owners.
+- **Conflictos:** la matriz `docs/trazabilidad.md` no se resuelve a mano: se regenera con
+  `go run ./cmd/trace`. Los conflictos en `docs/diccionario-steps.md` y en el catálogo de errores
+  se resuelven conservando las dos partes.
+- **CI rojo en `main`** frena todo lo demás hasta arreglarlo con un PR `fix`.
+
+**Lista de recorte del Sprint 5**, en este orden, solo si el jueves 29/10 la velocidad no alcanza y se
+decide en el momento, escrito en el acta:
+
+1. US-024 (objetivo estirado; no entra al compromiso).
+2. US-004: se absorbe en el dashboard, que ya muestra el estado del proyecto.
+3. El dashboard sin gráficos: solo tarjetas y tablas.
+4. US-034 como un botón «Imprimir» sin hoja de estilos propia.
+5. Nunca se recortan los tests, las specs, T-008 ni T-009. US-017 (nueva ronda) es parte de lo que
+   exige la guía: se recorta solo con acuerdo del Product Architect.
 
 ## Cómo se reparte y por qué
 
