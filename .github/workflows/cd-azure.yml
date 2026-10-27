@@ -1,61 +1,83 @@
 name: CD (Azure)
 
-# Entrega continua (T-017): construye la imagen Docker del servidor y, si el repositorio tiene
-# configuradas las credenciales de Azure, la publica en el Azure Container Registry como
-#   <ACR_NAME>.azurecr.io/<IMAGE_NAME>:<sha del commit>   y   :latest
+# Entrega continua (T-017 y T-018): en cada merge a main construye la imagen Docker del servidor,
+# la publica en el Azure Container Registry compartido de la catedra y despliega esa version en
+# la Azure Container App del grupo:
+#   <ACR_NAME>.azurecr.io/<IMAGE_NAME>:sha-<commit>   y   :latest
 #
-# Configuracion (Settings > Secrets and variables > Actions; ver docs/ci-cd.md):
+# Configuracion (ver docs/ci-cd.md). Los secretos viven en el Environment "azure", que solo puede
+# usarse desde la rama main: asi nadie los puede leer desde una rama propia.
 #   secreto   AZURE_CREDENTIALS  el JSON del service principal que entrega la catedra
-#   variable  ACR_NAME           nombre del registro, sin ".azurecr.io"
-#   variable  IMAGE_NAME         nombre de la imagen dentro del registro
+#   secreto   DATABASE_URL       la cadena de conexion de la base (Neon), sin channel_binding
+# Las variables son opcionales (Settings > Secrets and variables > Actions > Variables); si no
+# existen se usan los datos del grupo 03:
+#   ACR_NAME              ingcalidad2026   (registro compartido: nunca se crea ni se borra desde aca)
+#   IMAGE_NAME            grupo03-grupocrv
+#   RESOURCE_GROUP        frsrutn
+#   CONTAINER_APP_NAME    grupo03-grupocrv-seguimiento
+#   CONTAINER_APPS_ENV    solo hace falta si la Container App todavia no existe
+#   CARGAR_DATOS_EJEMPLO  true: carga el proyecto de ejemplo al arrancar (para la demo)
 #
-# Si falta alguno, el workflow construye la imagen igual (valida el Dockerfile) pero no se
-# loguea ni publica nada, asi que el repositorio no se pone en rojo antes de tener las credenciales.
+# Si falta algun secreto, el workflow construye la imagen igual (valida el Dockerfile) pero no se
+# loguea, publica ni despliega nada, asi que el repositorio no se pone en rojo antes de tener las
+# credenciales.
 #
-# Seguridad: las acciones de terceros estan fijadas por el hash exacto de su version (si alguien
-# moviera la etiqueta, el workflow seguiria usando el codigo que se reviso), el token no puede
-# escribir en el repositorio y el JSON solo se pasa a azure/login, nunca a un comando ni al log.
+# Costos: la cuenta de Azure es compartida y con creditos limitados. La app corre con 0,25 vCPU,
+# 0,5 GiB y MINIMO DE REPLICAS EN 0 (sin visitas no corre ni cobra), y solo se conservan las
+# ultimas etiquetas de la imagen del grupo en el registro.
+#
+# Seguridad: las acciones de terceros estan fijadas por el hash exacto de su version, el token no
+# puede escribir en el repositorio, los secretos llegan a los comandos por variables de entorno y
+# nunca escritos dentro del script, y todo lo que se crea, cambia o borra lleva el prefijo grupo03.
 
 on:
   push:
     branches: [main]
+    # Un cambio que no entra en la imagen no vuelve a construirla ni a desplegarla.
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - "specs/**"
+      - "features/**"
+      - ".github/ISSUE_TEMPLATE/**"
+      - ".github/pull_request_template.md"
   workflow_dispatch:
 
 permissions:
   contents: read
 
-# Una publicacion en curso no se corta: la siguiente espera.
+# Un despliegue en curso no se corta: el siguiente espera.
 concurrency:
   group: cd-azure
   cancel-in-progress: false
 
 jobs:
   # ---------------------------------------------------------------
-  # 1. Configuracion: dice si hay con que publicar.
+  # 1. Configuracion: dice si hay con que publicar y desplegar.
   # ---------------------------------------------------------------
   configuracion:
     name: Configuracion
     runs-on: ubuntu-latest
+    # Los secretos son del Environment: sin esta linea el job no los ve.
+    environment: azure
     outputs:
       completa: ${{ steps.revisar.outputs.completa }}
     steps:
-      - name: Revisar secretos y variables
+      - name: Revisar secretos
         id: revisar
         env:
           # Solo se pasa si el secreto existe, nunca su valor.
           TIENE_CREDENCIALES: ${{ secrets.AZURE_CREDENTIALS != '' }}
-          ACR_NAME: ${{ vars.ACR_NAME }}
-          IMAGE_NAME: ${{ vars.IMAGE_NAME }}
+          TIENE_BASE: ${{ secrets.DATABASE_URL != '' }}
         run: |
           faltan=""
-          [ "$TIENE_CREDENCIALES" = "true" ] || faltan="$faltan AZURE_CREDENTIALS(secreto)"
-          [ -n "$ACR_NAME" ] || faltan="$faltan ACR_NAME(variable)"
-          [ -n "$IMAGE_NAME" ] || faltan="$faltan IMAGE_NAME(variable)"
+          [ "$TIENE_CREDENCIALES" = "true" ] || faltan="$faltan AZURE_CREDENTIALS"
+          [ "$TIENE_BASE" = "true" ] || faltan="$faltan DATABASE_URL"
           if [ -z "$faltan" ]; then
             echo "completa=true" >> "$GITHUB_OUTPUT"
           else
             echo "completa=false" >> "$GITHUB_OUTPUT"
-            echo "::notice title=CD sin configurar::Falta configurar:$faltan. Se construye la imagen para validar el Dockerfile, pero no se publica."
+            echo "::notice title=CD sin configurar::Faltan los secretos:$faltan (Environment azure). Se construye la imagen para validar el Dockerfile, pero no se publica ni se despliega."
           fi
 
   # ---------------------------------------------------------------
@@ -65,11 +87,12 @@ jobs:
     name: Imagen Docker
     needs: configuracion
     runs-on: ubuntu-latest
+    environment: azure
     env:
       PUBLICAR: ${{ needs.configuracion.outputs.completa }}
-      # Sin configuracion se usan nombres de relleno: la imagen no sale de este runner.
-      REGISTRO: ${{ vars.ACR_NAME || 'sin-registro' }}.azurecr.io
-      IMAGEN: ${{ vars.IMAGE_NAME || 'metrics' }}
+      ACR_NAME: ${{ vars.ACR_NAME || 'ingcalidad2026' }}
+      REGISTRO: ${{ vars.ACR_NAME || 'ingcalidad2026' }}.azurecr.io
+      IMAGEN: ${{ vars.IMAGE_NAME || 'grupo03-grupocrv' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -82,8 +105,6 @@ jobs:
 
       - name: Login en el registro (ACR)
         if: env.PUBLICAR == 'true'
-        env:
-          ACR_NAME: ${{ vars.ACR_NAME }}
         run: az acr login --name "$ACR_NAME"
 
       # docker/setup-buildx-action v4.4.1
@@ -113,6 +134,31 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      # El registro es compartido por todos los grupos y cobra por almacenamiento: se conservan solo las
+      # ultimas etiquetas sha-<commit> de la imagen del grupo. Nunca se toca otra imagen, ni `latest`, ni
+      # el registro. Si falla no corta el despliegue.
+      - name: Limpiar etiquetas viejas de la imagen del grupo
+        if: env.PUBLICAR == 'true'
+        continue-on-error: true
+        env:
+          CONSERVAR: "10"
+        run: |
+          set -euo pipefail
+          case "$IMAGEN" in
+            grupo03-*) ;;
+            *)
+              echo "::warning::La imagen $IMAGEN no empieza con grupo03-: no se borra ninguna etiqueta."
+              exit 0
+              ;;
+          esac
+          az acr repository show-tags --name "$ACR_NAME" --repository "$IMAGEN" --orderby time_desc --output tsv \
+            | { grep -E '^sha-[0-9a-f]{40}$' || true; } \
+            | tail -n +"$((CONSERVAR + 1))" \
+            | while IFS= read -r etiqueta; do
+                echo "Borro ${IMAGEN}:${etiqueta}"
+                az acr repository delete --name "$ACR_NAME" --image "${IMAGEN}:${etiqueta}" --yes
+              done
+
       # Los resultados de otros pasos llegan por variables de entorno y no escritos dentro del script:
       # asi el shell nunca interpreta su contenido (y shellcheck no tiene nada que objetar).
       - name: Resumen
@@ -132,6 +178,106 @@ jobs:
                 echo "  - \`${etiqueta}\`"
               done <<< "$ETIQUETAS"
             else
-              echo "Construida y validada, **sin publicar**: falta configurar \`AZURE_CREDENTIALS\`, \`ACR_NAME\` o \`IMAGE_NAME\` (ver docs/ci-cd.md)."
+              echo "Construida y validada, **sin publicar**: faltan los secretos \`AZURE_CREDENTIALS\` o \`DATABASE_URL\` del Environment azure (ver docs/ci-cd.md)."
             fi
           } >> "$GITHUB_STEP_SUMMARY"
+
+  # ---------------------------------------------------------------
+  # 3. Despliegue: actualiza la Container App con la imagen recien publicada y comprueba que responde.
+  # ---------------------------------------------------------------
+  desplegar:
+    name: Desplegar en Container Apps
+    needs: [configuracion, imagen]
+    if: needs.configuracion.outputs.completa == 'true'
+    runs-on: ubuntu-latest
+    environment: azure
+    env:
+      REGISTRO: ${{ vars.ACR_NAME || 'ingcalidad2026' }}.azurecr.io
+      ACR_NAME: ${{ vars.ACR_NAME || 'ingcalidad2026' }}
+      IMAGEN: ${{ vars.IMAGE_NAME || 'grupo03-grupocrv' }}
+      GRUPO_RECURSOS: ${{ vars.RESOURCE_GROUP || 'frsrutn' }}
+      APP: ${{ vars.CONTAINER_APP_NAME || 'grupo03-grupocrv-seguimiento' }}
+      ENTORNO_APPS: ${{ vars.CONTAINER_APPS_ENV }}
+      CARGAR_DATOS_EJEMPLO: ${{ vars.CARGAR_DATOS_EJEMPLO || 'true' }}
+      # Recursos de la app: lo minimo que alcanza, para no gastar los creditos compartidos.
+      CPU: "0.25"
+      MEMORIA: "0.5Gi"
+    steps:
+      # azure/login v3.1.0
+      - name: Login en Azure
+        uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Instalar la extension containerapp de la CLI
+        run: az extension add --name containerapp --upgrade --yes --only-show-errors
+
+      - name: Desplegar la app
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          # Sin esto, un nombre mal armado podria tocar recursos de otro grupo en la cuenta compartida.
+          case "$APP" in
+            grupo03-*) ;;
+            *)
+              echo "::error::La Container App $APP no empieza con grupo03-: no se despliega."
+              exit 1
+              ;;
+          esac
+
+          imagen_completa="${REGISTRO}/${IMAGEN}:sha-${GITHUB_SHA}"
+          variables=("DATABASE_URL=secretref:database-url" "HTTP_ADDR=:8080" "CARGAR_DATOS_EJEMPLO=${CARGAR_DATOS_EJEMPLO}")
+
+          if az containerapp show --name "$APP" --resource-group "$GRUPO_RECURSOS" --only-show-errors > /dev/null 2>&1; then
+            echo "Actualizo la Container App $APP con $imagen_completa"
+            az containerapp secret set --name "$APP" --resource-group "$GRUPO_RECURSOS" \
+              --secrets "database-url=${DATABASE_URL}" --only-show-errors > /dev/null
+            az containerapp update --name "$APP" --resource-group "$GRUPO_RECURSOS" \
+              --image "$imagen_completa" \
+              --cpu "$CPU" --memory "$MEMORIA" --min-replicas 0 --max-replicas 1 \
+              --set-env-vars "${variables[@]}" --only-show-errors > /dev/null
+          else
+            if [ -z "$ENTORNO_APPS" ]; then
+              echo "::error::La Container App $APP no existe y falta la variable CONTAINER_APPS_ENV (el entorno donde crearla)."
+              exit 1
+            fi
+            echo "La Container App $APP no existe: la creo en el entorno $ENTORNO_APPS"
+            # El registro es compartido: se usan sus credenciales de administrador solo para que la app pueda bajar la imagen.
+            usuario=$(az acr credential show --name "$ACR_NAME" --query username --output tsv) \
+              || { echo "::error::No se pudieron leer las credenciales del registro (puede tener el usuario administrador deshabilitado)."; exit 1; }
+            clave=$(az acr credential show --name "$ACR_NAME" --query 'passwords[0].value' --output tsv)
+            echo "::add-mask::$clave"
+            az containerapp create --name "$APP" --resource-group "$GRUPO_RECURSOS" --environment "$ENTORNO_APPS" \
+              --image "$imagen_completa" --target-port 8080 --ingress external \
+              --registry-server "$REGISTRO" --registry-username "$usuario" --registry-password "$clave" \
+              --cpu "$CPU" --memory "$MEMORIA" --min-replicas 0 --max-replicas 1 \
+              --secrets "database-url=${DATABASE_URL}" --env-vars "${variables[@]}" --only-show-errors > /dev/null
+          fi
+
+      # La app escala a cero: la primera visita la despierta (y la base de Neon tambien), asi que se reintenta.
+      - name: Comprobar que responde (/health)
+        run: |
+          set -euo pipefail
+          fqdn=$(az containerapp show --name "$APP" --resource-group "$GRUPO_RECURSOS" \
+            --query properties.configuration.ingress.fqdn --output tsv --only-show-errors)
+          url="https://${fqdn}"
+          for intento in $(seq 1 12); do
+            codigo=$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time 20 "${url}/health" || true)
+            echo "Intento ${intento} de 12: HTTP ${codigo}"
+            if [ "$codigo" = "200" ]; then
+              {
+                echo "### Despliegue"
+                echo ""
+                echo "- app: \`${APP}\` (${CPU} vCPU, ${MEMORIA}, minimo 0 replicas)"
+                echo "- imagen: \`${REGISTRO}/${IMAGEN}:sha-${GITHUB_SHA}\`"
+                echo "- URL: ${url}"
+                echo "- \`/health\`: HTTP 200"
+              } >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::La app no respondio 200 en /health despues de 12 intentos."
+          az containerapp logs show --name "$APP" --resource-group "$GRUPO_RECURSOS" --tail 50 --only-show-errors || true
+          exit 1
