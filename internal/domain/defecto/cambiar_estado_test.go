@@ -2,6 +2,7 @@ package defecto_test
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -95,5 +96,36 @@ func TestCambiarEstado_TransicionesProhibidas(t *testing.T) {
 				t.Errorf("CambiarEstado() devolvio el defecto %+v, quiero ninguno", d)
 			}
 		})
+	}
+}
+
+// US-023 / CA-023-9 / CL-023-3 / RN-023-1: un estado fuera de los cuatro se rechaza con
+// ErrEstadoInvalido indicando el valor recibido. El dominio no recorta ni pasa a minuscula, y con
+// un estado invalido no se evalua ninguna otra regla: es el unico error, con o sin sprint.
+func TestCambiarEstado_EstadoInvalido(t *testing.T) {
+	invalidos := []defecto.Estado{"cerrado", "Resuelto", " resuelto ", "en correccion", "en_corrección", ""}
+	resoluciones := map[string]defecto.SprintDeResolucion{
+		"sin sprint": {},
+		"con sprint": {ID: "sprint-2", Numero: 2},
+	}
+	for _, nuevo := range invalidos {
+		for nombre, resolucion := range resoluciones {
+			t.Run(fmt.Sprintf("%q %s", nuevo, nombre), func(t *testing.T) {
+				d, err := defectoEn(defecto.EstadoAbierto, "").CambiarEstado(nuevo, resolucion, 1)
+				if !errors.Is(err, defecto.ErrEstadoInvalido) {
+					t.Fatalf("CambiarEstado() devolvio %v, quiero ErrEstadoInvalido", err)
+				}
+				if errors.Is(err, defecto.ErrTransicionInvalida) || errors.Is(err, defecto.ErrSprintResolucionFaltante) ||
+					errors.Is(err, defecto.ErrSprintResolucionNoCorresponde) || errors.Is(err, defecto.ErrSprintResolucionAnterior) {
+					t.Errorf("el error es %q, quiero solo ErrEstadoInvalido", err)
+				}
+				if !strings.Contains(err.Error(), fmt.Sprintf("%q", string(nuevo))) {
+					t.Errorf("el error es %q, quiero que indique el valor %q", err, string(nuevo))
+				}
+				if d != (defecto.Defecto{}) {
+					t.Errorf("CambiarEstado() devolvio el defecto %+v, quiero ninguno", d)
+				}
+			})
+		}
 	}
 }
