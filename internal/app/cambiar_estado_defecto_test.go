@@ -178,3 +178,166 @@ func TestCambiarEstadoDefecto_SprintDeDeteccionQueNoEsta(t *testing.T) {
 		t.Errorf("se guardaron %d cambios, quiero ninguno", len(repo.guardado))
 	}
 }
+
+// US-023 / CA-023-13 / CL-023-9 / RN-023-6 / RN-023-8: los errores de validacion los devuelve el
+// dominio tal cual, unidos y en orden, y los numeros de sprint se comparan ya traducidos: un
+// defecto detectado en el Sprint 3 y resuelto de nuevo en el 2 devuelve transicion y sprint
+// anterior. Un resuelto sin sprint no consulta el sprint de resolucion (ID vacio). No se guarda nada.
+func TestCambiarEstadoDefecto_DatosInvalidos(t *testing.T) {
+	casos := []struct {
+		nombre    string
+		repo      func() *repositorioCambioDeEstadoFalso
+		estado    defecto.Estado
+		sprint    string
+		esperados []error
+	}{
+		{"descartado a resuelto sin sprint", func() *repositorioCambioDeEstadoFalso {
+			return repositorioConDefecto(defecto.EstadoDescartado, "")
+		}, defecto.EstadoResuelto, "", []error{defecto.ErrTransicionInvalida, defecto.ErrSprintResolucionFaltante}},
+		{"resuelto a resuelto en un sprint anterior al de deteccion", func() *repositorioCambioDeEstadoFalso {
+			r := repositorioConDefecto(defecto.EstadoResuelto, "sprint-3")
+			d := r.defectos["defecto-1"]
+			d.SprintDeteccionID = "sprint-3"
+			r.defectos["defecto-1"] = d
+			return r
+		}, defecto.EstadoResuelto, "sprint-2", []error{defecto.ErrTransicionInvalida, defecto.ErrSprintResolucionAnterior}},
+		{"sprint de resolucion con en_correccion", func() *repositorioCambioDeEstadoFalso {
+			return repositorioConDefecto(defecto.EstadoAbierto, "")
+		}, defecto.EstadoEnCorreccion, "sprint-2", []error{defecto.ErrSprintResolucionNoCorresponde}},
+		{"estado invalido", func() *repositorioCambioDeEstadoFalso {
+			return repositorioConDefecto(defecto.EstadoAbierto, "")
+		}, "cerrado", "sprint-2", []error{defecto.ErrEstadoInvalido}},
+	}
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			repo := c.repo()
+
+			d, err := app.NuevoCambiarEstadoDefecto(repo).Ejecutar(context.Background(), "proyecto-1", "defecto-1", c.estado, c.sprint)
+
+			for _, esperado := range c.esperados {
+				if !errors.Is(err, esperado) {
+					t.Errorf("error = %v, quiero que incluya %v", err, esperado)
+				}
+			}
+			if d != (defecto.Defecto{}) {
+				t.Errorf("devolvio el defecto %+v, quiero el valor cero", d)
+			}
+			if len(repo.guardado) != 0 {
+				t.Errorf("se guardaron %d cambios, quiero ninguno", len(repo.guardado))
+			}
+		})
+	}
+}
+
+// US-023 / CL-023-11 / RN-023-8: el estado actual sale del defecto guardado, no de lo que vio la
+// persona. La pantalla mostraba el defecto abierto pero otra persona ya lo resolvio: pedir
+// descartado se evalua contra resuelto y se rechaza ("de resuelto a descartado"); pedir abierto es
+// una reapertura valida, que guarda el sprint vacio condicionada a resuelto (CL-023-7).
+func TestCambiarEstadoDefecto_EvaluaContraLoGuardado(t *testing.T) {
+	repo := repositorioConDefecto(defecto.EstadoResuelto, "sprint-2")
+	cambiar := app.NuevoCambiarEstadoDefecto(repo)
+
+	_, err := cambiar.Ejecutar(context.Background(), "proyecto-1", "defecto-1", defecto.EstadoDescartado, "")
+	if !errors.Is(err, defecto.ErrTransicionInvalida) || !strings.Contains(err.Error(), "de resuelto a descartado") {
+		t.Fatalf("error = %v, quiero ErrTransicionInvalida indicando de resuelto a descartado", err)
+	}
+	if len(repo.guardado) != 0 {
+		t.Fatalf("se guardaron %d cambios, quiero ninguno", len(repo.guardado))
+	}
+
+	d, err := cambiar.Ejecutar(context.Background(), "proyecto-1", "defecto-1", defecto.EstadoAbierto, "")
+	if err != nil {
+		t.Fatalf("Ejecutar (reapertura): %v", err)
+	}
+	if d.Estado != defecto.EstadoAbierto || d.SprintResolucionID != "" {
+		t.Errorf("defecto = %+v, quiero abierto y sin sprint de resolucion", d)
+	}
+	if len(repo.guardado) != 1 || repo.guardado[0].estadoAnterior != defecto.EstadoResuelto {
+		t.Errorf("guardado = %+v, quiero un cambio condicionado a resuelto", repo.guardado)
+	}
+}
+
+// US-023 / CA-023-14 / CL-023-14 / CL-023-15 / RN-023-11: lo que devuelve el repositorio al guardar
+// (otro cambio se adelanto, el defecto o el sprint desaparecieron) se deja pasar reconocible con
+// errors.Is. El caso de uso no reintenta.
+func TestCambiarEstadoDefecto_ErroresAlGuardar(t *testing.T) {
+	for _, e := range []error{app.ErrDefectoModificado, app.ErrDefectoInexistente, app.ErrSprintInexistente} {
+		repo := repositorioConDefecto(defecto.EstadoAbierto, "")
+		repo.errActualizar = e
+
+		d, err := app.NuevoCambiarEstadoDefecto(repo).Ejecutar(context.Background(), "proyecto-1", "defecto-1", defecto.EstadoResuelto, "sprint-2")
+
+		if !errors.Is(err, e) {
+			t.Errorf("error = %v, quiero %v", err, e)
+		}
+		if d != (defecto.Defecto{}) {
+			t.Errorf("devolvio el defecto %+v, quiero el valor cero", d)
+		}
+		if len(repo.guardado) != 1 {
+			t.Errorf("intento guardar %d veces, quiero 1 (sin reintento)", len(repo.guardado))
+		}
+	}
+}
+
+// Los fallos del repositorio se devuelven envueltos con contexto y siguen reconociendose con
+// errors.Is. Cada consulta tiene el suyo.
+func TestCambiarEstadoDefecto_ErroresDelRepositorio(t *testing.T) {
+	falla := errors.New("se corto la conexion")
+	casos := []struct {
+		nombre string
+		repo   func() *repositorioCambioDeEstadoFalso
+	}{
+		{"al buscar el proyecto", func() *repositorioCambioDeEstadoFalso {
+			r := repositorioConDefecto(defecto.EstadoAbierto, "")
+			r.errProyecto = falla
+			return r
+		}},
+		{"al buscar el defecto", func() *repositorioCambioDeEstadoFalso {
+			r := repositorioConDefecto(defecto.EstadoAbierto, "")
+			r.errDefecto = falla
+			return r
+		}},
+		{"al buscar los sprints", func() *repositorioCambioDeEstadoFalso {
+			r := repositorioConDefecto(defecto.EstadoAbierto, "")
+			r.errSprint = falla
+			return r
+		}},
+		{"al guardar", func() *repositorioCambioDeEstadoFalso {
+			r := repositorioConDefecto(defecto.EstadoAbierto, "")
+			r.errActualizar = falla
+			return r
+		}},
+	}
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			d, err := app.NuevoCambiarEstadoDefecto(c.repo()).Ejecutar(context.Background(), "proyecto-1", "defecto-1", defecto.EstadoResuelto, "sprint-2")
+
+			if !errors.Is(err, falla) {
+				t.Fatalf("error = %v, quiero el del repositorio", err)
+			}
+			if d != (defecto.Defecto{}) {
+				t.Errorf("devolvio el defecto %+v, quiero el valor cero", d)
+			}
+		})
+	}
+}
+
+// US-023 / CL-023-1 / CL-023-12 / RN-023-9: el cambio solo modifica el estado y el sprint de
+// resolucion; la descripcion, la severidad, la historia y el sprint de deteccion quedan como
+// estaban. En_correccion no consulta el sprint de resolucion: no se informo.
+func TestCambiarEstadoDefecto_SoloCambiaEstadoYSprintDeResolucion(t *testing.T) {
+	repo := repositorioConDefecto(defecto.EstadoAbierto, "")
+
+	d, err := app.NuevoCambiarEstadoDefecto(repo).Ejecutar(context.Background(), "proyecto-1", "defecto-1", defecto.EstadoEnCorreccion, "")
+	if err != nil {
+		t.Fatalf("Ejecutar: %v", err)
+	}
+
+	esperado := defectoGuardadoEn(defecto.EstadoEnCorreccion, "")
+	if d != esperado {
+		t.Errorf("defecto = %+v, quiero %+v", d, esperado)
+	}
+	if llamadas := strings.Join(repo.llamadas, ","); llamadas != "proyecto,defecto,sprint:sprint-1,actualizar" {
+		t.Errorf("llamadas = %s, quiero proyecto, defecto, sprint de deteccion, actualizar", llamadas)
+	}
+}
