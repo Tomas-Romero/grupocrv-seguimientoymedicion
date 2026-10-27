@@ -52,3 +52,21 @@ func (r *RepositorioDefectos) NumeroDeSprintEnProyecto(ctx context.Context, proy
 	}
 	return numero, true, nil
 }
+
+// ActualizarEstadoDefecto guarda el estado y el sprint de resolucion con un unico UPDATE
+// condicionado al estado que leyo el caso de uso (RN-023-11). Un sprint de resolucion vacio se
+// guarda como NULL (RN-023-5).
+func (r *RepositorioDefectos) ActualizarEstadoDefecto(ctx context.Context, d defecto.Defecto, estadoAnterior defecto.Estado) error {
+	const actualizar = `
+UPDATE defectos SET estado = $3, sprint_resolucion_id = $4
+WHERE id = $1 AND proyecto_id = $2 AND estado = $5`
+
+	var sprintResolucion *string
+	if d.SprintResolucionID != "" {
+		sprintResolucion = &d.SprintResolucionID
+	}
+	if _, err := r.pool.Exec(ctx, actualizar, d.ID, d.ProyectoID, string(d.Estado), sprintResolucion, string(estadoAnterior)); err != nil {
+		return fmt.Errorf("actualizar el estado del defecto %s: %w", d.ID, err)
+	}
+	return nil
+}
