@@ -341,3 +341,23 @@ func TestCambiarEstadoDefecto_SoloCambiaEstadoYSprintDeResolucion(t *testing.T) 
 		t.Errorf("llamadas = %s, quiero proyecto, defecto, sprint de deteccion, actualizar", llamadas)
 	}
 }
+
+// Sin sprint de resolucion, la unica consulta de sprint es la del sprint de deteccion: su fallo se
+// devuelve envuelto con contexto y reconocible con errors.Is, sin guardar nada.
+func TestCambiarEstadoDefecto_ErrorAlBuscarElSprintDeDeteccion(t *testing.T) {
+	falla := errors.New("se corto la conexion")
+	repo := repositorioConDefecto(defecto.EstadoAbierto, "")
+	repo.errSprint = falla
+
+	_, err := app.NuevoCambiarEstadoDefecto(repo).Ejecutar(context.Background(), "proyecto-1", "defecto-1", defecto.EstadoEnCorreccion, "")
+
+	if !errors.Is(err, falla) {
+		t.Fatalf("error = %v, quiero el del repositorio", err)
+	}
+	if !strings.Contains(err.Error(), "sprint-1") {
+		t.Errorf("el error %q no indica el sprint de deteccion", err)
+	}
+	if len(repo.guardado) != 0 {
+		t.Errorf("se guardaron %d cambios, quiero ninguno", len(repo.guardado))
+	}
+}
