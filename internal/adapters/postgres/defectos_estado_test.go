@@ -147,3 +147,81 @@ func TestRepositorioDefectos_NumeroDeSprintEnProyecto(t *testing.T) {
 		})
 	}
 }
+
+// US-023 / CA-023-1 / CA-023-3 / CL-023-7 / CL-023-12 / RN-023-9 / RN-023-11: el UPDATE guarda el
+// estado y el sprint de resolucion y nada mas: la descripcion, la severidad, la historia, el sprint
+// de deteccion y la fecha de carga quedan como estaban, y los demas defectos no se tocan. Reabrir un
+// resuelto deja el sprint en NULL, y se puede volver a resolver en otro sprint.
+func TestActualizarEstadoDefecto_Guarda(t *testing.T) {
+	ctx := contexto(t)
+	e := nuevoEscenarioDefectos(ctx, t)
+	guardado, err := e.repo.RegistrarDefecto(ctx, e.defecto(t, "Falla al guardar", defecto.SeveridadAlta, 1))
+	if err != nil {
+		t.Fatalf("RegistrarDefecto: %v", err)
+	}
+	otro, err := e.repo.RegistrarDefecto(ctx, e.defecto(t, "Otra falla", defecto.SeveridadBaja, 2))
+	if err != nil {
+		t.Fatalf("RegistrarDefecto: %v", err)
+	}
+	antes := leerDefecto(ctx, t, e.pool, guardado.ID)
+	antesOtro := leerDefecto(ctx, t, e.pool, otro.ID)
+
+	cambios := []struct {
+		nombre         string
+		anterior       defecto.Estado
+		nuevo          defecto.Estado
+		sprint         string
+		sprintEsperado *string
+	}{
+		{"a en_correccion", defecto.EstadoAbierto, defecto.EstadoEnCorreccion, "", nil},
+		{"a resuelto en el Sprint 2", defecto.EstadoEnCorreccion, defecto.EstadoResuelto, e.sprints[1], &e.sprints[1]},
+		{"reabierto", defecto.EstadoResuelto, defecto.EstadoAbierto, "", nil},
+		{"resuelto de nuevo en el Sprint 3", defecto.EstadoAbierto, defecto.EstadoResuelto, e.sprints[2], &e.sprints[2]},
+		{"reabierto otra vez", defecto.EstadoResuelto, defecto.EstadoAbierto, "", nil},
+		{"descartado", defecto.EstadoAbierto, defecto.EstadoDescartado, "", nil},
+		{"reabierto un descartado", defecto.EstadoDescartado, defecto.EstadoAbierto, "", nil},
+	}
+	for _, c := range cambios {
+		t.Run(c.nombre, func(t *testing.T) {
+			cambiado := guardado
+			cambiado.Estado, cambiado.SprintResolucionID = c.nuevo, c.sprint
+
+			if err := e.repo.ActualizarEstadoDefecto(ctx, cambiado, c.anterior); err != nil {
+				t.Fatalf("ActualizarEstadoDefecto: %v", err)
+			}
+
+			f := leerDefecto(ctx, t, e.pool, guardado.ID)
+			if f.estado != string(c.nuevo) {
+				t.Errorf("estado = %q, quiero %q", f.estado, c.nuevo)
+			}
+			if (f.sprintResolucionID == nil) != (c.sprintEsperado == nil) || (f.sprintResolucionID != nil && *f.sprintResolucionID != *c.sprintEsperado) {
+				t.Errorf("sprint de resolucion = %v, quiero %v", f.sprintResolucionID, c.sprintEsperado)
+			}
+			if !mismaFilaSalvoEstado(f, antes) {
+				t.Errorf("el resto de la fila cambio: %+v, quiero %+v", f, antes)
+			}
+			if fOtro := leerDefecto(ctx, t, e.pool, otro.ID); !mismaFila(fOtro, antesOtro) {
+				t.Errorf("otro defecto cambio: %+v, quiero %+v", fOtro, antesOtro)
+			}
+		})
+	}
+}
+
+// mismaFilaSalvoEstado dice si las dos filas son iguales sin mirar el estado ni el sprint de
+// resolucion. La fecha de carga se compara con Equal y no con ==.
+func mismaFilaSalvoEstado(a, b filaDeDefecto) bool {
+	if !a.creadoEn.Equal(b.creadoEn) {
+		return false
+	}
+	a.estado, a.sprintResolucionID, a.creadoEn = b.estado, b.sprintResolucionID, b.creadoEn
+	return a == b
+}
+
+// mismaFila dice si las dos filas son iguales, incluido el sprint de resolucion (por su valor).
+func mismaFila(a, b filaDeDefecto) bool {
+	if (a.sprintResolucionID == nil) != (b.sprintResolucionID == nil) ||
+		(a.sprintResolucionID != nil && *a.sprintResolucionID != *b.sprintResolucionID) {
+		return false
+	}
+	return mismaFilaSalvoEstado(a, b) && a.estado == b.estado
+}
