@@ -157,3 +157,24 @@ func TestCambiarEstadoDefecto_LoQueNoExiste(t *testing.T) {
 		})
 	}
 }
+
+// US-023 / CL-023-15 / RN-023-8: si el sprint de deteccion del defecto no esta (el defecto
+// guardado apunta a uno que desaparecio), no hay numero para comparar: se devuelve
+// ErrSprintInexistente y no se guarda nada, en vez de comparar contra un 0 inventado.
+func TestCambiarEstadoDefecto_SprintDeDeteccionQueNoEsta(t *testing.T) {
+	repo := repositorioConDefecto(defecto.EstadoAbierto, "")
+	delete(repo.sprints, "sprint-1")
+	repo.sprints["sprint-2"] = 2
+
+	_, err := app.NuevoCambiarEstadoDefecto(repo).Ejecutar(context.Background(), "proyecto-1", "defecto-1", defecto.EstadoResuelto, "sprint-2")
+
+	if !errors.Is(err, app.ErrSprintInexistente) {
+		t.Fatalf("error = %v, quiero ErrSprintInexistente", err)
+	}
+	if !strings.Contains(err.Error(), "sprint-1") {
+		t.Errorf("el error %q no indica el sprint de deteccion", err)
+	}
+	if len(repo.guardado) != 0 {
+		t.Errorf("se guardaron %d cambios, quiero ninguno", len(repo.guardado))
+	}
+}
