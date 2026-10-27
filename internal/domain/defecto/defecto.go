@@ -47,9 +47,14 @@ const (
 // Estado es el estado de un defecto en su ciclo de vida.
 type Estado string
 
-// EstadoAbierto es el unico estado que existe hasta que US-023 define los demas:
-// todo defecto nace abierto (RN-022-3).
-const EstadoAbierto Estado = "abierto"
+// Valores de Estado (RN-023-1). EstadoAbierto es el inicial: todo defecto nace abierto
+// (RN-022-3). Los otros tres los suma US-023.
+const (
+	EstadoAbierto      Estado = "abierto"
+	EstadoEnCorreccion Estado = "en_correccion"
+	EstadoResuelto     Estado = "resuelto"
+	EstadoDescartado   Estado = "descartado"
+)
 
 // Defecto es una falla registrada en un proyecto.
 type Defecto struct {
