@@ -273,8 +273,8 @@ func TestPantallasDefectos_FormularioAccesible(t *testing.T) {
 	}
 }
 
-// T-021 / CA-T021-5, RN-T021-6, RN-T021-8, CL-T021-3, CL-T021-4, CL-T021-5: los errores de descripcion y severidad
-// los decide el dominio de US-022; salen con el campo en data-campo (juntos y en ese orden si hay dos), en
+// T-021 / CA-T021-5, RN-T021-1, RN-T021-6, RN-T021-8, CL-T021-3, CL-T021-4, CL-T021-5: el handler no valida reglas de
+// negocio (RN-T021-1): los errores de descripcion y severidad los decide el dominio de US-022; salen con el campo en data-campo (juntos y en ese orden si hay dos), en
 // 422, y no registran nada. De 2000 caracteres se acepta y de 2001 se rechaza.
 func TestPantallasDefectos_ErroresAlRegistrar(t *testing.T) {
 	e := nuevoEntorno(t)
@@ -645,7 +645,7 @@ func TestPantallasDefectos_Resolver(t *testing.T) {
 	}
 }
 
-// T-021 / CL-T021-10, CA-T021-5: resolver con un sprint anterior al de deteccion (la lista lo ofrece) es
+// T-021 / CL-T021-10, RN-T021-7, CA-T021-5: resolver con un sprint anterior al de deteccion (la lista lo ofrece) es
 // ErrSprintResolucionAnterior en el campo sprint_resolucion, con 409, y el defecto no cambia.
 func TestPantallasDefectos_ResolverEnUnSprintAnterior(t *testing.T) {
 	e := nuevoEntorno(t)
@@ -668,7 +668,7 @@ func TestPantallasDefectos_ResolverEnUnSprintAnterior(t *testing.T) {
 	}
 }
 
-// T-021 / CL-T021-12, CA-T021-5: con la pagina desactualizada se evalua el pedido contra el estado guardado:
+// T-021 / CL-T021-12, RN-T021-7, RN-T021-14, CA-T021-5: con la pagina desactualizada se evalua el pedido contra el estado guardado:
 // descartar uno que otra persona ya resolvio, o volver a abierto uno que ya esta abierto, es
 // ErrTransicionInvalida en el campo estado, con 409 y sin cambiar nada; reabrir el resuelto es valido.
 func TestPantallasDefectos_PaginaDesactualizada(t *testing.T) {
@@ -699,7 +699,7 @@ func TestPantallasDefectos_PaginaDesactualizada(t *testing.T) {
 	contiene(t, w, `data-campo="estado"`)
 }
 
-// T-021 / CL-T021-13, CA-T021-5: un estado a mano fuera de los cuatro es ErrEstadoInvalido (422) en el campo estado, y
+// T-021 / CL-T021-13, RN-T021-7, CA-T021-5: un estado a mano fuera de los cuatro es ErrEstadoInvalido (422) en el campo estado, y
 // un sprint de resolucion con un estado distinto de resuelto es ErrSprintResolucionNoCorresponde (422) en su
 // campo; el defecto no cambia.
 func TestPantallasDefectos_EstadoMandadoAMano(t *testing.T) {
