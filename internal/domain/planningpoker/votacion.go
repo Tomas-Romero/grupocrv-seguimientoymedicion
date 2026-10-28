@@ -44,14 +44,17 @@ func VerificarVoto(s SesionPlanningPoker, integranteID string, valor int) error 
 	return errors.Join(errs...)
 }
 
-// Votacion es la votacion de la ronda actual de una sesion. Garantiza el voto oculto
-// (RN-015-7): no exporta sus campos, y mientras la sesion esta votando solo dice quien
-// voto y quien falta. Los valores recien se pueden leer cuando la sesion deja de estar
-// votando (US-016). Tampoco los muestra al imprimirla.
+// Votacion es la votacion de una ronda de una sesion. Garantiza el voto oculto
+// (RN-015-7): no exporta sus campos, y mientras la sesion esta votando la ronda actual solo
+// dice quien voto y quien falta. Los valores recien se pueden leer cuando la sesion deja de
+// estar votando (US-016), o si la ronda es anterior a la actual (RN-017-6). Tampoco los
+// muestra al imprimirla.
 type Votacion struct {
 	estado        Estado
 	participantes []string
 	votos         map[string]int
+	// anterior dice si la ronda es anterior a la actual de la sesion: ya se revelo.
+	anterior bool
 }
 
 // NuevaVotacion arma la votacion de la sesion con los votos de su ronda actual, por
@@ -65,6 +68,20 @@ func NuevaVotacion(s SesionPlanningPoker, votos map[string]int) Votacion {
 		}
 	}
 	return v
+}
+
+// NuevaVotacionDeRonda es como NuevaVotacion para una ronda cualquiera de la sesion. Si la
+// ronda es anterior a la actual, sus valores se pueden leer aunque la sesion este votando
+// (RN-017-6).
+func NuevaVotacionDeRonda(s SesionPlanningPoker, ronda int, votos map[string]int) Votacion {
+	v := NuevaVotacion(s, votos)
+	v.anterior = ronda < s.Ronda
+	return v
+}
+
+// legible dice si los valores de la votacion se pueden leer (RN-015-7 y RN-017-6).
+func (v Votacion) legible() bool {
+	return v.anterior || v.estado != EstadoVotando
 }
 
 // Votaron devuelve los participantes que votaron, en el orden de la sesion.
@@ -89,10 +106,10 @@ func (v Votacion) Faltan() []string {
 	return faltan
 }
 
-// Valores devuelve el voto de cada participante que voto. Con la sesion votando no
-// devuelve ninguno y responde ErrVotosOcultos (RN-015-7).
+// Valores devuelve el voto de cada participante que voto. Con la sesion votando la ronda
+// actual no devuelve ninguno y responde ErrVotosOcultos (RN-015-7, RN-017-6).
 func (v Votacion) Valores() (map[string]int, error) {
-	if v.estado == EstadoVotando {
+	if !v.legible() {
 		return nil, ErrVotosOcultos
 	}
 	return maps.Clone(v.votos), nil
