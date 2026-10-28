@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"time"
 
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/app"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/defecto"
@@ -42,7 +43,20 @@ func (b *Base) RegistrarDefecto(_ context.Context, d defecto.Defecto) (defecto.D
 
 	d.ID = b.nuevoID()
 	b.defectos[d.ProyectoID] = append(b.defectos[d.ProyectoID], d)
+	b.defectosCreadoEn[d.ID] = b.instanteDeAlta()
 	return d, nil
+}
+
+// instanteDeAlta es el reloj del sistema, que en un adaptador si se puede usar, pero nunca igual ni
+// anterior al ultimo que dio: dos altas seguidas pueden caer en el mismo instante del reloj, y en
+// Postgres cada defecto tiene su propio creado_en (T-021, seccion 5). Se llama con mu tomado.
+func (b *Base) instanteDeAlta() time.Time {
+	ahora := time.Now()
+	if !ahora.After(b.ultimaAltaDeDefecto) {
+		ahora = b.ultimaAltaDeDefecto.Add(time.Nanosecond)
+	}
+	b.ultimaAltaDeDefecto = ahora
+	return ahora
 }
 
 // Defectos devuelve una copia de los defectos del proyecto, en orden de alta. Un proyecto
