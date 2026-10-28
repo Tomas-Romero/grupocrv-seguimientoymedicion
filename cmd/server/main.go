@@ -140,6 +140,7 @@ func casosDeUsoDePantallas(pool *pgxpool.Pool) httpadapter.CasosDeUso {
 	items := postgres.NuevoRepositorioBacklog(pool)
 	sprints := postgres.NuevoRepositorioSprints(pool)
 	asignaciones := postgres.NuevoRepositorioAsignaciones(pool)
+	esfuerzo := postgres.NuevoRepositorioEsfuerzo(pool)
 	return httpadapter.CasosDeUso{
 		ListarProyectos:     app.NuevoListarProyectos(proyectos),
 		ConsultarProyecto:   app.NuevoConsultarProyecto(lecturaDeProyecto{proyectos, integrantes}),
@@ -160,5 +161,10 @@ func casosDeUsoDePantallas(pool *pgxpool.Pool) httpadapter.CasosDeUso {
 		CerrarSprint:        app.NuevoCerrarSprint(asignaciones),
 
 		ConsultarSprintsAnteriores: app.NuevoConsultarSprintsAnteriores(asignaciones),
+
+		RegistrarEsfuerzo: app.NuevoRegistrarEsfuerzo(esfuerzo, time.Now),
+		ConsultarEsfuerzo: app.NuevoConsultarEsfuerzo(esfuerzo),
+		CompararEsfuerzo:  app.NuevoCompararEsfuerzo(esfuerzo),
+		Ahora:             time.Now,
 	}
 }

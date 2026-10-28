@@ -1,0 +1,178 @@
+package plantillas
+
+// EsfuerzoDeProyecto es la pantalla /proyectos/{id}/esfuerzo: el formulario para registrar horas,
+// los filtros, el total, la tabla de registros y los totales de lo que quedo despues de filtrar.
+templ EsfuerzoDeProyecto(v VistaEsfuerzo) {
+	<h1 class={ claseTitulo }>Esfuerzo</h1>
+	<h2 class="mt-6 text-lg font-semibold text-slate-900">Registrar horas</h2>
+	<form hx-post={ v.Alta.Accion } class="mt-4 max-w-xl space-y-4">
+		<div>
+			<label for="integrante" class={ claseEtiqueta }>Integrante</label>
+			<select id="integrante" name="integrante" class={ claseCampo }>
+				<option value="">Elegí un integrante</option>
+				for _, o := range v.Alta.Integrantes {
+					<option value={ o.Valor } selected?={ o.Elegida }>{ o.Texto }</option>
+				}
+			</select>
+			if v.Alta.AvisoIntegrantes != "" {
+				<p class="mt-1 text-sm text-slate-700">{ v.Alta.AvisoIntegrantes }</p>
+			}
+		</div>
+		<div>
+			<label for="historia" class={ claseEtiqueta }>Historia</label>
+			<select id="historia" name="historia" class={ claseCampo }>
+				<option value="">Elegí una historia</option>
+				for _, o := range v.Alta.Historias {
+					<option value={ o.Valor } selected?={ o.Elegida }>{ o.Texto }</option>
+				}
+			</select>
+			if v.Alta.AvisoHistorias != "" {
+				<p class="mt-1 text-sm text-slate-700">{ v.Alta.AvisoHistorias }</p>
+			}
+		</div>
+		<div>
+			<label for="fecha" class={ claseEtiqueta }>Fecha</label>
+			<input type="date" id="fecha" name="fecha" value={ v.Alta.Fecha } class={ claseCampo }/>
+		</div>
+		<div>
+			<label for="actividad" class={ claseEtiqueta }>Actividad</label>
+			<input type="text" id="actividad" name="actividad" maxlength="120" class={ claseCampo }/>
+		</div>
+		<div>
+			<label for="horas" class={ claseEtiqueta }>Horas (por ejemplo 2,5)</label>
+			<input type="text" id="horas" name="horas" inputmode="decimal" class={ claseCampo }/>
+		</div>
+		<button type="submit" class={ claseBoton }>Registrar</button>
+	</form>
+	<h2 class="mt-10 text-lg font-semibold text-slate-900">Filtros</h2>
+	<form method="get" action={ templ.URL(v.Filtros.Accion) } class="mt-4 flex flex-wrap items-end gap-4">
+		<div>
+			<label for="filtro-historia" class={ claseEtiqueta }>Historia</label>
+			<select id="filtro-historia" name="historia" class={ claseCampo }>
+				for _, o := range v.Filtros.Historias {
+					<option value={ o.Valor } selected?={ o.Elegida }>{ o.Texto }</option>
+				}
+			</select>
+		</div>
+		<div>
+			<label for="filtro-integrante" class={ claseEtiqueta }>Integrante</label>
+			<select id="filtro-integrante" name="integrante" class={ claseCampo }>
+				for _, o := range v.Filtros.Integrantes {
+					<option value={ o.Valor } selected?={ o.Elegida }>{ o.Texto }</option>
+				}
+			</select>
+		</div>
+		<div>
+			<label for="filtro-sprint" class={ claseEtiqueta }>Sprint</label>
+			<select id="filtro-sprint" name="sprint" class={ claseCampo }>
+				for _, o := range v.Filtros.Sprints {
+					<option value={ o.Valor } selected?={ o.Elegida }>{ o.Texto }</option>
+				}
+			</select>
+		</div>
+		<button type="submit" class={ claseBoton }>Filtrar</button>
+	</form>
+	<p class="mt-6 text-lg font-semibold text-slate-900">{ v.Total }</p>
+	if v.Vacio != "" {
+		<p class="mt-2 text-slate-700">{ v.Vacio }</p>
+	} else {
+		<table class="mt-4 w-full border-collapse text-left text-sm">
+			<caption class="sr-only">Horas registradas, de la fecha más reciente a la más antigua</caption>
+			<thead>
+				<tr class="border-b border-slate-300">
+					<th scope="col" class="py-2 pr-3 font-semibold">Fecha</th>
+					<th scope="col" class="py-2 pr-3 font-semibold">Historia</th>
+					<th scope="col" class="py-2 pr-3 font-semibold">Integrante</th>
+					<th scope="col" class="py-2 pr-3 font-semibold">Actividad</th>
+					<th scope="col" class="py-2 pr-3 font-semibold">Horas</th>
+					<th scope="col" class="py-2 font-semibold">Sprint</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, r := range v.Registros {
+					<tr class="border-b border-slate-200 align-top">
+						<td class="py-2 pr-3">{ r.Fecha }</td>
+						<td class="py-2 pr-3">{ r.Historia }</td>
+						<td class="py-2 pr-3">{ r.Integrante }</td>
+						<td class="py-2 pr-3">{ r.Actividad }</td>
+						<td class="py-2 pr-3">{ r.Horas }</td>
+						<td class="py-2">{ r.Sprint }</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+		<div class="mt-8 grid gap-8 md:grid-cols-3">
+			@totalesDeEsfuerzo("Por historia", "Historia", v.PorHistoria)
+			@totalesDeEsfuerzo("Por integrante", "Integrante", v.PorIntegrante)
+			@totalesDeEsfuerzo("Por sprint", "Sprint", v.PorSprint)
+		</div>
+	}
+	<p class="mt-8">
+		<a href={ templ.URL(v.Comparar) } class={ claseEnlace }>Comparar con lo estimado</a>
+	</p>
+}
+
+templ totalesDeEsfuerzo(titulo string, columna string, filas []FilaTotalEsfuerzo) {
+	<section>
+		<h2 class="text-base font-semibold text-slate-900">{ titulo }</h2>
+		<table class="mt-2 w-full border-collapse text-left text-sm">
+			<caption class="sr-only">{ titulo }</caption>
+			<thead>
+				<tr class="border-b border-slate-300">
+					<th scope="col" class="py-1 pr-3 font-semibold">{ columna }</th>
+					<th scope="col" class="py-1 font-semibold">Horas</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, f := range filas {
+					<tr class="border-b border-slate-200">
+						<td class="py-1 pr-3">{ f.Nombre }</td>
+						<td class="py-1">{ f.Horas }</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	</section>
+}
+
+// ComparacionDeEsfuerzo es la pantalla /proyectos/{id}/esfuerzo/comparacion: lo estimado contra lo
+// real de cada historia, la que mas se desvio primero.
+templ ComparacionDeEsfuerzo(v VistaComparacion) {
+	<h1 class={ claseTitulo }>Estimado contra real</h1>
+	if v.Vacio != "" {
+		<p class="mt-4 text-slate-700">{ v.Vacio }</p>
+	} else {
+		<table class="mt-4 w-full border-collapse text-left text-sm">
+			<caption class="sr-only">Horas estimadas contra horas reales de cada historia, de la que más se desvió a la que menos</caption>
+			<thead>
+				<tr class="border-b border-slate-300">
+					<th scope="col" class="py-2 pr-3 font-semibold">Historia</th>
+					<th scope="col" class="py-2 pr-3 font-semibold">Story Points</th>
+					<th scope="col" class="py-2 pr-3 font-semibold">Horas estimadas</th>
+					<th scope="col" class="py-2 pr-3 font-semibold">Horas reales</th>
+					<th scope="col" class="py-2 pr-3 font-semibold">Desviación (h)</th>
+					<th scope="col" class="py-2 pr-3 font-semibold">Desviación (%)</th>
+					<th scope="col" class="py-2 font-semibold">Situación</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, f := range v.Filas {
+					<tr class="border-b border-slate-200 align-top">
+						<td class="py-2 pr-3">{ f.Titulo }</td>
+						<td class="py-2 pr-3">{ f.Puntos }</td>
+						<td class="py-2 pr-3">{ f.Estimadas }</td>
+						<td class="py-2 pr-3">{ f.Reales }</td>
+						<td class="py-2 pr-3">{ f.Desviacion }</td>
+						<td class="py-2 pr-3">{ f.Porcentaje }</td>
+						<td class="py-2">{ f.Situacion }</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+		<p class="mt-4 font-semibold text-slate-900">{ v.Resumen }</p>
+		<p class="mt-1 text-slate-700">{ v.SinComparar }</p>
+	}
+	<p class="mt-8">
+		<a href={ templ.URL(v.Volver) } class={ claseEnlace }>Volver a la carga de horas</a>
+	</p>
+}
