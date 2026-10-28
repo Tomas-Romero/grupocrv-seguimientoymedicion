@@ -10,6 +10,7 @@ package memoria
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/backlog"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/defecto"
@@ -48,6 +49,12 @@ type Base struct {
 
 	// defectos guarda los defectos de cada proyecto, en orden de alta (US-022).
 	defectos map[string][]defecto.Defecto
+	// defectosCreadoEn guarda el instante de alta de cada defecto, por ID, como la columna
+	// creado_en (T-021): el defecto no lo lleva, pero listarlos del mas reciente al mas antiguo
+	// lo necesita. ultimaAltaDeDefecto es el ultimo que se dio, para que cada alta sea posterior
+	// a la anterior.
+	defectosCreadoEn    map[string]time.Time
+	ultimaAltaDeDefecto time.Time
 
 	// asignaciones guarda las filas de la relacion entre cada item y sus sprints, en
 	// orden de alta (US-009). Un item tiene como mucho una pendiente.
@@ -65,15 +72,16 @@ type Base struct {
 // NuevaBase devuelve una base vacia.
 func NuevaBase() *Base {
 	return &Base{
-		proyectos:      map[string]bool{},
-		items:          map[string][]backlog.ItemBacklog{},
-		datosProyectos: map[string]proyecto.Proyecto{},
-		integrantes:    map[string][]integrante.Integrante{},
-		sprints:        map[string][]sprint.Sprint{},
-		esfuerzos:      map[string][]esfuerzo.RegistroEsfuerzo{},
-		defectos:       map[string][]defecto.Defecto{},
-		votos:          map[claveDeVoto]int{},
-		asignaciones:   map[string][]asignacion{},
+		proyectos:        map[string]bool{},
+		items:            map[string][]backlog.ItemBacklog{},
+		datosProyectos:   map[string]proyecto.Proyecto{},
+		integrantes:      map[string][]integrante.Integrante{},
+		sprints:          map[string][]sprint.Sprint{},
+		esfuerzos:        map[string][]esfuerzo.RegistroEsfuerzo{},
+		defectos:         map[string][]defecto.Defecto{},
+		defectosCreadoEn: map[string]time.Time{},
+		votos:            map[claveDeVoto]int{},
+		asignaciones:     map[string][]asignacion{},
 	}
 }
 
