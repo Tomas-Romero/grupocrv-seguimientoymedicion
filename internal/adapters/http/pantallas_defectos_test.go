@@ -622,7 +622,7 @@ func TestPantallasDefectos_Resolver(t *testing.T) {
 
 	// Reabrir lo deja abierto y sin sprint de resolucion; resolverlo de nuevo con otro sprint deja el nuevo.
 	e.cambiar(d.proyecto, falla.ID, "abierto", "")
-	if f := defectoEnLaLista(t, e, d.proyecto, "Falla"); !strings.Contains(f, "Abierto") || strings.Contains(f, "Sprint 1</td><td class=\"py-2\">Sprint") {
+	if f := defectoEnLaLista(t, e, d.proyecto, "Falla"); !strings.Contains(f, "Abierto") || strings.Contains(f, "Resuelto") || !strings.Contains(f, "—") {
 		t.Errorf("reabrir tiene que dejar el defecto abierto y sin sprint de resolucion:\n%s", f)
 	}
 	if w := e.cambiar(d.proyecto, falla.ID, "resuelto", segundo); w.Code != http.StatusSeeOther {
