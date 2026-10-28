@@ -1,0 +1,135 @@
+name: "ACI: encender o apagar"
+
+# Azure Container Instances (ACI) cobra por segundo MIENTRAS EL CONTENEDOR ESTA ENCENDIDO y no escala a cero. Este workflow es
+# el control de costos del contenedor del grupo (la cuenta de Azure es compartida y con creditos limitados):
+#   - a mano (Actions > ACI: encender o apagar > Run workflow): estado, encender o apagar;
+#   - todas las noches (03:00 de Argentina): lo apaga si quedo encendido, salvo que MANTENER_ENCENDIDO valga true.
+# Apagado (detenido) el contenedor no cobra computo; los datos estan en Neon, asi que no se pierde nada. Encenderlo tarda un par
+# de minutos y la URL es la misma (la etiqueta DNS se conserva). Como usa el Environment azure, solo corre desde main.
+
+on:
+  workflow_dispatch:
+    inputs:
+      accion:
+        description: "Que hacer con el contenedor"
+        type: choice
+        options:
+          - estado
+          - encender
+          - apagar
+        default: estado
+  schedule:
+    - cron: "0 6 * * *"
+
+permissions:
+  contents: read
+
+# Una orden a la vez: encender y apagar no se pisan.
+concurrency:
+  group: aci-energia
+  cancel-in-progress: false
+
+jobs:
+  energia:
+    name: Contenedor del grupo
+    runs-on: ubuntu-latest
+    environment: azure
+    env:
+      GRUPO_RECURSOS: ${{ vars.RESOURCE_GROUP || vars.AZURE_RESOURCE_GROUP || 'frsrutn' }}
+      CONTENEDOR: ${{ vars.CONTAINER_APP_NAME || vars.ACI_NAME || 'grupo03-grupocrv-seguimientoymedicion' }}
+      MANTENER_ENCENDIDO: ${{ vars.MANTENER_ENCENDIDO || 'false' }}
+      # En la corrida de la noche no hay entrada: se usa "apagado-nocturno".
+      ACCION: ${{ inputs.accion || 'apagado-nocturno' }}
+      # Solo se pasa si el secreto existe, nunca su valor.
+      TIENE_CREDENCIALES: ${{ secrets.AZURE_CREDENTIALS != '' }}
+    steps:
+      - name: Revisar la configuracion
+        id: revisar
+        run: |
+          set -euo pipefail
+          case "$CONTENEDOR" in
+            grupo03-*) ;;
+            *)
+              echo "::error::El contenedor $CONTENEDOR no empieza con grupo03-: no se toca."
+              exit 1
+              ;;
+          esac
+          if [ "$TIENE_CREDENCIALES" != "true" ]; then
+            echo "::notice title=Sin credenciales::Falta el secreto AZURE_CREDENTIALS del Environment azure: no hay nada que encender ni apagar."
+            echo "listo=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "listo=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # azure/login v3.1.0
+      - name: Login en Azure
+        if: steps.revisar.outputs.listo == 'true'
+        uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Ejecutar la accion
+        if: steps.revisar.outputs.listo == 'true'
+        run: |
+          set -euo pipefail
+          resumen() { echo "$1" >> "$GITHUB_STEP_SUMMARY"; }
+          resumen "### Contenedor \`${CONTENEDOR}\`"
+          resumen ""
+
+          if ! az container show --name "$CONTENEDOR" --resource-group "$GRUPO_RECURSOS" --only-show-errors > /dev/null 2>&1; then
+            resumen "El contenedor todavia no existe: lo crea el primer despliegue (CD (Azure) con CD_ACTIVO=true)."
+            [ "$ACCION" = "apagado-nocturno" ] || [ "$ACCION" = "estado" ] || { echo "::error::No hay un contenedor $CONTENEDOR para $ACCION."; exit 1; }
+            exit 0
+          fi
+          estado() { az container show --name "$CONTENEDOR" --resource-group "$GRUPO_RECURSOS" --query instanceView.state --output tsv --only-show-errors; }
+          actual=$(estado)
+
+          case "$ACCION" in
+            estado)
+              fqdn=$(az container show --name "$CONTENEDOR" --resource-group "$GRUPO_RECURSOS" --query ipAddress.fqdn --output tsv --only-show-errors)
+              resumen "- estado: **${actual}**"
+              resumen "- URL: http://${fqdn}:8080"
+              ;;
+            apagar)
+              az container stop --name "$CONTENEDOR" --resource-group "$GRUPO_RECURSOS" --only-show-errors > /dev/null || true
+              resumen "- estado antes: ${actual}"
+              resumen "- **apagado**: ya no cobra computo."
+              ;;
+            apagado-nocturno)
+              if [ "$MANTENER_ENCENDIDO" = "true" ]; then
+                resumen "MANTENER_ENCENDIDO vale true: no se apaga."
+              elif [ "$actual" = "Running" ]; then
+                az container stop --name "$CONTENEDOR" --resource-group "$GRUPO_RECURSOS" --only-show-errors > /dev/null
+                resumen "Estaba encendido: **apagado** por el control de la noche."
+              else
+                resumen "Ya estaba apagado (${actual}): no se hace nada."
+              fi
+              ;;
+            encender)
+              if [ "$actual" = "Running" ]; then
+                resumen "Ya estaba encendido."
+              else
+                az container start --name "$CONTENEDOR" --resource-group "$GRUPO_RECURSOS" --only-show-errors > /dev/null
+              fi
+              fqdn=$(az container show --name "$CONTENEDOR" --resource-group "$GRUPO_RECURSOS" --query ipAddress.fqdn --output tsv --only-show-errors)
+              url="http://${fqdn}:8080"
+              for intento in $(seq 1 24); do
+                codigo=$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time 20 "${url}/health" || true)
+                echo "Intento ${intento} de 24: HTTP ${codigo}"
+                if [ "$codigo" = "200" ]; then
+                  resumen "- **encendido**, /health responde 200"
+                  resumen "- URL: ${url}"
+                  resumen ""
+                  resumen "Mientras este encendido cobra por segundo: apagalo cuando termines (o lo apaga solo la corrida de la noche)."
+                  exit 0
+                fi
+                sleep 10
+              done
+              echo "::error::El contenedor no respondio 200 en /health despues de 24 intentos."
+              exit 1
+              ;;
+            *)
+              echo "::error::Accion desconocida: $ACCION"
+              exit 1
+              ;;
+          esac
