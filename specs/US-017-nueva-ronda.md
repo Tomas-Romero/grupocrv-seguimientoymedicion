@@ -7,7 +7,7 @@
 | **Issue** | #28 |
 | **Escenarios BDD** | `features/US-017-nueva-ronda.feature` |
 | **Código** | `internal/domain/planningpoker/`, caso de uso en `internal/app/`, repositorios en `internal/adapters/postgres/` y `internal/adapters/memoria/`. Sin migración nueva |
-| **Última actualización** | 2026-10-27 |
+| **Última actualización** | 2026-10-28 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
 > implementación. Si durante la implementación descubrís que algo de acá está
@@ -111,10 +111,16 @@ Entre paréntesis, la capa que la hace cumplir.
   valores legibles y devuelve el resultado de la ronda (los votos, quiénes
   faltaron, la divergencia, el mínimo y el máximo). `Revelar` la usa, en un
   refactor con los tests de US-016 en verde. T-020 la usa para mostrar una
-  sesión revelada y sus rondas anteriores.
+  sesión revelada y sus rondas anteriores. En el código: el tipo
+  `planningpoker.Resultado` y `planningpoker.ResultadoDeLaRonda`, que responde
+  `ErrVotosOcultos` si la votación no deja leer sus valores. La votación de una
+  ronda cualquiera se arma con `planningpoker.NuevaVotacionDeRonda`.
 - **Lectura de rondas anteriores.** El puerto suma una lectura que devuelve,
   para cada ronda anterior a la actual, su número y su `Votacion` (RN-017-10).
-  La usan los escenarios de CA-017-2 y la pantalla de T-020.
+  La usan los escenarios de CA-017-2 y la pantalla de T-020. En el código es
+  `app.LectorDeRondasAnteriores` (`RondasAnteriores`, que devuelve
+  `[]app.RondaAnterior`), separada de `app.RepositorioNuevaRonda` porque el caso
+  de uso de abrir la ronda no la necesita.
 - **Catálogo de errores (T-005).** En el PR de implementación se registran
   `planningpoker.ErrNuevaRondaSinRevelar` y `planningpoker.ErrSinDivergencia`
   como `conflicto` (RN-T005-2). Los demás ya están registrados.
