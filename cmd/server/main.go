@@ -133,7 +133,7 @@ type lecturaDeProyecto struct {
 var _ app.RepositorioConsultarProyecto = lecturaDeProyecto{}
 
 // casosDeUsoDePantallas arma los casos de uso de las pantallas sobre los repositorios de
-// Postgres (T-011 y T-015). Es el unico lugar donde se eligen los adaptadores.
+// Postgres (T-011, T-015 y T-020). Es el unico lugar donde se eligen los adaptadores.
 func casosDeUsoDePantallas(pool *pgxpool.Pool) httpadapter.CasosDeUso {
 	proyectos := postgres.NuevoRepositorioProyectos(pool)
 	integrantes := postgres.NuevoRepositorioIntegrantes(pool)
@@ -141,6 +141,7 @@ func casosDeUsoDePantallas(pool *pgxpool.Pool) httpadapter.CasosDeUso {
 	sprints := postgres.NuevoRepositorioSprints(pool)
 	asignaciones := postgres.NuevoRepositorioAsignaciones(pool)
 	esfuerzo := postgres.NuevoRepositorioEsfuerzo(pool)
+	poker := postgres.NuevoRepositorioPlanningPoker(pool)
 	return httpadapter.CasosDeUso{
 		ListarProyectos:     app.NuevoListarProyectos(proyectos),
 		ConsultarProyecto:   app.NuevoConsultarProyecto(lecturaDeProyecto{proyectos, integrantes}),
@@ -166,5 +167,11 @@ func casosDeUsoDePantallas(pool *pgxpool.Pool) httpadapter.CasosDeUso {
 		ConsultarEsfuerzo: app.NuevoConsultarEsfuerzo(esfuerzo),
 		CompararEsfuerzo:  app.NuevoCompararEsfuerzo(esfuerzo),
 		Ahora:             time.Now,
+		IniciarSesionPlanningPoker: app.NuevoIniciarSesionPlanningPoker(poker),
+		ConsultarSesion:            app.NuevoConsultarSesionPlanningPoker(poker),
+		VotarEnSesion:              app.NuevoVotarEnSesion(poker),
+		RevelarVotos:               app.NuevoRevelarVotos(poker),
+		AbrirNuevaRonda:            app.NuevoAbrirNuevaRonda(poker),
+		RegistrarAcuerdo:           app.NuevoRegistrarEstimacionAcordada(poker),
 	}
 }
