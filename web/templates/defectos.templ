@@ -1,7 +1,7 @@
 package plantillas
 
 // ListaDeDefectos es la pantalla /proyectos/{id}/defectos: la tabla de defectos del mas reciente
-// al mas antiguo.
+// al mas antiguo y el formulario para registrar uno.
 templ ListaDeDefectos(v VistaDefectos) {
 	<h1 class={ claseTitulo }>Defectos</h1>
 	if len(v.Defectos) == 0 {
@@ -33,4 +33,44 @@ templ ListaDeDefectos(v VistaDefectos) {
 			</tbody>
 		</table>
 	}
+	<h2 class="mt-10 text-lg font-semibold text-slate-900">Registrar defecto</h2>
+	<form hx-post={ v.Alta.Accion } class="mt-4 max-w-xl space-y-4">
+		<div>
+			<label for="descripcion" class={ claseEtiqueta }>Descripción</label>
+			<textarea id="descripcion" name="descripcion" rows="5" class={ claseCampo }></textarea>
+		</div>
+		<div>
+			<label for="severidad" class={ claseEtiqueta }>Severidad</label>
+			<select id="severidad" name="severidad" class={ claseCampo }>
+				for _, o := range v.Alta.Severidades {
+					<option value={ o.Valor }>{ o.Texto }</option>
+				}
+			</select>
+		</div>
+		<div>
+			<label for="historia" class={ claseEtiqueta }>Historia relacionada</label>
+			<select id="historia" name="historia" class={ claseCampo }>
+				for _, o := range v.Alta.Historias {
+					<option value={ o.Valor }>{ o.Texto }</option>
+				}
+			</select>
+			if v.Alta.SinHistorias {
+				<p class="mt-1 text-sm text-slate-700">Primero cargá una historia</p>
+			}
+		</div>
+		<div>
+			<label for="sprint_deteccion" class={ claseEtiqueta }>Sprint de detección</label>
+			<select id="sprint_deteccion" name="sprint_deteccion" class={ claseCampo }>
+				for _, o := range v.Alta.Sprints {
+					<option value={ o.Valor }>{ o.Texto }</option>
+				}
+			</select>
+			if v.Alta.SinSprints {
+				<p class="mt-1 text-sm text-slate-700">Primero creá un sprint</p>
+			}
+		</div>
+		<div>
+			<button type="submit" class={ claseBoton }>Registrar defecto</button>
+		</div>
+	</form>
 }
