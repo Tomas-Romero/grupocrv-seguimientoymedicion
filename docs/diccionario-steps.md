@@ -222,6 +222,7 @@ inexistente (CA-005-8, CA-008-10); con esa frase el escenario no lleva
 | `Cuando se cambia el estado del defecto de la historia "Crear proyecto" a "en_correccion"` | `^se cambia el estado del defecto de la historia "([^"]*)" a "([^"]*)"$` |
 | `Cuando se cambia el estado del defecto de la historia "Crear proyecto" a "resuelto" con el sprint de resolución "Sprint 2"` | `^se cambia el estado del defecto de la historia "([^"]*)" a "([^"]*)" con el sprint de resolución "([^"]*)"$` |
 | `Cuando el integrante "Ana" revela los votos de la sesión de la historia "Crear proyecto"` | `^el integrante "([^"]*)" revela los votos de la sesión de la historia "([^"]*)"$` |
+| `Cuando el integrante "Ana" abre una nueva ronda en la sesión de la historia "Crear proyecto"` | `^el integrante "([^"]*)" abre una nueva ronda en la sesión de la historia "([^"]*)"$` |
 | `Cuando el integrante "Ana" registra la estimación acordada de 5 en la sesión de la historia "Crear proyecto"` | `^el integrante "([^"]*)" registra la estimación acordada de (-?\d+) en la sesión de la historia "([^"]*)"$` |
 | `Cuando el integrante "Ana" registra 2,5 horas de "Desarrollo" en la historia "Crear proyecto" el 2026-10-05` | `^el integrante "([^"]*)" registra (-?\d+(?:[.,]\d+)?) horas de "([^"]*)" en la historia "([^"]*)" el (\S+)$` |
 | `Cuando se consulta el esfuerzo del proyecto "Demo"` | `^se consulta el esfuerzo del proyecto "([^"]*)"(?: de la historia "([^"]*)")?(?: del integrante "([^"]*)")?(?: del sprint "([^"]*)")?$` |
@@ -405,6 +406,7 @@ cuenta caracteres y no bytes.
 | `Y los votos de la sesión de la historia "Crear proyecto" son:` + tabla `integrante \| voto` | `^los votos de la sesión de la historia "([^"]*)" son:$` |
 | `Y hay divergencia en la sesión de la historia "Crear proyecto"` | `^hay divergencia en la sesión de la historia "([^"]*)"$` |
 | `Y no hay divergencia en la sesión de la historia "Crear proyecto"` | `^no hay divergencia en la sesión de la historia "([^"]*)"$` |
+| `Y los votos de la ronda 1 de la sesión de la historia "Crear proyecto" son:` + tabla `integrante \| voto` | `^los votos de la ronda (\d+) de la sesión de la historia "([^"]*)" son:$` |
 | `Y la estimación acordada de la sesión de la historia "Crear proyecto" es 5` | `^la estimación acordada de la sesión de la historia "([^"]*)" es (\d+)$` |
 
 `la operación es exitosa` y `la operación se rechaza` miran el error que dejó el
@@ -451,6 +453,11 @@ finaliza la sesión de la historia con ese valor y la deja estimada. Una sesión
 ya no está abierta, así que las frases de la sesión (estado, participantes, votos y
 estimación acordada) leen la **última** sesión de la historia. El número acepta negativos
 para poder escribir el rechazo de un valor fuera de la escala.
+
+**Nueva ronda (US-017):** `el integrante "X" abre una nueva ronda ...` vuelve a poner
+votando la última sesión de la historia, en la ronda siguiente y sin votos. `los votos de la
+ronda N ... son:` lee los votos de una ronda anterior a la actual, con la misma tabla que
+`los votos ... son:`; los de la ronda actual siguen ocultos mientras se vota.
 
 `está sin estimar` y `tiene N story points` no son lo mismo: una historia recién
 creada está sin estimar, no tiene 0 story points (RN-005-7). Los estados se

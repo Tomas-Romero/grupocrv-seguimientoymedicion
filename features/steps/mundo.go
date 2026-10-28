@@ -273,6 +273,12 @@ type PlanningPoker interface {
 	RegistrarEstimacionAcordada(integrante, titulo string, valor int) error
 	// EstimacionAcordada devuelve el valor acordado de la ultima sesion de la historia.
 	EstimacionAcordada(titulo string) (int, error)
+	// AbrirNuevaRonda abre la ronda siguiente en la ultima sesion de la historia (US-017).
+	// Lo que no existe se manda con un ID que no esta en la base.
+	AbrirNuevaRonda(integrante, titulo string) error
+	// VotosDeRonda devuelve los votos de una ronda anterior a la actual, con los nombres de
+	// quienes votaron, en el orden de los participantes (RN-017-6).
+	VotosDeRonda(titulo string, ronda int) ([]VotoRevelado, error)
 }
 
 // VotoRevelado es el voto de un integrante, ya revelado.

@@ -20,6 +20,7 @@ func registrarPlanningPoker(sc *godog.ScenarioContext, m *mundo) {
 	sc.Step(`^el integrante "([^"]*)" vota (-?\d+) en la sesión de la historia "([^"]*)"$`, m.cuandoVota)
 	sc.Step(`^el integrante "([^"]*)" revela los votos de la sesión de la historia "([^"]*)"$`, m.cuandoRevela)
 	sc.Step(`^el integrante "([^"]*)" registra la estimación acordada de (-?\d+) en la sesión de la historia "([^"]*)"$`, m.cuandoRegistraAcuerdo)
+	sc.Step(`^el integrante "([^"]*)" abre una nueva ronda en la sesión de la historia "([^"]*)"$`, m.cuandoAbreNuevaRonda)
 
 	sc.Step(`^la sesión de la historia "([^"]*)" está "([^"]*)" en la ronda (\d+)$`, m.entoncesEstadoDeLaSesion)
 	sc.Step(`^los participantes de la sesión de la historia "([^"]*)" son:$`, m.entoncesParticipantes)
@@ -27,6 +28,7 @@ func registrarPlanningPoker(sc *godog.ScenarioContext, m *mundo) {
 	sc.Step(`^en la sesión de la historia "([^"]*)" faltan votar:$`, m.entoncesFaltanVotar)
 	sc.Step(`^los votos de la sesión de la historia "([^"]*)" están ocultos$`, m.entoncesVotosOcultos)
 	sc.Step(`^los votos de la sesión de la historia "([^"]*)" son:$`, m.entoncesVotosSon)
+	sc.Step(`^los votos de la ronda (\d+) de la sesión de la historia "([^"]*)" son:$`, m.entoncesVotosDeRondaSon)
 	sc.Step(`^hay divergencia en la sesión de la historia "([^"]*)"$`, m.entoncesHayDivergencia)
 	sc.Step(`^no hay divergencia en la sesión de la historia "([^"]*)"$`, m.entoncesNoHayDivergencia)
 	sc.Step(`^la estimación acordada de la sesión de la historia "([^"]*)" es (\d+)$`, m.entoncesEstimacionAcordada)
@@ -174,19 +176,9 @@ func (m *mundo) entoncesVotosSon(titulo string, tabla *godog.Table) error {
 	if err != nil {
 		return err
 	}
-	if len(tabla.Rows) == 0 {
-		return fmt.Errorf("la tabla de votos no tiene encabezado")
-	}
-	esperados := make([]VotoRevelado, 0, len(tabla.Rows)-1)
-	for i, fila := range tabla.Rows[1:] {
-		if len(fila.Cells) != 2 {
-			return fmt.Errorf("la fila %d de la tabla tiene %d columnas, se esperaban dos (integrante y voto)", i+2, len(fila.Cells))
-		}
-		valor, err := strconv.Atoi(fila.Cells[1].Value)
-		if err != nil {
-			return fmt.Errorf("el voto %q de la fila %d no es un numero: %w", fila.Cells[1].Value, i+2, err)
-		}
-		esperados = append(esperados, VotoRevelado{Integrante: fila.Cells[0].Value, Valor: valor})
+	esperados, err := tablaDeVotos(tabla)
+	if err != nil {
+		return err
 	}
 	votos, err := poker.VotosRevelados(titulo)
 	if err != nil {
@@ -196,6 +188,46 @@ func (m *mundo) entoncesVotosSon(titulo string, tabla *godog.Table) error {
 		return fmt.Errorf("votos de la sesion de %q: se esperaban %v, son %v", titulo, esperados, votos)
 	}
 	return nil
+}
+
+// entoncesVotosDeRondaSon compara los votos de una ronda de la sesion con la tabla
+// (integrante | voto), en orden (US-017).
+func (m *mundo) entoncesVotosDeRondaSon(ronda int, titulo string, tabla *godog.Table) error {
+	poker, err := m.planningPoker()
+	if err != nil {
+		return err
+	}
+	esperados, err := tablaDeVotos(tabla)
+	if err != nil {
+		return err
+	}
+	votos, err := poker.VotosDeRonda(titulo, ronda)
+	if err != nil {
+		return fmt.Errorf("leer los votos de la ronda %d de la sesion de %q: %w", ronda, titulo, err)
+	}
+	if !slices.Equal(votos, esperados) {
+		return fmt.Errorf("votos de la ronda %d de la sesion de %q: se esperaban %v, son %v", ronda, titulo, esperados, votos)
+	}
+	return nil
+}
+
+// tablaDeVotos lee una tabla integrante | voto. La primera fila es el encabezado.
+func tablaDeVotos(tabla *godog.Table) ([]VotoRevelado, error) {
+	if len(tabla.Rows) == 0 {
+		return nil, fmt.Errorf("la tabla de votos no tiene encabezado")
+	}
+	votos := make([]VotoRevelado, 0, len(tabla.Rows)-1)
+	for i, fila := range tabla.Rows[1:] {
+		if len(fila.Cells) != 2 {
+			return nil, fmt.Errorf("la fila %d de la tabla tiene %d columnas, se esperaban dos (integrante y voto)", i+2, len(fila.Cells))
+		}
+		valor, err := strconv.Atoi(fila.Cells[1].Value)
+		if err != nil {
+			return nil, fmt.Errorf("el voto %q de la fila %d no es un numero: %w", fila.Cells[1].Value, i+2, err)
+		}
+		votos = append(votos, VotoRevelado{Integrante: fila.Cells[0].Value, Valor: valor})
+	}
+	return votos, nil
 }
 
 func (m *mundo) entoncesHayDivergencia(titulo string) error {
@@ -242,4 +274,12 @@ func (m *mundo) entoncesEstimacionAcordada(titulo string, esperada int) error {
 		return fmt.Errorf("estimacion acordada de la sesion de %q: se esperaba %d, es %d", titulo, esperada, valor)
 	}
 	return nil
+}
+
+func (m *mundo) cuandoAbreNuevaRonda(integrante, titulo string) error {
+	poker, err := m.planningPoker()
+	if err != nil {
+		return err
+	}
+	return m.registrarAccion(poker.AbrirNuevaRonda(integrante, titulo))
 }
