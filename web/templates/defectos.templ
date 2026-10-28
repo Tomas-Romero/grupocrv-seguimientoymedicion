@@ -1,0 +1,36 @@
+package plantillas
+
+// ListaDeDefectos es la pantalla /proyectos/{id}/defectos: la tabla de defectos del mas reciente
+// al mas antiguo.
+templ ListaDeDefectos(v VistaDefectos) {
+	<h1 class={ claseTitulo }>Defectos</h1>
+	if len(v.Defectos) == 0 {
+		<p class="mt-4 text-slate-700">Todavía no hay defectos</p>
+	} else {
+		<table class="mt-4 w-full border-collapse text-left text-sm">
+			<caption class="sr-only">Defectos del proyecto, del más reciente al más antiguo</caption>
+			<thead>
+				<tr class="border-b border-slate-300">
+					<th scope="col" class="py-2 pr-3 font-semibold">Descripción</th>
+					<th scope="col" class="py-2 pr-3 font-semibold">Severidad</th>
+					<th scope="col" class="py-2 pr-3 font-semibold">Estado</th>
+					<th scope="col" class="py-2 pr-3 font-semibold">Historia</th>
+					<th scope="col" class="py-2 pr-3 font-semibold">Sprint de detección</th>
+					<th scope="col" class="py-2 font-semibold">Sprint de resolución</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, d := range v.Defectos {
+					<tr class="border-b border-slate-200 align-top">
+						<td class="py-2 pr-3 whitespace-pre-wrap">{ d.Descripcion }</td>
+						<td class="py-2 pr-3">{ d.Severidad }</td>
+						<td class="py-2 pr-3">{ d.Estado }</td>
+						<td class="py-2 pr-3">{ d.Historia }</td>
+						<td class="py-2 pr-3">{ d.SprintDeteccion }</td>
+						<td class="py-2">{ d.SprintResolucion }</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	}
+}
