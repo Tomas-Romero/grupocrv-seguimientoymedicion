@@ -14,7 +14,7 @@ import (
 // no tiene una sesion abierta. El rechazo (ErrSesionInexistente) lo produce la aplicacion.
 const idDeSesionInexistente = "00000000-0000-0000-0000-000000000000"
 
-// pokerSobreApp conecta el area PlanningPoker con los casos de uso de US-014, US-015 y US-016
+// pokerSobreApp conecta el area PlanningPoker con los casos de uso de US-014 a US-018
 // sobre la base en memoria del escenario (ADR 0002). Los Entonces leen la base
 // directamente, porque todavia no hay casos de uso de lectura de las sesiones.
 type pokerSobreApp struct {
@@ -23,6 +23,8 @@ type pokerSobreApp struct {
 	votar     *app.VotarEnSesion
 	revelar   *app.RevelarVotos
 	acordar   *app.RegistrarEstimacionAcordada
+	// nuevaRonda es de US-017.
+	nuevaRonda *app.AbrirNuevaRonda
 	// reveladas guarda la ultima revelacion de cada historia, para preguntar por la divergencia.
 	reveladas map[string]planningpoker.Revelacion
 }
@@ -31,12 +33,13 @@ var _ steps.PlanningPoker = (*pokerSobreApp)(nil)
 
 func nuevoPokerSobreApp(e *escenario) *pokerSobreApp {
 	return &pokerSobreApp{
-		escenario: e,
-		iniciar:   app.NuevoIniciarSesionPlanningPoker(e.base),
-		votar:     app.NuevoVotarEnSesion(e.base),
-		revelar:   app.NuevoRevelarVotos(e.base),
-		acordar:   app.NuevoRegistrarEstimacionAcordada(e.base),
-		reveladas: map[string]planningpoker.Revelacion{},
+		escenario:  e,
+		iniciar:    app.NuevoIniciarSesionPlanningPoker(e.base),
+		votar:      app.NuevoVotarEnSesion(e.base),
+		revelar:    app.NuevoRevelarVotos(e.base),
+		acordar:    app.NuevoRegistrarEstimacionAcordada(e.base),
+		nuevaRonda: app.NuevoAbrirNuevaRonda(e.base),
+		reveladas:  map[string]planningpoker.Revelacion{},
 	}
 }
 
@@ -225,16 +228,55 @@ func (p *pokerSobreApp) EstimacionAcordada(titulo string) (int, error) {
 	return valor, nil
 }
 
-// AbrirNuevaRonda es de US-017.
-func (p *pokerSobreApp) AbrirNuevaRonda(_, _ string) error { return errNuevaRondaSinConectar }
-
-// VotosDeRonda es de US-017.
-func (p *pokerSobreApp) VotosDeRonda(_ string, _ int) ([]steps.VotoRevelado, error) {
-	return nil, errNuevaRondaSinConectar
+// AbrirNuevaRonda abre con el caso de uso de US-017 la ronda siguiente de la ultima sesion de
+// la historia. No valida nada: lo hace el caso de uso. Una historia sin sesion o un integrante
+// que no esta en el proyecto se mandan con un ID que no existe (RN-017-1).
+func (p *pokerSobreApp) AbrirNuevaRonda(integrante, titulo string) error {
+	itemID, proyectoID := p.historia(titulo)
+	sesionID := idDeSesionInexistente
+	if sesion, ok := p.escenario.base.UltimaSesionDeLaHistoria(itemID); ok {
+		sesionID = sesion.ID
+	}
+	_, err := p.nuevaRonda.Ejecutar(context.Background(), sesionID, p.integrante(proyectoID, integrante))
+	return err
 }
 
-// errNuevaRondaSinConectar lo devuelve abrir una nueva ronda mientras no esta conectado.
-var errNuevaRondaSinConectar = errors.New("abrir una nueva ronda todavia no esta conectado a la aplicacion")
+// VotosDeRonda lee los votos de una ronda anterior a la actual con la lectura de US-017 (RN-017-6).
+func (p *pokerSobreApp) VotosDeRonda(titulo string, ronda int) ([]steps.VotoRevelado, error) {
+	sesion, proyectoID, err := p.sesion(titulo)
+	if err != nil {
+		return nil, err
+	}
+	rondas, err := p.escenario.base.RondasAnteriores(context.Background(), sesion.ID)
+	if err != nil {
+		return nil, err
+	}
+	for _, r := range rondas {
+		if r.Numero != ronda {
+			continue
+		}
+		valores, err := r.Votacion.Valores()
+		if err != nil {
+			return nil, err
+		}
+		votos := []steps.VotoRevelado{}
+		for _, id := range r.Votacion.Votaron() {
+			votos = append(votos, steps.VotoRevelado{Integrante: p.nombres(proyectoID, []string{id})[0], Valor: valores[id]})
+		}
+		return votos, nil
+	}
+	return nil, fmt.Errorf("la sesion de la historia %q no tiene una ronda %d anterior a la actual", titulo, ronda)
+}
+
+// integrante devuelve el ID del integrante del proyecto con ese nombre, o uno que no existe.
+func (p *pokerSobreApp) integrante(proyectoID, nombre string) string {
+	for _, i := range p.escenario.base.Integrantes(proyectoID) {
+		if i.Nombre == nombre {
+			return i.ID
+		}
+	}
+	return idDeIntegranteInexistente
+}
 
 // sesion devuelve la ultima sesion de la historia y el proyecto de la historia.
 func (p *pokerSobreApp) sesion(titulo string) (planningpoker.SesionPlanningPoker, string, error) {
