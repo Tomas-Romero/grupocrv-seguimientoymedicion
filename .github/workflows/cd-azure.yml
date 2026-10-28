@@ -9,14 +9,19 @@ name: CD (Azure)
 # usarse desde la rama main: asi nadie los puede leer desde una rama propia.
 #   secreto   AZURE_CREDENTIALS  el JSON del service principal que entrega la catedra
 #   secreto   DATABASE_URL       la cadena de conexion de la base (Neon), sin channel_binding
+#   secreto   ACR_PASSWORD       (opcional) la clave del registro que entrega la catedra: si existe, el login y la
+#                                limpieza usan usuario y clave y no dependen de los roles del service principal
 # Las variables son opcionales (Settings > Secrets and variables > Actions > Variables); si no
-# existen se usan los datos del grupo 03:
+# existen se usan los datos del grupo 03. Se aceptan tambien los nombres que usa la catedra (entre parentesis):
 #   ACR_NAME              ingcalidad2026   (registro compartido: nunca se crea ni se borra desde aca)
+#   ACR_URL               <ACR_NAME>.azurecr.io
 #   IMAGE_NAME            grupo03-grupocrv
-#   RESOURCE_GROUP        frsrutn
+#   RESOURCE_GROUP        frsrutn          (AZURE_RESOURCE_GROUP)
 #   CONTAINER_APP_NAME    grupo03-grupocrv-seguimiento
-#   CONTAINER_APPS_ENV    solo hace falta si la Container App todavia no existe
+#   CONTAINER_APPS_ENV    solo hace falta si la Container App todavia no existe (AZURE_CONTAINERAPPS_ENVIRONMENT)
 #   CARGAR_DATOS_EJEMPLO  true: carga el proyecto de ejemplo al arrancar (para la demo)
+#   MIN_REPLICAS          0 (la app se apaga sin visitas); 1 solo el dia de la presentacion, para evitar el arranque en frio
+#   CD_ACTIVO             false: interruptor general; solo se valida el Dockerfile y no se publica ni se despliega nada
 #
 # Si falta algun secreto, el workflow construye la imagen igual (valida el Dockerfile) pero no se
 # loguea, publica ni despliega nada, asi que el repositorio no se pone en rojo antes de tener las
@@ -69,7 +74,13 @@ jobs:
           # Solo se pasa si el secreto existe, nunca su valor.
           TIENE_CREDENCIALES: ${{ secrets.AZURE_CREDENTIALS != '' }}
           TIENE_BASE: ${{ secrets.DATABASE_URL != '' }}
+          CD_ACTIVO: ${{ vars.CD_ACTIVO || 'true' }}
         run: |
+          if [ "$CD_ACTIVO" = "false" ]; then
+            echo "completa=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=CD apagado::La variable CD_ACTIVO vale false: se construye la imagen para validar el Dockerfile, pero no se publica ni se despliega."
+            exit 0
+          fi
           faltan=""
           [ "$TIENE_CREDENCIALES" = "true" ] || faltan="$faltan AZURE_CREDENTIALS"
           [ "$TIENE_BASE" = "true" ] || faltan="$faltan DATABASE_URL"
@@ -91,7 +102,8 @@ jobs:
     env:
       PUBLICAR: ${{ needs.configuracion.outputs.completa }}
       ACR_NAME: ${{ vars.ACR_NAME || 'ingcalidad2026' }}
-      REGISTRO: ${{ vars.ACR_NAME || 'ingcalidad2026' }}.azurecr.io
+      REGISTRO: ${{ vars.ACR_URL || format('{0}.azurecr.io', vars.ACR_NAME || 'ingcalidad2026') }}
+      ACR_USUARIO: ${{ vars.ACR_USERNAME || vars.ACR_NAME || 'ingcalidad2026' }}
       IMAGEN: ${{ vars.IMAGE_NAME || 'grupo03-grupocrv' }}
     steps:
       - uses: actions/checkout@v4
@@ -103,9 +115,21 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      # Con ACR_PASSWORD (la clave del registro que entrega la catedra) se entra con usuario y clave: no depende de
+      # que el service principal tenga el rol AcrPush. Sin ella, se entra con el service principal.
       - name: Login en el registro (ACR)
         if: env.PUBLICAR == 'true'
-        run: az acr login --name "$ACR_NAME"
+        env:
+          ACR_PASSWORD: ${{ secrets.ACR_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -n "$ACR_PASSWORD" ]; then
+            echo "Login en $REGISTRO con el usuario y la clave del registro"
+            printf '%s' "$ACR_PASSWORD" | docker login "$REGISTRO" --username "$ACR_USUARIO" --password-stdin
+          else
+            echo "Login en $REGISTRO con el service principal"
+            az acr login --name "$ACR_NAME"
+          fi
 
       # docker/setup-buildx-action v4.4.1
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069
@@ -142,8 +166,11 @@ jobs:
         continue-on-error: true
         env:
           CONSERVAR: "10"
+          ACR_PASSWORD: ${{ secrets.ACR_PASSWORD }}
         run: |
           set -euo pipefail
+          auth=()
+          if [ -n "$ACR_PASSWORD" ]; then auth=(--username "$ACR_USUARIO" --password "$ACR_PASSWORD"); fi
           case "$IMAGEN" in
             grupo03-*) ;;
             *)
@@ -151,12 +178,12 @@ jobs:
               exit 0
               ;;
           esac
-          az acr repository show-tags --name "$ACR_NAME" --repository "$IMAGEN" --orderby time_desc --output tsv \
+          az acr repository show-tags --name "$ACR_NAME" --repository "$IMAGEN" --orderby time_desc --output tsv "${auth[@]}" \
             | { grep -E '^sha-[0-9a-f]{40}$' || true; } \
             | tail -n +"$((CONSERVAR + 1))" \
             | while IFS= read -r etiqueta; do
                 echo "Borro ${IMAGEN}:${etiqueta}"
-                az acr repository delete --name "$ACR_NAME" --image "${IMAGEN}:${etiqueta}" --yes
+                az acr repository delete --name "$ACR_NAME" --image "${IMAGEN}:${etiqueta}" --yes "${auth[@]}"
               done
 
       # Los resultados de otros pasos llegan por variables de entorno y no escritos dentro del script:
@@ -192,16 +219,19 @@ jobs:
     runs-on: ubuntu-latest
     environment: azure
     env:
-      REGISTRO: ${{ vars.ACR_NAME || 'ingcalidad2026' }}.azurecr.io
+      REGISTRO: ${{ vars.ACR_URL || format('{0}.azurecr.io', vars.ACR_NAME || 'ingcalidad2026') }}
       ACR_NAME: ${{ vars.ACR_NAME || 'ingcalidad2026' }}
+      ACR_USUARIO: ${{ vars.ACR_USERNAME || vars.ACR_NAME || 'ingcalidad2026' }}
       IMAGEN: ${{ vars.IMAGE_NAME || 'grupo03-grupocrv' }}
-      GRUPO_RECURSOS: ${{ vars.RESOURCE_GROUP || 'frsrutn' }}
+      GRUPO_RECURSOS: ${{ vars.RESOURCE_GROUP || vars.AZURE_RESOURCE_GROUP || 'frsrutn' }}
       APP: ${{ vars.CONTAINER_APP_NAME || 'grupo03-grupocrv-seguimiento' }}
-      ENTORNO_APPS: ${{ vars.CONTAINER_APPS_ENV }}
+      ENTORNO_APPS: ${{ vars.CONTAINER_APPS_ENV || vars.AZURE_CONTAINERAPPS_ENVIRONMENT }}
       CARGAR_DATOS_EJEMPLO: ${{ vars.CARGAR_DATOS_EJEMPLO || 'true' }}
-      # Recursos de la app: lo minimo que alcanza, para no gastar los creditos compartidos.
+      # Recursos de la app: lo minimo que alcanza, para no gastar los creditos compartidos. Con 0 replicas minimas la
+      # app no corre ni cobra sin visitas; MIN_REPLICAS=1 se usa solo el dia de la presentacion.
       CPU: "0.25"
       MEMORIA: "0.5Gi"
+      MIN_REPLICAS: ${{ vars.MIN_REPLICAS || '0' }}
     steps:
       # azure/login v3.1.0
       - name: Login en Azure
@@ -215,6 +245,7 @@ jobs:
       - name: Desplegar la app
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          ACR_PASSWORD: ${{ secrets.ACR_PASSWORD }}
         run: |
           set -euo pipefail
           # Sin esto, un nombre mal armado podria tocar recursos de otro grupo en la cuenta compartida.
@@ -222,6 +253,18 @@ jobs:
             grupo03-*) ;;
             *)
               echo "::error::La Container App $APP no empieza con grupo03-: no se despliega."
+              exit 1
+              ;;
+          esac
+          # Azure acepta nombres de Container App de 2 a 32 caracteres, con minusculas, numeros y guiones.
+          if [ "${#APP}" -gt 32 ] || ! [[ "$APP" =~ ^[a-z][a-z0-9-]*[a-z0-9]$ ]]; then
+            echo "::error::El nombre de la Container App ($APP, ${#APP} caracteres) no es valido: tiene que tener 32 caracteres o menos."
+            exit 1
+          fi
+          case "$MIN_REPLICAS" in
+            0|1) ;;
+            *)
+              echo "::error::MIN_REPLICAS tiene que ser 0 o 1 (vale $MIN_REPLICAS)."
               exit 1
               ;;
           esac
@@ -233,9 +276,14 @@ jobs:
             echo "Actualizo la Container App $APP con $imagen_completa"
             az containerapp secret set --name "$APP" --resource-group "$GRUPO_RECURSOS" \
               --secrets "database-url=${DATABASE_URL}" --only-show-errors > /dev/null
+            # Con la clave del registro, la app tambien puede bajar la imagen si todavia no tenia acceso (es idempotente).
+            if [ -n "$ACR_PASSWORD" ]; then
+              az containerapp registry set --name "$APP" --resource-group "$GRUPO_RECURSOS" \
+                --server "$REGISTRO" --username "$ACR_USUARIO" --password "$ACR_PASSWORD" --only-show-errors > /dev/null
+            fi
             az containerapp update --name "$APP" --resource-group "$GRUPO_RECURSOS" \
               --image "$imagen_completa" \
-              --cpu "$CPU" --memory "$MEMORIA" --min-replicas 0 --max-replicas 1 \
+              --cpu "$CPU" --memory "$MEMORIA" --min-replicas "$MIN_REPLICAS" --max-replicas 1 \
               --set-env-vars "${variables[@]}" --only-show-errors > /dev/null
           else
             if [ -z "$ENTORNO_APPS" ]; then
@@ -243,15 +291,21 @@ jobs:
               exit 1
             fi
             echo "La Container App $APP no existe: la creo en el entorno $ENTORNO_APPS"
-            # El registro es compartido: se usan sus credenciales de administrador solo para que la app pueda bajar la imagen.
-            usuario=$(az acr credential show --name "$ACR_NAME" --query username --output tsv) \
-              || { echo "::error::No se pudieron leer las credenciales del registro (puede tener el usuario administrador deshabilitado)."; exit 1; }
-            clave=$(az acr credential show --name "$ACR_NAME" --query 'passwords[0].value' --output tsv)
+            # El registro es compartido: se usan sus credenciales solo para que la app pueda bajar la imagen. Si la
+            # catedra entrego ACR_PASSWORD se usa esa; si no, se leen las del usuario administrador del registro.
+            if [ -n "$ACR_PASSWORD" ]; then
+              usuario="$ACR_USUARIO"
+              clave="$ACR_PASSWORD"
+            else
+              usuario=$(az acr credential show --name "$ACR_NAME" --query username --output tsv) \
+                || { echo "::error::No se pudieron leer las credenciales del registro (puede tener el usuario administrador deshabilitado)."; exit 1; }
+              clave=$(az acr credential show --name "$ACR_NAME" --query 'passwords[0].value' --output tsv)
+            fi
             echo "::add-mask::$clave"
             az containerapp create --name "$APP" --resource-group "$GRUPO_RECURSOS" --environment "$ENTORNO_APPS" \
               --image "$imagen_completa" --target-port 8080 --ingress external \
               --registry-server "$REGISTRO" --registry-username "$usuario" --registry-password "$clave" \
-              --cpu "$CPU" --memory "$MEMORIA" --min-replicas 0 --max-replicas 1 \
+              --cpu "$CPU" --memory "$MEMORIA" --min-replicas "$MIN_REPLICAS" --max-replicas 1 \
               --secrets "database-url=${DATABASE_URL}" --env-vars "${variables[@]}" --only-show-errors > /dev/null
           fi
 
@@ -269,7 +323,7 @@ jobs:
               {
                 echo "### Despliegue"
                 echo ""
-                echo "- app: \`${APP}\` (${CPU} vCPU, ${MEMORIA}, minimo 0 replicas)"
+                echo "- app: \`${APP}\` (${CPU} vCPU, ${MEMORIA}, minimo ${MIN_REPLICAS} replicas)"
                 echo "- imagen: \`${REGISTRO}/${IMAGEN}:sha-${GITHUB_SHA}\`"
                 echo "- URL: ${url}"
                 echo "- \`/health\`: HTTP 200"
