@@ -7,7 +7,7 @@
 | **Issue** | #189 (tarea) · #193 (spec) |
 | **Escenarios BDD** | ninguno: es una tarea técnica (ver "Decisiones") |
 | **Código** | `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
-| **Última actualización** | 2026-10-27 |
+| **Última actualización** | 2026-10-28 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
 > implementación. Si durante la implementación descubrís que algo de acá está
@@ -55,8 +55,9 @@ formularios) y en el patrón de T-011 y T-015.
 ## 3. Salidas esperadas
 
 **Después de registrar con éxito:** `HX-Redirect` con HTMX o `303` sin él, hacia
-`/proyectos/{id}/esfuerzo`. Los errores se responden con `ResponderError` (T-005): el formulario
-muestra el mensaje junto a su campo y no se registra nada.
+`/proyectos/{id}/esfuerzo`. Los errores se responden con `ResponderError` (T-005): el mensaje cae en
+`#mensajes` con el campo en `data-campo`, como en T-011 y T-015 (el formulario no se redibuja), y no se registra
+nada.
 
 **`/proyectos/{id}/esfuerzo`** tiene, en este orden:
 
@@ -72,8 +73,11 @@ muestra el mensaje junto a su campo y no se registra nada.
 **`/proyectos/{id}/esfuerzo/comparacion`:** una tabla con una fila por historia que aparece en la
 comparación de US-021 (la que más se desvió primero) con sus Story Points, las horas estimadas, las
 reales, la desviación en horas y en porcentaje, y su situación: «Completada», «En curso» o «Sin
-estimar». Debajo, el total de las historias comparables («N historias comparables: estimadas X h,
-reales Y h, desviación Z h (P %)») y «Horas sin comparar: W h». Un enlace vuelve a la carga.
+estimar». Una historia sin estimar no tiene base de comparación: sus Story Points, sus horas estimadas y
+su desviación (en horas y en porcentaje) se muestran como «—» y no como un 0 que parezca un dato; sus
+horas reales sí se ven. Debajo, el total de las historias comparables («N historias comparables:
+estimadas X h, reales Y h, desviación Z h (P %)», y «1 historia comparable» en singular) y «Horas sin
+comparar: W h». Un enlace («Volver a la carga de horas») vuelve a la carga.
 
 **Menú del proyecto:** aparece el item «Esfuerzo», activo en estas páginas.
 
@@ -140,7 +144,10 @@ No hay reglas de dominio nuevas. Son reglas de comportamiento de la interfaz.
   de memoria y de Postgres ya cumplen sus puertos (`RepositorioEsfuerzo`, `RepositorioConsultarEsfuerzo` y
   `RepositorioCompararEsfuerzo`): `cmd/server` solo los conecta.
 - **Reloj.** El valor inicial de `fecha` (hoy) sale del mismo reloj que usa `RegistrarEsfuerzo`: `time.Now`
-  en `cmd/server` y uno fijo en los tests.
+  en `cmd/server` y uno fijo en los tests. Llega a las pantallas como el campo `Ahora` de `CasosDeUso` (si falta,
+  `time.Now`). Es la hora del servidor, que en Azure es UTC: pasadas las 21:00 de Argentina el valor inicial ya
+  es la fecha de mañana, y el dominio lo acepta porque compara contra el mismo reloj (una fecha futura recién se
+  rechaza si es posterior a «hoy» en UTC). Si molesta, se cambia el día a mano en el formulario.
 - **Catálogo de errores.** Los errores que aparecen ya están registrados, salvo los dos campos nuevos de
   RN-T019-4.
 - **Los formularios requieren JavaScript (HTMX),** como en T-011 y T-015. El de filtros no.
@@ -205,8 +212,8 @@ No hay reglas de dominio nuevas. Son reglas de comportamiento de la interfaz.
 - **CA-T019-4** (límite) — Sin registros, o con filtros sin coincidencias, las pantallas muestran el
   texto de vacío y no un error; las horas se aceptan con coma y con punto.
 - **CA-T019-5** (error) — Una fecha futura, horas en 0, con fracción o fuera de rango, una actividad vacía o
-  de más de 120 caracteres, y un integrante o una historia sin elegir se informan junto a su campo y no
-  registran nada; un integrante o una historia de otro proyecto responde 404.
+  de más de 120 caracteres, y un integrante o una historia sin elegir se informan nombrando su campo (con
+  `data-campo`, en `#mensajes`) y no registran nada; un integrante o una historia de otro proyecto responde 404.
 - **CA-T019-6** (plataforma) — Las rutas usan el layout, el router y `Responder`, funcionan con y sin
   HTMX, el menú muestra «Esfuerzo», y con Postgres (y con `make dev` en el navegador) se recorre el flujo
   completo: registrar, filtrar y comparar.
