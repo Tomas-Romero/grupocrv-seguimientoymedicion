@@ -60,6 +60,7 @@ func nuevoEntorno(t *testing.T) entorno {
 		AbrirNuevaRonda:            app.NuevoAbrirNuevaRonda(base),
 		RegistrarAcuerdo:           app.NuevoRegistrarEstimacionAcordada(base),
 		ListarDefectos:             app.NuevoListarDefectos(base),
+		RegistrarDefecto:           app.NuevoRegistrarDefecto(base),
 	}
 	manejador := httpadapter.NuevoManejadorDeErrores(httpadapter.CatalogoDeErrores(), slog.New(slog.NewTextHandler(io.Discard, nil)))
 	router := httpadapter.NuevoRouter(verificadorFalso{}, time.Second, http.FS(fstest.MapFS{}),
