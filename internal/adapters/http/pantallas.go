@@ -43,6 +43,13 @@ type CasosDeUso struct {
 
 	// Historial de sprints cerrados (US-012).
 	ConsultarSprintsAnteriores *app.ConsultarSprintsAnteriores
+
+	// Pantallas de esfuerzo (T-019).
+	RegistrarEsfuerzo *app.RegistrarEsfuerzo
+	ConsultarEsfuerzo *app.ConsultarEsfuerzo
+	CompararEsfuerzo  *app.CompararEsfuerzo
+	// Ahora es el reloj de las pantallas: el valor inicial de la fecha de las horas. Si falta, time.Now.
+	Ahora func() time.Time
 }
 
 // Pantallas son los handlers de las pantallas de proyectos, integrantes y backlog.
@@ -80,6 +87,11 @@ func (p *Pantallas) registrar(mux *http.ServeMux) {
 	mux.HandleFunc("POST /proyectos/{id}/sprints/{sprint}/historias/{item}/completar", p.completarHistoria)
 	mux.HandleFunc("POST /proyectos/{id}/sprints/{sprint}/historias/{item}/reabrir", p.reabrirHistoria)
 	mux.HandleFunc("POST /proyectos/{id}/sprints/{sprint}/cerrar", p.cerrarSprint)
+
+	// Esfuerzo (T-019).
+	mux.HandleFunc("GET /proyectos/{id}/esfuerzo", p.verEsfuerzo)
+	mux.HandleFunc("POST /proyectos/{id}/esfuerzo", p.registrarEsfuerzo)
+	mux.HandleFunc("GET /proyectos/{id}/esfuerzo/comparacion", p.compararEsfuerzo)
 }
 
 // ---------------------------------------------------------------- proyectos
@@ -322,10 +334,11 @@ func (p *Pantallas) estimarHistoria(w http.ResponseWriter, r *http.Request) {
 
 // ------------------------------------------------------------------ ayudas
 
-// fallaDeLectura responde el error de un GET: un proyecto, una historia o un sprint que no
+// fallaDeLectura responde el error de un GET: un proyecto, una historia, un sprint o un integrante que no
 // existen son la pagina 404 con layout; lo demas, el error uniforme de T-005 (RN-T011-10).
 func (p *Pantallas) fallaDeLectura(w http.ResponseWriter, r *http.Request, err error) {
-	if errors.Is(err, app.ErrProyectoInexistente) || errors.Is(err, app.ErrItemInexistente) || errors.Is(err, app.ErrSprintInexistente) {
+	if errors.Is(err, app.ErrProyectoInexistente) || errors.Is(err, app.ErrItemInexistente) || errors.Is(err, app.ErrSprintInexistente) ||
+		errors.Is(err, app.ErrIntegranteInexistente) {
 		noEncontrado(w, r)
 		return
 	}
