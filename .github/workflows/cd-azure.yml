@@ -1,26 +1,27 @@
 name: CD (Azure)
 
 # Entrega continua (T-017 y T-018): en cada merge a main construye la imagen Docker del servidor,
-# la publica en el Azure Container Registry compartido de la catedra y despliega esa version en
-# la Azure Container App del grupo:
+# la publica en el Azure Container Registry compartido de la catedra y la despliega en Azure
+# Container Instances (ACI), que es lo que pidio la catedra:
 #   <ACR_NAME>.azurecr.io/<IMAGE_NAME>:sha-<commit>   y   :latest
 #
 # Configuracion (ver docs/ci-cd.md). Los secretos viven en el Environment "azure", que solo puede
 # usarse desde la rama main: asi nadie los puede leer desde una rama propia.
 #   secreto   AZURE_CREDENTIALS  el JSON del service principal que entrega la catedra
 #   secreto   DATABASE_URL       la cadena de conexion de la base (Neon), sin channel_binding
-#   secreto   ACR_PASSWORD       (opcional) la clave del registro que entrega la catedra: si existe, el login y la
-#                                limpieza usan usuario y clave y no dependen de los roles del service principal
+#   secreto   ACR_PASSWORD       la clave del registro que entrega la catedra: ACI la usa para bajar la imagen
 # Las variables son opcionales (Settings > Secrets and variables > Actions > Variables); si no
 # existen se usan los datos del grupo 03. Se aceptan tambien los nombres que usa la catedra (entre parentesis):
 #   ACR_NAME              ingcalidad2026   (registro compartido: nunca se crea ni se borra desde aca)
 #   ACR_URL               <ACR_NAME>.azurecr.io
 #   IMAGE_NAME            grupo03-grupocrv
 #   RESOURCE_GROUP        frsrutn          (AZURE_RESOURCE_GROUP)
-#   CONTAINER_APP_NAME    grupo03-grupocrv-seguimiento
-#   CONTAINER_APPS_ENV    solo hace falta si la Container App todavia no existe (AZURE_CONTAINERAPPS_ENVIRONMENT)
+#   CONTAINER_APP_NAME    grupo03-grupocrv-seguimientoymedicion   (nombre del grupo de contenedores; 63 caracteres como maximo)
+#   ACI_DNS_LABEL         igual al nombre  (da la URL http://<etiqueta>.<region>.azurecontainer.io:8080)
+#   ACI_CPU / ACI_MEMORIA 1 / 1            (ACI cobra el vCPU redondeado hacia arriba: menos de 1 no ahorra)
 #   CARGAR_DATOS_EJEMPLO  true: carga el proyecto de ejemplo al arrancar (para la demo)
-#   MIN_REPLICAS          0 (la app se apaga sin visitas); 1 solo el dia de la presentacion, para evitar el arranque en frio
+#   MANTENER_ENCENDIDO    false: despues de desplegar y comprobar /health, el contenedor SE APAGA (ACI cobra mientras
+#                         esta encendido y no escala a cero). true solo mientras se necesite la app encendida
 #   CD_ACTIVO             interruptor general de costos: SOLO con `true` se publica y se despliega. Sin la variable (o con
 #                         cualquier otro valor) el workflow solo valida el Dockerfile, aunque esten todos los secretos
 #
@@ -28,8 +29,9 @@ name: CD (Azure)
 # loguea, publica ni despliega nada, asi que el repositorio no se pone en rojo antes de tener las
 # credenciales.
 #
-# Costos: la cuenta de Azure es compartida y con creditos limitados. La app corre con 0,25 vCPU,
-# 0,5 GiB y MINIMO DE REPLICAS EN 0 (sin visitas no corre ni cobra), y solo se conservan las
+# Costos: la cuenta de Azure es compartida y con creditos limitados. ACI cobra por segundo MIENTRAS EL CONTENEDOR
+# ESTA ENCENDIDO (no escala a cero): por eso, salvo MANTENER_ENCENDIDO=true, este workflow lo apaga despues de
+# comprobar que responde, y aci-energia.yml lo enciende, lo apaga o lo apaga solo cada noche. Solo se conservan las
 # ultimas etiquetas de la imagen del grupo en el registro.
 #
 # Seguridad: las acciones de terceros estan fijadas por el hash exacto de su version, el token no
@@ -75,6 +77,7 @@ jobs:
           # Solo se pasa si el secreto existe, nunca su valor.
           TIENE_CREDENCIALES: ${{ secrets.AZURE_CREDENTIALS != '' }}
           TIENE_BASE: ${{ secrets.DATABASE_URL != '' }}
+          TIENE_CLAVE_ACR: ${{ secrets.ACR_PASSWORD != '' }}
           CD_ACTIVO: ${{ vars.CD_ACTIVO || 'false' }}
         run: |
           if [ "$CD_ACTIVO" != "true" ]; then
@@ -85,6 +88,7 @@ jobs:
           faltan=""
           [ "$TIENE_CREDENCIALES" = "true" ] || faltan="$faltan AZURE_CREDENTIALS"
           [ "$TIENE_BASE" = "true" ] || faltan="$faltan DATABASE_URL"
+          [ "$TIENE_CLAVE_ACR" = "true" ] || faltan="$faltan ACR_PASSWORD"
           if [ -z "$faltan" ]; then
             echo "completa=true" >> "$GITHUB_OUTPUT"
           else
@@ -206,33 +210,31 @@ jobs:
                 echo "  - \`${etiqueta}\`"
               done <<< "$ETIQUETAS"
             else
-              echo "Construida y validada, **sin publicar**: falta algun secreto (\`AZURE_CREDENTIALS\`, \`DATABASE_URL\`) del Environment azure o la variable \`CD_ACTIVO\` no vale \`true\` (ver docs/ci-cd.md)."
+              echo "Construida y validada, **sin publicar**: falta algun secreto (\`AZURE_CREDENTIALS\`, \`DATABASE_URL\`, \`ACR_PASSWORD\`) del Environment azure o la variable \`CD_ACTIVO\` no vale \`true\` (ver docs/ci-cd.md)."
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
   # ---------------------------------------------------------------
-  # 3. Despliegue: actualiza la Container App con la imagen recien publicada y comprueba que responde.
+  # 3. Despliegue: reemplaza el contenedor del grupo en ACI con la imagen recien publicada, comprueba que responde y,
+  #    salvo que se pida mantenerlo, lo apaga para no gastar creditos.
   # ---------------------------------------------------------------
   desplegar:
-    name: Desplegar en Container Apps
+    name: Desplegar en Container Instances (ACI)
     needs: [configuracion, imagen]
     if: needs.configuracion.outputs.completa == 'true'
     runs-on: ubuntu-latest
     environment: azure
     env:
       REGISTRO: ${{ vars.ACR_URL || format('{0}.azurecr.io', vars.ACR_NAME || 'ingcalidad2026') }}
-      ACR_NAME: ${{ vars.ACR_NAME || 'ingcalidad2026' }}
       ACR_USUARIO: ${{ vars.ACR_USERNAME || vars.ACR_NAME || 'ingcalidad2026' }}
       IMAGEN: ${{ vars.IMAGE_NAME || 'grupo03-grupocrv' }}
       GRUPO_RECURSOS: ${{ vars.RESOURCE_GROUP || vars.AZURE_RESOURCE_GROUP || 'frsrutn' }}
-      APP: ${{ vars.CONTAINER_APP_NAME || 'grupo03-grupocrv-seguimiento' }}
-      ENTORNO_APPS: ${{ vars.CONTAINER_APPS_ENV || vars.AZURE_CONTAINERAPPS_ENVIRONMENT }}
+      CONTENEDOR: ${{ vars.CONTAINER_APP_NAME || vars.ACI_NAME || 'grupo03-grupocrv-seguimientoymedicion' }}
+      ETIQUETA_DNS: ${{ vars.ACI_DNS_LABEL || vars.CONTAINER_APP_NAME || vars.ACI_NAME || 'grupo03-grupocrv-seguimientoymedicion' }}
       CARGAR_DATOS_EJEMPLO: ${{ vars.CARGAR_DATOS_EJEMPLO || 'true' }}
-      # Recursos de la app: lo minimo que alcanza, para no gastar los creditos compartidos. Con 0 replicas minimas la
-      # app no corre ni cobra sin visitas; MIN_REPLICAS=1 se usa solo el dia de la presentacion.
-      CPU: "0.25"
-      MEMORIA: "0.5Gi"
-      MIN_REPLICAS: ${{ vars.MIN_REPLICAS || '0' }}
+      CPU: ${{ vars.ACI_CPU || '1' }}
+      MEMORIA: ${{ vars.ACI_MEMORIA || '1' }}
+      MANTENER_ENCENDIDO: ${{ vars.MANTENER_ENCENDIDO || 'false' }}
     steps:
       # azure/login v3.1.0
       - name: Login en Azure
@@ -240,91 +242,66 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Instalar la extension containerapp de la CLI
-        run: az extension add --name containerapp --upgrade --yes --only-show-errors
-
-      - name: Desplegar la app
+      - name: Desplegar el contenedor
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           ACR_PASSWORD: ${{ secrets.ACR_PASSWORD }}
         run: |
           set -euo pipefail
           # Sin esto, un nombre mal armado podria tocar recursos de otro grupo en la cuenta compartida.
-          case "$APP" in
+          case "$CONTENEDOR" in
             grupo03-*) ;;
             *)
-              echo "::error::La Container App $APP no empieza con grupo03-: no se despliega."
+              echo "::error::El contenedor $CONTENEDOR no empieza con grupo03-: no se despliega."
               exit 1
               ;;
           esac
-          # Azure acepta nombres de Container App de 2 a 32 caracteres, con minusculas, numeros y guiones.
-          if [ "${#APP}" -gt 32 ] || ! [[ "$APP" =~ ^[a-z][a-z0-9-]*[a-z0-9]$ ]]; then
-            echo "::error::El nombre de la Container App ($APP, ${#APP} caracteres) no es valido: tiene que tener 32 caracteres o menos."
+          # ACI acepta nombres de 1 a 63 caracteres, con minusculas, numeros y guiones (sin guion al principio ni al final);
+          # la etiqueta DNS, de 5 a 63.
+          if [ "${#CONTENEDOR}" -gt 63 ] || ! [[ "$CONTENEDOR" =~ ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$ ]]; then
+            echo "::error::El nombre del contenedor ($CONTENEDOR, ${#CONTENEDOR} caracteres) no es valido en ACI: 63 caracteres como maximo, minusculas, numeros y guiones."
             exit 1
           fi
-          case "$MIN_REPLICAS" in
-            0|1) ;;
-            *)
-              echo "::error::MIN_REPLICAS tiene que ser 0 o 1 (vale $MIN_REPLICAS)."
-              exit 1
-              ;;
-          esac
-
-          imagen_completa="${REGISTRO}/${IMAGEN}:sha-${GITHUB_SHA}"
-          variables=("DATABASE_URL=secretref:database-url" "HTTP_ADDR=:8080" "CARGAR_DATOS_EJEMPLO=${CARGAR_DATOS_EJEMPLO}")
-
-          if az containerapp show --name "$APP" --resource-group "$GRUPO_RECURSOS" --only-show-errors > /dev/null 2>&1; then
-            echo "Actualizo la Container App $APP con $imagen_completa"
-            az containerapp secret set --name "$APP" --resource-group "$GRUPO_RECURSOS" \
-              --secrets "database-url=${DATABASE_URL}" --only-show-errors > /dev/null
-            # Con la clave del registro, la app tambien puede bajar la imagen si todavia no tenia acceso (es idempotente).
-            if [ -n "$ACR_PASSWORD" ]; then
-              az containerapp registry set --name "$APP" --resource-group "$GRUPO_RECURSOS" \
-                --server "$REGISTRO" --username "$ACR_USUARIO" --password "$ACR_PASSWORD" --only-show-errors > /dev/null
-            fi
-            az containerapp update --name "$APP" --resource-group "$GRUPO_RECURSOS" \
-              --image "$imagen_completa" \
-              --cpu "$CPU" --memory "$MEMORIA" --min-replicas "$MIN_REPLICAS" --max-replicas 1 \
-              --set-env-vars "${variables[@]}" --only-show-errors > /dev/null
-          else
-            if [ -z "$ENTORNO_APPS" ]; then
-              echo "::error::La Container App $APP no existe y falta la variable CONTAINER_APPS_ENV (el entorno donde crearla)."
-              exit 1
-            fi
-            echo "La Container App $APP no existe: la creo en el entorno $ENTORNO_APPS"
-            # El registro es compartido: se usan sus credenciales solo para que la app pueda bajar la imagen. Si la
-            # catedra entrego ACR_PASSWORD se usa esa; si no, se leen las del usuario administrador del registro.
-            if [ -n "$ACR_PASSWORD" ]; then
-              usuario="$ACR_USUARIO"
-              clave="$ACR_PASSWORD"
-            else
-              usuario=$(az acr credential show --name "$ACR_NAME" --query username --output tsv) \
-                || { echo "::error::No se pudieron leer las credenciales del registro (puede tener el usuario administrador deshabilitado)."; exit 1; }
-              clave=$(az acr credential show --name "$ACR_NAME" --query 'passwords[0].value' --output tsv)
-            fi
-            echo "::add-mask::$clave"
-            az containerapp create --name "$APP" --resource-group "$GRUPO_RECURSOS" --environment "$ENTORNO_APPS" \
-              --image "$imagen_completa" --target-port 8080 --ingress external \
-              --registry-server "$REGISTRO" --registry-username "$usuario" --registry-password "$clave" \
-              --cpu "$CPU" --memory "$MEMORIA" --min-replicas "$MIN_REPLICAS" --max-replicas 1 \
-              --secrets "database-url=${DATABASE_URL}" --env-vars "${variables[@]}" --only-show-errors > /dev/null
+          if [ "${#ETIQUETA_DNS}" -lt 5 ] || [ "${#ETIQUETA_DNS}" -gt 63 ] || ! [[ "$ETIQUETA_DNS" =~ ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$ ]]; then
+            echo "::error::La etiqueta DNS ($ETIQUETA_DNS) no es valida: de 5 a 63 caracteres, minusculas, numeros y guiones."
+            exit 1
+          fi
+          if ! [[ "$CPU" =~ ^[1-4]$ ]] || ! [[ "$MEMORIA" =~ ^[0-9]+(\.[0-9])?$ ]]; then
+            echo "::error::ACI_CPU (1 a 4) o ACI_MEMORIA (en GB, por ejemplo 1 o 1.5) no son validos: $CPU / $MEMORIA."
+            exit 1
           fi
 
-      # La app escala a cero: la primera visita la despierta (y la base de Neon tambien), asi que se reintenta.
+          imagen_completa="${REGISTRO}/${IMAGEN}:sha-${GITHUB_SHA}"
+
+          # En ACI, cambiar la imagen es volver a crear el grupo de contenedores: si ya existe se borra primero. La
+          # etiqueta DNS se conserva, asi que la URL no cambia aunque la IP si.
+          if az container show --name "$CONTENEDOR" --resource-group "$GRUPO_RECURSOS" --only-show-errors > /dev/null 2>&1; then
+            echo "El contenedor $CONTENEDOR ya existe: lo reemplazo"
+            az container delete --name "$CONTENEDOR" --resource-group "$GRUPO_RECURSOS" --yes --only-show-errors > /dev/null
+          fi
+          echo "Creo el contenedor $CONTENEDOR con $imagen_completa (${CPU} vCPU, ${MEMORIA} GB)"
+          az container create --name "$CONTENEDOR" --resource-group "$GRUPO_RECURSOS" \
+            --image "$imagen_completa" --os-type Linux --cpu "$CPU" --memory "$MEMORIA" \
+            --registry-login-server "$REGISTRO" --registry-username "$ACR_USUARIO" --registry-password "$ACR_PASSWORD" \
+            --ports 8080 --ip-address Public --dns-name-label "$ETIQUETA_DNS" --restart-policy Always \
+            --environment-variables HTTP_ADDR=:8080 "CARGAR_DATOS_EJEMPLO=${CARGAR_DATOS_EJEMPLO}" \
+            --secure-environment-variables "DATABASE_URL=${DATABASE_URL}" --only-show-errors > /dev/null
+
+      # ACI no hace TLS: la app se ve por http en el puerto 8080. Bajar la imagen y arrancar tarda un par de minutos.
       - name: Comprobar que responde (/health)
         run: |
           set -euo pipefail
-          fqdn=$(az containerapp show --name "$APP" --resource-group "$GRUPO_RECURSOS" \
-            --query properties.configuration.ingress.fqdn --output tsv --only-show-errors)
-          url="https://${fqdn}"
-          for intento in $(seq 1 12); do
+          fqdn=$(az container show --name "$CONTENEDOR" --resource-group "$GRUPO_RECURSOS" \
+            --query ipAddress.fqdn --output tsv --only-show-errors)
+          url="http://${fqdn}:8080"
+          for intento in $(seq 1 24); do
             codigo=$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time 20 "${url}/health" || true)
-            echo "Intento ${intento} de 12: HTTP ${codigo}"
+            echo "Intento ${intento} de 24: HTTP ${codigo}"
             if [ "$codigo" = "200" ]; then
               {
                 echo "### Despliegue"
                 echo ""
-                echo "- app: \`${APP}\` (${CPU} vCPU, ${MEMORIA}, minimo ${MIN_REPLICAS} replicas)"
+                echo "- contenedor: \`${CONTENEDOR}\` (${CPU} vCPU, ${MEMORIA} GB)"
                 echo "- imagen: \`${REGISTRO}/${IMAGEN}:sha-${GITHUB_SHA}\`"
                 echo "- URL: ${url}"
                 echo "- \`/health\`: HTTP 200"
@@ -333,6 +310,18 @@ jobs:
             fi
             sleep 10
           done
-          echo "::error::La app no respondio 200 en /health despues de 12 intentos."
-          az containerapp logs show --name "$APP" --resource-group "$GRUPO_RECURSOS" --tail 50 --only-show-errors || true
+          echo "::error::La app no respondio 200 en /health despues de 24 intentos."
+          az container logs --name "$CONTENEDOR" --resource-group "$GRUPO_RECURSOS" --only-show-errors | tail -n 50 || true
           exit 1
+
+      # ACI cobra mientras el contenedor esta encendido. Se apaga aunque la comprobacion haya fallado, salvo que se
+      # haya pedido mantenerlo (MANTENER_ENCENDIDO=true). Para encenderlo de nuevo: workflow "ACI: encender o apagar".
+      - name: Apagar el contenedor (no gastar creditos)
+        if: always() && env.MANTENER_ENCENDIDO != 'true'
+        continue-on-error: true
+        run: |
+          az container stop --name "$CONTENEDOR" --resource-group "$GRUPO_RECURSOS" --only-show-errors > /dev/null
+          {
+            echo ""
+            echo "Contenedor **apagado** para no gastar creditos (\`MANTENER_ENCENDIDO\` no vale true). Se enciende con el workflow \"ACI: encender o apagar\"."
+          } >> "$GITHUB_STEP_SUMMARY"
