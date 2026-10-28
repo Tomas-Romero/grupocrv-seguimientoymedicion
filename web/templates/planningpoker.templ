@@ -1,0 +1,123 @@
+package plantillas
+
+import "strconv"
+
+// SesionDePlanningPoker es la pantalla de una sesion (spec T-020): el estado, quienes votaron y
+// quienes faltan, y las acciones segun el estado (RN-T020-5). Mientras se vota no muestra ningun
+// valor de la ronda actual (RN-T020-2).
+templ SesionDePlanningPoker(v VistaSesion) {
+	<h1 class={ claseTitulo }>Planning Poker: { v.Historia }</h1>
+	<p class="mt-2 text-sm text-slate-700">Ronda { strconv.Itoa(v.Ronda) } · { v.Estado }</p>
+	<p class="mt-1 text-sm text-slate-700">Participantes: { joinNombres(v.Participantes) }</p>
+	if v.Finalizada {
+		<p class="mt-4 text-lg font-semibold text-slate-900">Estimación acordada: { v.Acordada }</p>
+	}
+	if v.Votando {
+		<div class="mt-6 grid gap-6 sm:grid-cols-2">
+			<div>
+				<h2 class="text-lg font-semibold text-slate-900">Votaron</h2>
+				@listaDeNombres(v.Votaron, "Todavía no votó nadie.")
+			</div>
+			<div>
+				<h2 class="text-lg font-semibold text-slate-900">Faltan</h2>
+				@listaDeNombres(v.Faltan, "Ya votaron todos.")
+			</div>
+		</div>
+		<form hx-post={ v.AccionVotar } class="mt-6">
+			<label for="integrante-voto" class={ claseEtiqueta }>Votás como</label>
+			@selectorDeIntegrante("integrante-voto", v.Integrantes)
+			<div class="mt-3 flex flex-wrap gap-2">
+				for _, c := range v.Cartas {
+					<button type="submit" name="estimacion" value={ c.Valor } aria-label={ c.Nombre } class={ claseBoton }>{ c.Valor }</button>
+				}
+			</div>
+		</form>
+		<form hx-post={ v.AccionRevelar } class="mt-6 flex flex-wrap items-end gap-3">
+			<div>
+				<label for="integrante-revelar" class={ claseEtiqueta }>Revela</label>
+				@selectorDeIntegrante("integrante-revelar", v.Integrantes)
+			</div>
+			<button type="submit" aria-label={ v.NombreRevelar } class={ claseBoton }>Revelar los votos</button>
+		</form>
+	}
+	if v.Revelada {
+		<h2 class="mt-6 text-lg font-semibold text-slate-900">Resultado de la ronda { strconv.Itoa(v.Resultado.Ronda) }</h2>
+		@resultadoDeRonda(v.Resultado)
+		if v.AccionNuevaRonda != "" {
+			<form hx-post={ v.AccionNuevaRonda } class="mt-6 flex flex-wrap items-end gap-3">
+				<div>
+					<label for="integrante-nueva-ronda" class={ claseEtiqueta }>Abre</label>
+					@selectorDeIntegrante("integrante-nueva-ronda", v.Integrantes)
+				</div>
+				<button type="submit" class={ claseBoton }>Abrir nueva ronda</button>
+			</form>
+		}
+		<form hx-post={ v.AccionAcuerdo } class="mt-6 flex flex-wrap items-end gap-3">
+			<div>
+				<label for="integrante-acuerdo" class={ claseEtiqueta }>Registra</label>
+				@selectorDeIntegrante("integrante-acuerdo", v.Integrantes)
+			</div>
+			<div>
+				<label for="estimacion-acuerdo" class={ claseEtiqueta }>Estimación acordada</label>
+				<select id="estimacion-acuerdo" name="estimacion" class={ claseCampo }>
+					for _, o := range v.Escala {
+						<option value={ o.Valor } selected?={ o.Elegida }>{ o.Texto }</option>
+					}
+				</select>
+			</div>
+			<button type="submit" class={ claseBoton }>Registrar la estimación acordada</button>
+		</form>
+	}
+	if len(v.Anteriores) > 0 {
+		<h2 class="mt-10 text-lg font-semibold text-slate-900">Rondas anteriores</h2>
+		for _, r := range v.Anteriores {
+			<h3 class="mt-4 text-base font-semibold text-slate-900">Ronda { strconv.Itoa(r.Ronda) }</h3>
+			@resultadoDeRonda(r)
+		}
+	}
+	<p class="mt-10"><a href={ templ.URL(v.Volver) } class={ claseEnlace }>Volver al backlog</a></p>
+}
+
+templ resultadoDeRonda(r ResultadoVisible) {
+	<table class="mt-2 border-collapse text-left text-sm">
+		<caption class="sr-only">Votos de la ronda { strconv.Itoa(r.Ronda) }</caption>
+		<thead>
+			<tr class="border-b border-slate-300">
+				<th scope="col" class="py-1 pr-6 font-semibold">Integrante</th>
+				<th scope="col" class="py-1 font-semibold">Voto</th>
+			</tr>
+		</thead>
+		<tbody>
+			for _, voto := range r.Votos {
+				<tr class="border-b border-slate-200">
+					<th scope="row" class="py-1 pr-6 font-normal">{ voto.Integrante }</th>
+					<td>{ strconv.Itoa(voto.Valor) }</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+	if len(r.Faltaron) > 0 {
+		<p class="mt-2 text-sm text-slate-700">No votaron: { joinNombres(r.Faltaron) }</p>
+	}
+	<p class="mt-2 text-sm font-semibold text-slate-900">{ r.Divergencia }</p>
+}
+
+templ listaDeNombres(nombres []string, vacia string) {
+	if len(nombres) == 0 {
+		<p class="mt-2 text-sm text-slate-700">{ vacia }</p>
+	} else {
+		<ul class="mt-2 text-sm text-slate-900">
+			for _, n := range nombres {
+				<li>{ n }</li>
+			}
+		</ul>
+	}
+}
+
+templ selectorDeIntegrante(id string, integrantes []Opcion) {
+	<select id={ id } name="integrante" class={ claseCampo }>
+		for _, o := range integrantes {
+			<option value={ o.Valor } selected?={ o.Elegida }>{ o.Texto }</option>
+		}
+	</select>
+}

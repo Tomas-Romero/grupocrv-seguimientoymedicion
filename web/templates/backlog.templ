@@ -41,6 +41,11 @@ templ BacklogDeProyecto(v VistaBacklog) {
 								<button type="submit" aria-label={ "Estimar " + i.Titulo } class={ claseBotonChico }>Estimar</button>
 								<a href={ templ.URL(i.Editar) } aria-label={ "Editar " + i.Titulo } class={ claseEnlace }>Editar</a>
 							</form>
+							if i.SesionAbierta != "" {
+								<a href={ templ.URL(i.SesionAbierta) } aria-label={ "Planning Poker de " + i.Titulo } class={ "mt-2 inline-block " + claseEnlace }>Planning Poker</a>
+							} else if i.IniciarPoker != "" {
+								<button type="button" hx-post={ i.IniciarPoker } aria-label={ "Iniciar Planning Poker de " + i.Titulo } class={ "mt-2 " + claseBotonChico }>Planning Poker</button>
+							}
 						</td>
 					</tr>
 				}
