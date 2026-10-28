@@ -4,7 +4,7 @@
 > No se edita a mano: se regenera. Enlaza Historia → Spec → Criterios de aceptación →
 > Escenarios BDD → Tests → Código (la guía de la cátedra la pide como evidencia).
 
-Total: 30 especificaciones, 215 criterios de aceptación, 180 con escenario BDD y 193 con test.
+Total: 32 especificaciones, 227 criterios de aceptación, 180 con escenario BDD y 193 con test.
 
 Un criterio sin escenario BDD o sin test se muestra con `—`: o falta la evidencia, o el criterio
 se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no llevan `.feature`).
@@ -43,6 +43,8 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | T-011 | [specs/T-011-pantallas-proyectos-backlog.md](../specs/T-011-pantallas-proyectos-backlog.md) | borrador | 5 | 0 | 4 | `internal/app/`, `internal/adapters/memoria/`, `internal/adapters/postgres/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
 | T-015 | [specs/T-015-pantallas-sprints.md](../specs/T-015-pantallas-sprints.md) | borrador | 5 | 0 | 4 | `internal/app/`, `internal/adapters/memoria/`, `internal/adapters/postgres/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
 | T-016 | [specs/T-016-cerrar-sprint.md](../specs/T-016-cerrar-sprint.md) | borrador | 5 | 0 | 4 | `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
+| T-019 | [specs/T-019-pantallas-esfuerzo.md](../specs/T-019-pantallas-esfuerzo.md) | borrador | 6 | 0 | 0 | `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
+| T-021 | [specs/T-021-pantallas-defectos.md](../specs/T-021-pantallas-defectos.md) | borrador | 6 | 0 | 0 | `internal/app/`, `internal/adapters/memoria/`, `internal/adapters/postgres/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
 
 ## Detalle
 
@@ -560,3 +562,35 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | CA-T016-3 | límite | — | TestPantallasCierre_SprintSinHistorias |
 | CA-T016-4 | error | — | TestPantallasCierre_Rechazos |
 | CA-T016-5 | plataforma | — | — |
+
+### T-019 — Pantallas de esfuerzo: cargar horas, consultar y comparar
+
+- **Spec:** [specs/T-019-pantallas-esfuerzo.md](../specs/T-019-pantallas-esfuerzo.md) · **Issue:** #189 (tarea) · #193 (spec)
+- **Escenarios BDD:** ninguno
+- **Código:** `internal/adapters/http/`, `web/templates/`, `cmd/server/`
+- **Tests que la citan:** 0
+
+| Criterio | Tipo | Escenarios BDD | Tests |
+|---|---|---|---|
+| CA-T019-1 | normal | — | — |
+| CA-T019-2 | alternativo | — | — |
+| CA-T019-3 | alternativo | — | — |
+| CA-T019-4 | límite | — | — |
+| CA-T019-5 | error | — | — |
+| CA-T019-6 | plataforma | — | — |
+
+### T-021 — Pantallas de defectos: registrar, listar y cambiar el estado
+
+- **Spec:** [specs/T-021-pantallas-defectos.md](../specs/T-021-pantallas-defectos.md) · **Issue:** #191 (tarea) · issue de la spec: pendiente
+- **Escenarios BDD:** ninguno
+- **Código:** `internal/app/`, `internal/adapters/memoria/`, `internal/adapters/postgres/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/`
+- **Tests que la citan:** 0
+
+| Criterio | Tipo | Escenarios BDD | Tests |
+|---|---|---|---|
+| CA-T021-1 | normal | — | — |
+| CA-T021-2 | alternativo | — | — |
+| CA-T021-3 | alternativo | — | — |
+| CA-T021-4 | límite | — | — |
+| CA-T021-5 | error | — | — |
+| CA-T021-6 | plataforma | — | — |
