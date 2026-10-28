@@ -6,7 +6,7 @@
 # propia rama y leerlos; con el Environment limitado a main no, porque main esta protegida.
 #
 # Hace falta permiso de administrador del repositorio y `gh` iniciado. No pide ni toca ningun secreto: los
-# secretos se cargan despues con `gh secret set <NOMBRE> --env azure`. Se puede correr mas de una vez.
+# secretos se cargan despues con scripts/configurar-azure.sh. Se puede correr mas de una vez.
 set -euo pipefail
 
 ENTORNO="azure"
@@ -31,6 +31,5 @@ echo "Politica actual del Environment ${ENTORNO}:"
 gh api "repos/{owner}/{repo}/environments/${ENTORNO}" --jq '.deployment_branch_policy'
 gh api "repos/{owner}/{repo}/environments/${ENTORNO}/deployment-branch-policies" --jq '.branch_policies[] | "  rama permitida: " + .name'
 echo
-echo "Siguiente paso (el valor se pega cuando lo pide):"
-echo "  gh secret set AZURE_CREDENTIALS --env ${ENTORNO}"
-echo "  gh secret set DATABASE_URL --env ${ENTORNO}"
+echo "Siguiente paso: cargar las variables y los secretos (se piden sin mostrarlos):"
+echo "  bash scripts/configurar-azure.sh"
