@@ -4,7 +4,7 @@
 > No se edita a mano: se regenera. Enlaza Historia → Spec → Criterios de aceptación →
 > Escenarios BDD → Tests → Código (la guía de la cátedra la pide como evidencia).
 
-Total: 38 especificaciones, 261 criterios de aceptación, 184 con escenario BDD y 217 con test.
+Total: 39 especificaciones, 267 criterios de aceptación, 184 con escenario BDD y 217 con test.
 
 Un criterio sin escenario BDD o sin test se muestra con `—`: o falta la evidencia, o el criterio
 se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no llevan `.feature`).
@@ -35,6 +35,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | US-021 | [specs/US-021-comparar-esfuerzo.md](../specs/US-021-comparar-esfuerzo.md) | borrador | 9 | 8 | 9 | `internal/domain/metricas/`, `internal/app/comparar_esfuerzo.go` |
 | US-022 | [specs/US-022-registrar-defecto.md](../specs/US-022-registrar-defecto.md) | borrador | 12 | 12 | 12 | `internal/domain/defecto/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`, `migraciones/00012_defectos.sql` |
 | US-023 | [specs/US-023-cambiar-estado-defecto.md](../specs/US-023-cambiar-estado-defecto.md) | borrador | 14 | 13 | 14 | `internal/domain/defecto/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`, `migraciones/00013_defectos_estado.sql` |
+| US-024 | [specs/US-024-listar-defectos.md](../specs/US-024-listar-defectos.md) | borrador | 6 | 0 | 0 | `internal/app/`, `internal/domain/defecto/`, `internal/adapters/http/`, `web/templates/` |
 | US-025 | [specs/US-025-story-points-sprint.md](../specs/US-025-story-points-sprint.md) | borrador | 4 | 4 | 1 | `internal/domain/metricas/` |
 | US-026 | [specs/US-026-velocidad-equipo.md](../specs/US-026-velocidad-equipo.md) | borrador | 4 | 4 | 1 | `internal/domain/metricas/` |
 | US-027 | [specs/US-027-horas-estimadas-reales.md](../specs/US-027-horas-estimadas-reales.md) | borrador | 6 | 6 | 6 | `internal/domain/metricas/` |
@@ -446,6 +447,22 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | CA-023-12 | error | Cambiar el estado de un defecto en un proyecto que no existe se rechaza | TestCambiarEstadoDefecto_LoQueNoExiste |
 | CA-023-13 | error | Con una transición prohibida y sin sprint de resolución se informan los dos errores | TestCambiarEstadoDefecto_DatosInvalidos, TestCambiarEstado_UneLosErroresEnOrden |
 | CA-023-14 | error | — | TestBase_ActualizarEstadoDefecto_RechazaElEstadoQueYaNoEsElGuardado, TestDefectos_LosCheckDelEstado, TestActualizarEstadoDefecto_RechazaUnEstadoAnteriorQueYaNoEsElGuardado, TestActualizarEstadoDefecto_CambiosSimultaneos, +1 más |
+
+### US-024 — Listar los defectos de un proyecto filtrando por sprint de detección y severidad
+
+- **Spec:** [specs/US-024-listar-defectos.md](../specs/US-024-listar-defectos.md) · **Issue:** #32 (historia) · issue de la spec: pendiente
+- **Escenarios BDD:** ninguno
+- **Código:** `internal/app/`, `internal/domain/defecto/`, `internal/adapters/http/`, `web/templates/`
+- **Tests que la citan:** 0
+
+| Criterio | Tipo | Escenarios BDD | Tests |
+|---|---|---|---|
+| CA-024-1 | normal | — | — |
+| CA-024-2 | alternativo | — | — |
+| CA-024-3 | límite | — | — |
+| CA-024-4 | error | — | — |
+| CA-024-5 | alternativo | — | — |
+| CA-024-6 | error | — | — |
 
 ### US-025 — Calcular Story Points planificados y completados de un Sprint
 
