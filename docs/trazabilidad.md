@@ -4,7 +4,7 @@
 > No se edita a mano: se regenera. Enlaza Historia → Spec → Criterios de aceptación →
 > Escenarios BDD → Tests → Código (la guía de la cátedra la pide como evidencia).
 
-Total: 38 especificaciones, 261 criterios de aceptación, 184 con escenario BDD y 211 con test.
+Total: 38 especificaciones, 261 criterios de aceptación, 184 con escenario BDD y 217 con test.
 
 Un criterio sin escenario BDD o sin test se muestra con `—`: o falta la evidencia, o el criterio
 se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no llevan `.feature`).
@@ -50,7 +50,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | T-016 | [specs/T-016-cerrar-sprint.md](../specs/T-016-cerrar-sprint.md) | borrador | 5 | 0 | 4 | `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
 | T-019 | [specs/T-019-pantallas-esfuerzo.md](../specs/T-019-pantallas-esfuerzo.md) | borrador | 6 | 0 | 6 | `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
 | T-020 | [specs/T-020-pantallas-planning-poker.md](../specs/T-020-pantallas-planning-poker.md) | borrador | 7 | 0 | 7 | `internal/adapters/http/`, `web/templates/`, `internal/app/`, `cmd/server/` |
-| T-021 | [specs/T-021-pantallas-defectos.md](../specs/T-021-pantallas-defectos.md) | borrador | 6 | 0 | 0 | `internal/app/`, `internal/adapters/memoria/`, `internal/adapters/postgres/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
+| T-021 | [specs/T-021-pantallas-defectos.md](../specs/T-021-pantallas-defectos.md) | borrador | 6 | 0 | 6 | `internal/app/`, `internal/adapters/memoria/`, `internal/adapters/postgres/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
 
 ## Detalle
 
@@ -406,7 +406,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 - **Spec:** [specs/US-022-registrar-defecto.md](../specs/US-022-registrar-defecto.md) · **Issue:** #30
 - **Escenarios BDD:** [features/US-022-registrar-defecto.feature](../features/US-022-registrar-defecto.feature)
 - **Código:** `internal/domain/defecto/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`, `migraciones/00012_defectos.sql`
-- **Tests que la citan:** 32
+- **Tests que la citan:** 35
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
@@ -588,7 +588,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 - **Spec:** [specs/T-005-validaciones-errores-uniformes.md](../specs/T-005-validaciones-errores-uniformes.md) · **Issue:** #15
 - **Escenarios BDD:** ninguno
 - **Código:** `internal/platform/errores/`, `internal/adapters/http/`
-- **Tests que la citan:** 39
+- **Tests que la citan:** 40
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
@@ -684,13 +684,13 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 - **Spec:** [specs/T-021-pantallas-defectos.md](../specs/T-021-pantallas-defectos.md) · **Issue:** #191 (tarea) · issue de la spec: pendiente
 - **Escenarios BDD:** ninguno
 - **Código:** `internal/app/`, `internal/adapters/memoria/`, `internal/adapters/postgres/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/`
-- **Tests que la citan:** 0
+- **Tests que la citan:** 37
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
-| CA-T021-1 | normal | — | — |
-| CA-T021-2 | alternativo | — | — |
-| CA-T021-3 | alternativo | — | — |
-| CA-T021-4 | límite | — | — |
-| CA-T021-5 | error | — | — |
-| CA-T021-6 | plataforma | — | — |
+| CA-T021-1 | normal | — | TestPantallasDefectos_Registrar, TestPantallasDefectos_RegistrarConYSinHTMX |
+| CA-T021-2 | alternativo | — | TestPantallasDefectos_Lista |
+| CA-T021-3 | alternativo | — | TestPantallasDefectos_BotonesSegunElEstado, TestPantallasDefectos_CambiarElEstado |
+| CA-T021-4 | límite | — | TestPantallasDefectos_ListasDelFormulario, TestPantallasDefectos_SinHistoriasOSinSprints, TestPantallasDefectos_SprintCerradoYRepetidos |
+| CA-T021-5 | error | — | TestPantallasDefectos_ErroresAlRegistrar, TestPantallasDefectos_ResolverEnUnSprintAnterior, TestPantallasDefectos_PaginaDesactualizada, TestPantallasDefectos_EstadoMandadoAMano |
+| CA-T021-6 | plataforma | — | TestPantallasDefectos_NavegacionYFragmento, TestBase_ListarDefectosDelProyecto, TestBase_ListarDefectosDelProyecto_CreadoEnCreciente, TestRepositorioDefectos_ListarDefectosDelProyecto, +1 más |

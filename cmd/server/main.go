@@ -175,8 +175,8 @@ func casosDeUsoDePantallas(pool *pgxpool.Pool) httpadapter.CasosDeUso {
 		RevelarVotos:               app.NuevoRevelarVotos(poker),
 		AbrirNuevaRonda:            app.NuevoAbrirNuevaRonda(poker),
 		RegistrarAcuerdo:           app.NuevoRegistrarEstimacionAcordada(poker),
-		ListarDefectos:       app.NuevoListarDefectos(defectos),
-		RegistrarDefecto:     app.NuevoRegistrarDefecto(defectos),
-		CambiarEstadoDefecto: app.NuevoCambiarEstadoDefecto(defectos),
+		ListarDefectos:             app.NuevoListarDefectos(defectos),
+		RegistrarDefecto:           app.NuevoRegistrarDefecto(defectos),
+		CambiarEstadoDefecto:       app.NuevoCambiarEstadoDefecto(defectos),
 	}
 }
