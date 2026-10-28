@@ -1,11 +1,12 @@
 // Package defecto contiene las reglas de un defecto: lo que se registra de una falla
 // del producto, con su severidad, la historia donde se introdujo y el sprint en el que
-// se detecto (US-022).
+// se detecto (US-022), y su ciclo de vida: los estados, las transiciones permitidas y el
+// sprint en el que se resuelve (US-023).
 //
 // Es dominio puro: no importa nada fuera de la biblioteca estandar, no accede a la
 // base, no genera IDs y no lee el reloj (la fecha de carga la pone la base). Que el
-// proyecto, la historia y el sprint existan y se correspondan lo verifica la capa de
-// aplicacion.
+// proyecto, la historia y los sprints existan y se correspondan lo verifica la capa de
+// aplicacion, que tambien traduce los sprints a su numero antes de llamar al dominio.
 package defecto
 
 import (
@@ -47,9 +48,14 @@ const (
 // Estado es el estado de un defecto en su ciclo de vida.
 type Estado string
 
-// EstadoAbierto es el unico estado que existe hasta que US-023 define los demas:
-// todo defecto nace abierto (RN-022-3).
-const EstadoAbierto Estado = "abierto"
+// Valores de Estado (RN-023-1). EstadoAbierto es el inicial: todo defecto nace abierto
+// (RN-022-3). Los otros tres los suma US-023.
+const (
+	EstadoAbierto      Estado = "abierto"
+	EstadoEnCorreccion Estado = "en_correccion"
+	EstadoResuelto     Estado = "resuelto"
+	EstadoDescartado   Estado = "descartado"
+)
 
 // Defecto es una falla registrada en un proyecto.
 type Defecto struct {
@@ -64,8 +70,8 @@ type Defecto struct {
 	Descripcion       string
 	Severidad         Severidad
 	Estado            Estado
-	// SprintResolucionID esta vacio mientras el defecto no se resuelve; solo lo
-	// completa US-023 (RN-022-3).
+	// SprintResolucionID esta vacio mientras el defecto no esta resuelto: solo el estado
+	// resuelto lleva sprint de resolucion (RN-022-3, RN-023-3).
 	SprintResolucionID string
 }
 
