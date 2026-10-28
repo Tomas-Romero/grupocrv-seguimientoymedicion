@@ -68,7 +68,15 @@ func TestPantallasDefectos_Lista(t *testing.T) {
 	contiene(t, w, "Defecto viejo", "Defecto medio", "Defecto nuevo",
 		"Crítica", "Media", "Baja", "Abierto", "En corrección", "Descartado",
 		"#1 Alta de proyectos", "Sprint 1", "—")
-	noContiene(t, w, "Todavía no hay defectos", "critica", "en_correccion")
+	noContiene(t, w, "Todavía no hay defectos")
+	// La tabla muestra las etiquetas de la pantalla y no los valores del dominio. Se mira solo la tabla:
+	// el formulario ofrece esos valores como value de sus opciones.
+	tabla := w.Body.String()[strings.Index(w.Body.String(), "<table"):strings.Index(w.Body.String(), "</table>")]
+	for _, valor := range []string{"critica", "en_correccion", "descartado"} {
+		if strings.Contains(tabla, valor) {
+			t.Errorf("la tabla no tiene que mostrar el valor del dominio %q:\n%s", valor, tabla)
+		}
+	}
 
 	if !(posicion(t, w, "Defecto nuevo") < posicion(t, w, "Defecto medio") && posicion(t, w, "Defecto medio") < posicion(t, w, "Defecto viejo")) {
 		t.Error("la lista tiene que mostrar primero el defecto mas reciente")
