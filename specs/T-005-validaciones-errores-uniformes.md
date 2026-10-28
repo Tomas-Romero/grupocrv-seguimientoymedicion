@@ -109,7 +109,7 @@ puntero nulo dentro de la interfaz).
   T-011: `nombre`, `email`, `rol`, `titulo`, `prioridad`, `criterios`,
   `estimacion`, `sprint_goal`, `fecha_inicio`, `fecha_fin`, `fecha`,
   `actividad`, `horas`, `descripcion`, `severidad`, `estado`,
-  `sprint_resolucion`.
+  `sprint_resolucion`, `historia`, `sprint_deteccion`.
 - **RN-T005-9** — Un `*ErrorDeValidacion` (lo que arma el formulario) se
   clasifica como `validacion` y conserva sus campos y mensajes tal cual.
   Puede venir solo o unido con errores del dominio.
