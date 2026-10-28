@@ -16,6 +16,23 @@ type FilaDefecto struct {
 	Historia         string
 	SprintDeteccion  string
 	SprintResolucion string
+	// Nombre es el comienzo de la descripcion (hasta 40 caracteres): el defecto no tiene numero ni
+	// titulo, y es lo que dice a que defecto corresponde cada control (RN-T021-17).
+	Nombre string
+	// Accion es la URL del cambio de estado; Acciones, los botones que ofrece el estado de la fila
+	// (RN-T021-14); Sprints, las opciones del sprint de resolucion de "Resolver".
+	Accion   string
+	Acciones []AccionDeDefecto
+	Sprints  []Opcion
+}
+
+// AccionDeDefecto es un boton de la fila: un formulario que pide un estado. Estado es el valor del
+// dominio que viaja en el campo oculto; ConSprint dice si el formulario lleva la lista del sprint de
+// resolucion, que solo tiene "Resolver" (RN-T021-14).
+type AccionDeDefecto struct {
+	Texto     string
+	Estado    string
+	ConSprint bool
 }
 
 // FormDefecto es el formulario de alta de un defecto. Cada lista de opciones trae como primera una

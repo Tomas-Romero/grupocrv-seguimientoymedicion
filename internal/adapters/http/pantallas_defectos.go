@@ -3,6 +3,7 @@ package httpadapter
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/app"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/backlog"
@@ -93,6 +94,38 @@ func opcionesDeSprintsDeDefecto(sprints []app.ResumenDeSprint) []plantillas.Opci
 	return opciones
 }
 
+// largoDeNombreDeDefecto es cuantos caracteres de la descripcion se usan para nombrar los controles de
+// una fila (RN-T021-17).
+const largoDeNombreDeDefecto = 40
+
+// nombreDeDefecto es el comienzo de la descripcion, con los espacios y saltos de linea reducidos a un
+// espacio, para el nombre accesible de los controles de la fila. El defecto no tiene numero ni titulo.
+func nombreDeDefecto(descripcion string) string {
+	texto := strings.Join(strings.Fields(descripcion), " ")
+	if letras := []rune(texto); len(letras) > largoDeNombreDeDefecto {
+		texto = strings.TrimSpace(string(letras[:largoDeNombreDeDefecto]))
+	}
+	return texto
+}
+
+// accionesDeDefecto son los botones que ofrece una fila segun el estado que muestra: solo las
+// transiciones validas de US-023 (RN-023-2, RN-T021-14). Desde en correccion, ir a abierto no es una
+// reapertura y se llama "Volver a abierto"; desde resuelto o descartado si, y se llama "Reabrir". La
+// pantalla no protege la regla: el caso de uso evalua el pedido contra el estado guardado.
+func accionesDeDefecto(estado defecto.Estado) []plantillas.AccionDeDefecto {
+	resolver := plantillas.AccionDeDefecto{Texto: "Resolver", Estado: string(defecto.EstadoResuelto), ConSprint: true}
+	descartar := plantillas.AccionDeDefecto{Texto: "Descartar", Estado: string(defecto.EstadoDescartado)}
+	switch estado {
+	case defecto.EstadoAbierto:
+		return []plantillas.AccionDeDefecto{{Texto: "En corrección", Estado: string(defecto.EstadoEnCorreccion)}, resolver, descartar}
+	case defecto.EstadoEnCorreccion:
+		return []plantillas.AccionDeDefecto{{Texto: "Volver a abierto", Estado: string(defecto.EstadoAbierto)}, resolver, descartar}
+	case defecto.EstadoResuelto, defecto.EstadoDescartado:
+		return []plantillas.AccionDeDefecto{{Texto: "Reabrir", Estado: string(defecto.EstadoAbierto)}}
+	}
+	return nil
+}
+
 // listaDeDefectos es la pantalla con la lista de defectos del proyecto y el formulario de alta
 // (RN-T021-2). Las listas del formulario salen de lecturas que ya existen.
 func (p *Pantallas) listaDeDefectos(w http.ResponseWriter, r *http.Request) {
@@ -118,6 +151,7 @@ func (p *Pantallas) listaDeDefectos(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	sprintsDeResolucion := opcionesDeSprintsDeDefecto(sprints)
 	filas := make([]plantillas.FilaDefecto, len(defectos))
 	for i, d := range defectos {
 		filas[i] = plantillas.FilaDefecto{
@@ -127,6 +161,10 @@ func (p *Pantallas) listaDeDefectos(w http.ResponseWriter, r *http.Request) {
 			Historia:         fmt.Sprintf("#%d %s", d.HistoriaNumero, d.HistoriaTitulo),
 			SprintDeteccion:  textoDeSprintDeDefecto(d.SprintDeteccion),
 			SprintResolucion: textoDeSprintDeDefecto(d.SprintResolucion),
+			Nombre:           nombreDeDefecto(d.Defecto.Descripcion),
+			Accion:           rutaDeDefectos(id) + "/" + d.Defecto.ID + "/estado",
+			Acciones:         accionesDeDefecto(d.Defecto.Estado),
+			Sprints:          sprintsDeResolucion,
 		}
 	}
 	vista := plantillas.VistaDefectos{
@@ -135,7 +173,7 @@ func (p *Pantallas) listaDeDefectos(w http.ResponseWriter, r *http.Request) {
 			Accion:       rutaDeDefectos(id),
 			Severidades:  opcionesDeSeveridad(),
 			Historias:    opcionesDeHistoriasDeDefecto(historias),
-			Sprints:      opcionesDeSprintsDeDefecto(sprints),
+			Sprints:      sprintsDeResolucion,
 			SinHistorias: len(historias) == 0,
 			SinSprints:   len(sprints) == 0,
 		},
@@ -174,6 +212,25 @@ func (p *Pantallas) registrarDefecto(w http.ResponseWriter, r *http.Request) {
 
 	_, err := p.casos.RegistrarDefecto.Ejecutar(r.Context(), id, historia, sprintDeteccion,
 		r.PostForm.Get("descripcion"), defecto.Severidad(r.PostForm.Get("severidad")))
+	if err != nil {
+		p.errores.ResponderError(w, r, err)
+		return
+	}
+	redirigir(w, r, rutaDeDefectos(id))
+}
+
+// cambiarEstadoDeDefecto cambia el estado del defecto (US-023). El estado y el sprint de resolucion se pasan
+// tal como llegan: un estado fuera de los cuatro, una transicion no permitida, un sprint que falta o sobra o
+// uno anterior al de deteccion los decide el dominio (RN-T021-7). Un defecto o un sprint de otro proyecto,
+// inexistente o mal formado es un 404 que resuelve el caso de uso (RN-T021-11, RN-T021-12).
+func (p *Pantallas) cambiarEstadoDeDefecto(w http.ResponseWriter, r *http.Request) {
+	id, defectoID := r.PathValue("id"), r.PathValue("defecto")
+	if _, err := leerFormulario(r); err != nil {
+		p.errores.ResponderError(w, r, err)
+		return
+	}
+	_, err := p.casos.CambiarEstadoDefecto.Ejecutar(r.Context(), id, defectoID,
+		defecto.Estado(r.PostForm.Get("estado")), r.PostForm.Get("sprint_resolucion"))
 	if err != nil {
 		p.errores.ResponderError(w, r, err)
 		return

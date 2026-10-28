@@ -58,8 +58,9 @@ type CasosDeUso struct {
 	AbrirNuevaRonda            *app.AbrirNuevaRonda
 	RegistrarAcuerdo           *app.RegistrarEstimacionAcordada
 	// Pantallas de defectos (T-021).
-	ListarDefectos   *app.ListarDefectos
-	RegistrarDefecto *app.RegistrarDefecto
+	ListarDefectos       *app.ListarDefectos
+	RegistrarDefecto     *app.RegistrarDefecto
+	CambiarEstadoDefecto *app.CambiarEstadoDefecto
 }
 
 // Pantallas son los handlers de las pantallas de proyectos, integrantes y backlog.
@@ -111,6 +112,7 @@ func (p *Pantallas) registrar(mux *http.ServeMux) {
 	// Defectos (T-021).
 	mux.HandleFunc("GET /proyectos/{id}/defectos", p.listaDeDefectos)
 	mux.HandleFunc("POST /proyectos/{id}/defectos", p.registrarDefecto)
+	mux.HandleFunc("POST /proyectos/{id}/defectos/{defecto}/estado", p.cambiarEstadoDeDefecto)
 }
 
 // ---------------------------------------------------------------- proyectos
