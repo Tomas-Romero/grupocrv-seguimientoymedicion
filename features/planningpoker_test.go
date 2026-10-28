@@ -225,6 +225,17 @@ func (p *pokerSobreApp) EstimacionAcordada(titulo string) (int, error) {
 	return valor, nil
 }
 
+// AbrirNuevaRonda es de US-017.
+func (p *pokerSobreApp) AbrirNuevaRonda(_, _ string) error { return errNuevaRondaSinConectar }
+
+// VotosDeRonda es de US-017.
+func (p *pokerSobreApp) VotosDeRonda(_ string, _ int) ([]steps.VotoRevelado, error) {
+	return nil, errNuevaRondaSinConectar
+}
+
+// errNuevaRondaSinConectar lo devuelve abrir una nueva ronda mientras no esta conectado.
+var errNuevaRondaSinConectar = errors.New("abrir una nueva ronda todavia no esta conectado a la aplicacion")
+
 // sesion devuelve la ultima sesion de la historia y el proyecto de la historia.
 func (p *pokerSobreApp) sesion(titulo string) (planningpoker.SesionPlanningPoker, string, error) {
 	itemID, proyectoID := p.historia(titulo)
