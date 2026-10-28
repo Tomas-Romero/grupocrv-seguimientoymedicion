@@ -58,7 +58,28 @@ func Revelar(s SesionPlanningPoker, integranteID string, v Votacion) (Revelacion
 		return Revelacion{}, err
 	}
 
-	r := Revelacion{SesionID: s.ID, Ronda: s.Ronda, Votos: []Voto{}, Faltaron: v.Faltan()}
+	r := resultado(v)
+	return Revelacion{
+		SesionID: s.ID, Ronda: s.Ronda,
+		Votos: r.Votos, Faltaron: r.Faltaron, Divergencia: r.Divergencia, Minimo: r.Minimo, Maximo: r.Maximo,
+	}, nil
+}
+
+// Resultado es el resultado de una ronda: sus votos, quienes faltaron, la divergencia y los
+// extremos, con el mismo significado que en Revelacion. US-017 lo usa para decidir si se abre
+// otra ronda y para leer las rondas anteriores.
+type Resultado struct {
+	Votos       []Voto
+	Faltaron    []string
+	Divergencia bool
+	Minimo      int
+	Maximo      int
+}
+
+// resultado arma el resultado de la votacion leyendo sus valores sin preguntar si se pueden
+// leer: quien la llama ya lo decidio (Revelar, porque es quien revela).
+func resultado(v Votacion) Resultado {
+	r := Resultado{Votos: []Voto{}, Faltaron: v.Faltan()}
 	for _, p := range v.Votaron() {
 		valor := v.votos[p]
 		r.Votos = append(r.Votos, Voto{ParticipanteID: p, Valor: valor})
@@ -70,5 +91,5 @@ func Revelar(s SesionPlanningPoker, integranteID string, v Votacion) (Revelacion
 		}
 	}
 	r.Divergencia = r.Minimo != r.Maximo
-	return r, nil
+	return r
 }
