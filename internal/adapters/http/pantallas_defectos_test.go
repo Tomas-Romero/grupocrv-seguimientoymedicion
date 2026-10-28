@@ -2,12 +2,20 @@ package httpadapter_test
 
 import (
 	"context"
+	"io"
+	"log/slog"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"regexp"
 	"strings"
 	"testing"
+	"testing/fstest"
+	"time"
 
+	httpadapter "github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/adapters/http"
+	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/adapters/memoria"
+	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/app"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/defecto"
 )
 
@@ -421,4 +429,403 @@ func TestPantallasDefectos_SprintCerradoYRepetidos(t *testing.T) {
 		t.Errorf("la lista tiene %d filas con la descripcion repetida, quiero 2", n)
 	}
 	contiene(t, lista, "Sprint 1")
+}
+
+func rutaDeEstado(proyectoID, defectoID string) string {
+	return rutaDeDefectos(proyectoID) + "/" + defectoID + "/estado"
+}
+
+// cambiar manda el formulario de un boton de la fila: el estado pedido y, si lo lleva, el sprint de resolucion.
+func (e entorno) cambiar(proyectoID, defectoID, estado, sprintResolucion string) *httptest.ResponseRecorder {
+	return e.post(rutaDeEstado(proyectoID, defectoID), url.Values{"estado": {estado}, "sprint_resolucion": {sprintResolucion}})
+}
+
+// segundoSprint cierra el Sprint 1 del escenario y abre el Sprint 2 (que empieza despues de que termina el 1).
+func (e entorno) segundoSprint(t *testing.T, d escenarioDeDefectos) string {
+	t.Helper()
+	if w := e.post(rutaDeSprint(d.proyecto, d.sprint)+"/cerrar", nil); w.Code != http.StatusSeeOther {
+		t.Fatalf("cerrar el sprint: %d %s", w.Code, w.Body.String())
+	}
+	segundo := url.Values{"sprint_goal": {"Otra meta"}, "fecha_inicio": {"2026-10-19"}, "fecha_fin": {"2026-11-01"}}
+	w := e.post("/proyectos/"+d.proyecto+"/sprints", segundo)
+	if w.Code != http.StatusSeeOther {
+		t.Fatalf("crear el segundo sprint: %d %s", w.Code, w.Body.String())
+	}
+	return idDeSprintEnLaRuta.FindStringSubmatch(w.Header().Get("Location"))[2]
+}
+
+// forzar deja el defecto en ese estado directamente en la base, como si otra persona lo hubiera cambiado
+// desde otra pestana: la pagina que se abrio antes queda desactualizada.
+func (e entorno) forzar(t *testing.T, d defecto.Defecto, estado defecto.Estado, sprintResolucion string) defecto.Defecto {
+	t.Helper()
+	anterior := d.Estado
+	d.Estado, d.SprintResolucionID = estado, sprintResolucion
+	if err := e.base.ActualizarEstadoDefecto(context.Background(), d, anterior); err != nil {
+		t.Fatalf("ActualizarEstadoDefecto: %v", err)
+	}
+	return d
+}
+
+// fila devuelve el <tr> de la lista que contiene el texto, que tiene que ser uno solo.
+func fila(t *testing.T, w *httptest.ResponseRecorder, texto string) string {
+	t.Helper()
+	var encontradas []string
+	for _, tr := range strings.Split(w.Body.String(), "<tr")[1:] {
+		if strings.Contains(tr, texto) {
+			encontradas = append(encontradas, tr)
+		}
+	}
+	if len(encontradas) != 1 {
+		t.Fatalf("hay %d filas con %q, quiero una:\n%s", len(encontradas), texto, w.Body.String())
+	}
+	return encontradas[0]
+}
+
+// defectoEnLaLista es el estado y el sprint de resolucion que muestra la fila del defecto.
+func defectoEnLaLista(t *testing.T, e entorno, proyecto, descripcion string) string {
+	t.Helper()
+	return fila(t, e.get(rutaDeDefectos(proyecto)), descripcion)
+}
+
+// T-021 / RN-T021-14, CA-T021-3: cada fila ofrece solo las transiciones validas desde el estado que muestra, y
+// cada boton lleva el estado pedido en un campo oculto. Solo "Resolver" lleva la lista del sprint de resolucion.
+func TestPantallasDefectos_BotonesSegunElEstado(t *testing.T) {
+	e := nuevoEntorno(t)
+	d := e.proyectoParaDefectos(t, "Demo")
+	e.segundoSprint(t, d)
+	abierto := e.defectoGuardado(t, d.proyecto, d.historia, d.sprint, "Fila abierta", defecto.SeveridadAlta)
+	enCorreccion := e.defectoGuardado(t, d.proyecto, d.historia, d.sprint, "Fila en correccion", defecto.SeveridadAlta)
+	resuelto := e.defectoGuardado(t, d.proyecto, d.historia, d.sprint, "Fila resuelta", defecto.SeveridadAlta)
+	descartado := e.defectoGuardado(t, d.proyecto, d.historia, d.sprint, "Fila descartada", defecto.SeveridadAlta)
+	e.forzar(t, enCorreccion, defecto.EstadoEnCorreccion, "")
+	e.forzar(t, resuelto, defecto.EstadoResuelto, e.base.Sprints(d.proyecto)[1].ID)
+	e.forzar(t, descartado, defecto.EstadoDescartado, "")
+
+	w := e.get(rutaDeDefectos(d.proyecto))
+	casos := []struct {
+		descripcion string
+		defecto     defecto.Defecto
+		botones     []string
+		estados     []string // valor del campo oculto de cada boton
+		conSprint   bool
+	}{
+		{"Fila abierta", abierto, []string{"En corrección", "Resolver", "Descartar"}, []string{"en_correccion", "resuelto", "descartado"}, true},
+		{"Fila en correccion", enCorreccion, []string{"Volver a abierto", "Resolver", "Descartar"}, []string{"abierto", "resuelto", "descartado"}, true},
+		{"Fila resuelta", resuelto, []string{"Reabrir"}, []string{"abierto"}, false},
+		{"Fila descartada", descartado, []string{"Reabrir"}, []string{"abierto"}, false},
+	}
+	todos := []string{"En corrección", "Volver a abierto", "Resolver", "Descartar", "Reabrir"}
+	for _, c := range casos {
+		t.Run(c.descripcion, func(t *testing.T) {
+			f := fila(t, w, c.descripcion)
+			for _, boton := range todos {
+				tiene := strings.Contains(f, `aria-label="`+boton+`: `+c.descripcion)
+				quiere := false
+				for _, b := range c.botones {
+					quiere = quiere || b == boton
+				}
+				if tiene != quiere {
+					t.Errorf("boton %q: presente=%v, quiero %v:\n%s", boton, tiene, quiere, f)
+				}
+			}
+			for _, estado := range c.estados {
+				if !strings.Contains(f, `name="estado" value="`+estado+`"`) {
+					t.Errorf("falta el campo oculto estado=%s:\n%s", estado, f)
+				}
+			}
+			if n := strings.Count(f, `hx-post="`+rutaDeEstado(d.proyecto, c.defecto.ID)+`"`); n != len(c.botones) {
+				t.Errorf("hay %d formularios hacia la ruta del cambio de estado, quiero %d:\n%s", n, len(c.botones), f)
+			}
+			if tiene := strings.Contains(f, `name="sprint_resolucion"`); tiene != c.conSprint {
+				t.Errorf("lista de sprint de resolucion presente=%v, quiero %v", tiene, c.conSprint)
+			}
+		})
+	}
+	// La lista de resolucion ofrece todos los sprints del proyecto, sin filtrar (RN-T021-15).
+	contiene(t, w, `<option value="">Elegí un sprint</option>`)
+	if n := strings.Count(fila(t, w, "Fila abierta"), "<option"); n != 3 {
+		t.Errorf("la lista de resolucion tiene %d opciones, quiero 3 (la inicial y los dos sprints)", n)
+	}
+}
+
+// T-021 / CA-T021-3, CL-T021-9, CL-T021-11: un defecto se pasa a en correccion, se resuelve con su sprint de
+// resolucion, se descarta y se reabre; cada cambio responde 303 sin HTMX y HX-Redirect con HTMX hacia la lista, y
+// la lista muestra el estado y el sprint de resolucion nuevos.
+func TestPantallasDefectos_CambiarElEstado(t *testing.T) {
+	e := nuevoEntorno(t)
+	d := e.proyectoParaDefectos(t, "Demo")
+	segundo := e.segundoSprint(t, d)
+	defecto1 := e.defectoGuardado(t, d.proyecto, d.historia, d.sprint, "Falla al guardar", defecto.SeveridadAlta)
+
+	pasos := []struct {
+		nombre, estado, sprint string
+		quiero                 []string
+		noQuiero               []string
+	}{
+		{"pasar a en correccion", "en_correccion", "", []string{"En corrección", "—", `aria-label="Volver a abierto: Falla al guardar"`}, []string{"Sprint 2"}},
+		{"resolver con el Sprint 2", "resuelto", segundo, []string{"Resuelto", "Sprint 2", `aria-label="Reabrir: Falla al guardar"`}, []string{`aria-label="Resolver: Falla al guardar"`, `aria-label="Descartar: Falla al guardar"`}},
+		{"reabrir", "abierto", "", []string{"Abierto", "—", `aria-label="Resolver: Falla al guardar"`}, []string{"Resuelto", `aria-label="Reabrir: Falla al guardar"`}},
+		{"descartar", "descartado", "", []string{"Descartado", "—", `aria-label="Reabrir: Falla al guardar"`}, []string{`aria-label="Descartar: Falla al guardar"`}},
+		{"reabrir el descartado", "abierto", "", []string{"Abierto", "—"}, []string{"Descartado"}},
+		{"volver a abierto desde en correccion", "en_correccion", "", []string{"En corrección"}, nil},
+		{"y volver a abierto", "abierto", "", []string{"Abierto"}, []string{"En corrección</td>"}},
+	}
+	for _, p := range pasos {
+		t.Run(p.nombre, func(t *testing.T) {
+			w := e.cambiar(d.proyecto, defecto1.ID, p.estado, p.sprint)
+			if w.Code != http.StatusSeeOther || w.Header().Get("Location") != rutaDeDefectos(d.proyecto) {
+				t.Fatalf("estado %d, Location=%q, cuerpo=%s; quiero 303 a la lista", w.Code, w.Header().Get("Location"), w.Body.String())
+			}
+			f := defectoEnLaLista(t, e, d.proyecto, "Falla al guardar")
+			for _, q := range p.quiero {
+				if !strings.Contains(f, q) {
+					t.Errorf("la fila no tiene %q:\n%s", q, f)
+				}
+			}
+			for _, q := range p.noQuiero {
+				if strings.Contains(f, q) {
+					t.Errorf("la fila no deberia tener %q:\n%s", q, f)
+				}
+			}
+		})
+	}
+
+	// Con HTMX responde HX-Redirect y el cuerpo vacio.
+	w := e.enviar(http.MethodPost, rutaDeEstado(d.proyecto, defecto1.ID), url.Values{"estado": {"en_correccion"}}, true)
+	if w.Code != http.StatusOK || w.Header().Get("HX-Redirect") != rutaDeDefectos(d.proyecto) || w.Body.Len() != 0 {
+		t.Errorf("con HTMX: %d, HX-Redirect=%q, cuerpo=%q; quiero 200, la lista y cuerpo vacio", w.Code, w.Header().Get("HX-Redirect"), w.Body.String())
+	}
+}
+
+// T-021 / CL-T021-9, CL-T021-11: resolver sin elegir sprint es ErrSprintResolucionFaltante en su campo; resolver en
+// un sprint cerrado o posterior al de deteccion se acepta; y resolver de nuevo con otro sprint deja el nuevo.
+func TestPantallasDefectos_Resolver(t *testing.T) {
+	e := nuevoEntorno(t)
+	d := e.proyectoParaDefectos(t, "Demo")
+	segundo := e.segundoSprint(t, d)
+	falla := e.defectoGuardado(t, d.proyecto, d.historia, d.sprint, "Falla", defecto.SeveridadAlta)
+
+	w := e.cambiar(d.proyecto, falla.ID, "resuelto", "")
+	if w.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("resolver sin sprint: %d, quiero 422", w.Code)
+	}
+	contiene(t, w, `data-campo="sprint_resolucion"`)
+	contiene(t, e.get(rutaDeDefectos(d.proyecto)), "Abierto")
+
+	// El Sprint 1 esta cerrado y es el de deteccion: se acepta (CL-023-5, CL-023-6).
+	if w := e.cambiar(d.proyecto, falla.ID, "resuelto", d.sprint); w.Code != http.StatusSeeOther {
+		t.Fatalf("resolver en el sprint cerrado: %d %s", w.Code, w.Body.String())
+	}
+	if f := defectoEnLaLista(t, e, d.proyecto, "Falla"); !strings.Contains(f, "Resuelto") || !strings.Contains(f, "Sprint 1") {
+		t.Errorf("la fila tiene que mostrar Resuelto en el Sprint 1:\n%s", f)
+	}
+
+	// Reabrir lo deja abierto y sin sprint de resolucion; resolverlo de nuevo con otro sprint deja el nuevo.
+	e.cambiar(d.proyecto, falla.ID, "abierto", "")
+	if f := defectoEnLaLista(t, e, d.proyecto, "Falla"); !strings.Contains(f, "Abierto") || strings.Contains(f, "Sprint 1</td><td class=\"py-2\">Sprint") {
+		t.Errorf("reabrir tiene que dejar el defecto abierto y sin sprint de resolucion:\n%s", f)
+	}
+	if w := e.cambiar(d.proyecto, falla.ID, "resuelto", segundo); w.Code != http.StatusSeeOther {
+		t.Fatalf("resolver con otro sprint: %d %s", w.Code, w.Body.String())
+	}
+	if f := defectoEnLaLista(t, e, d.proyecto, "Falla"); !strings.Contains(f, "Sprint 2") {
+		t.Errorf("la fila tiene que mostrar el nuevo sprint de resolucion:\n%s", f)
+	}
+}
+
+// T-021 / CL-T021-10, CA-T021-5: resolver con un sprint anterior al de deteccion (la lista lo ofrece) es
+// ErrSprintResolucionAnterior en el campo sprint_resolucion, con 409, y el defecto no cambia.
+func TestPantallasDefectos_ResolverEnUnSprintAnterior(t *testing.T) {
+	e := nuevoEntorno(t)
+	d := e.proyectoParaDefectos(t, "Demo")
+	segundo := e.segundoSprint(t, d)
+	deteccionEnElDos := d.datos("Detectado en el Sprint 2", "alta")
+	deteccionEnElDos.Set("sprint_deteccion", segundo)
+	if w := e.post(rutaDeDefectos(d.proyecto), deteccionEnElDos); w.Code != http.StatusSeeOther {
+		t.Fatalf("registrar: %d %s", w.Code, w.Body.String())
+	}
+	guardado := e.base.Defectos(d.proyecto)[0]
+
+	w := e.cambiar(d.proyecto, guardado.ID, "resuelto", d.sprint)
+	if w.Code != http.StatusConflict {
+		t.Fatalf("resolver en un sprint anterior: %d, quiero 409", w.Code)
+	}
+	contiene(t, w, `data-campo="sprint_resolucion"`)
+	if f := defectoEnLaLista(t, e, d.proyecto, "Detectado en el Sprint 2"); !strings.Contains(f, "Abierto") {
+		t.Errorf("el defecto no tiene que cambiar:\n%s", f)
+	}
+}
+
+// T-021 / CL-T021-12, CA-T021-5: con la pagina desactualizada se evalua el pedido contra el estado guardado:
+// descartar uno que otra persona ya resolvio, o volver a abierto uno que ya esta abierto, es
+// ErrTransicionInvalida en el campo estado, con 409 y sin cambiar nada; reabrir el resuelto es valido.
+func TestPantallasDefectos_PaginaDesactualizada(t *testing.T) {
+	e := nuevoEntorno(t)
+	d := e.proyectoParaDefectos(t, "Demo")
+	falla := e.defectoGuardado(t, d.proyecto, d.historia, d.sprint, "Falla", defecto.SeveridadAlta)
+
+	// La fila mostraba "Abierto", pero otra persona ya lo resolvio.
+	e.forzar(t, falla, defecto.EstadoResuelto, d.sprint)
+	w := e.cambiar(d.proyecto, falla.ID, "descartado", "")
+	if w.Code != http.StatusConflict {
+		t.Fatalf("descartar uno resuelto: %d, quiero 409", w.Code)
+	}
+	contiene(t, w, `data-campo="estado"`)
+	if f := defectoEnLaLista(t, e, d.proyecto, "Falla"); !strings.Contains(f, "Resuelto") {
+		t.Errorf("el defecto no tiene que cambiar:\n%s", f)
+	}
+
+	// Reabrir el resuelto si es una reapertura valida.
+	if w := e.cambiar(d.proyecto, falla.ID, "abierto", ""); w.Code != http.StatusSeeOther {
+		t.Errorf("reabrir el resuelto: %d, quiero 303", w.Code)
+	}
+	// Y "Volver a abierto" sobre uno que ya esta abierto no es una transicion.
+	w = e.cambiar(d.proyecto, falla.ID, "abierto", "")
+	if w.Code != http.StatusConflict {
+		t.Errorf("volver a abierto uno abierto: %d, quiero 409", w.Code)
+	}
+	contiene(t, w, `data-campo="estado"`)
+}
+
+// T-021 / CL-T021-13, CA-T021-5: un estado a mano fuera de los cuatro es ErrEstadoInvalido (422) en el campo estado, y
+// un sprint de resolucion con un estado distinto de resuelto es ErrSprintResolucionNoCorresponde (422) en su
+// campo; el defecto no cambia.
+func TestPantallasDefectos_EstadoMandadoAMano(t *testing.T) {
+	e := nuevoEntorno(t)
+	d := e.proyectoParaDefectos(t, "Demo")
+	falla := e.defectoGuardado(t, d.proyecto, d.historia, d.sprint, "Falla", defecto.SeveridadAlta)
+
+	casos := []struct {
+		nombre, estado, sprint, campo string
+	}{
+		{"estado fuera de los cuatro", "cerrado", "", "estado"},
+		{"estado vacio", "", "", "estado"},
+		{"sprint con un estado que no es resuelto", "descartado", d.sprint, "sprint_resolucion"},
+	}
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			w := e.cambiar(d.proyecto, falla.ID, c.estado, c.sprint)
+			if w.Code != http.StatusUnprocessableEntity {
+				t.Fatalf("estado %d, quiero 422:\n%s", w.Code, w.Body.String())
+			}
+			contiene(t, w, `data-campo="`+c.campo+`"`)
+			if f := defectoEnLaLista(t, e, d.proyecto, "Falla"); !strings.Contains(f, "Abierto") {
+				t.Errorf("el defecto no tiene que cambiar:\n%s", f)
+			}
+		})
+	}
+}
+
+// T-021 / RN-T021-11, RN-T021-12, RN-T021-10, CL-T021-15: un defecto solo se alcanza por la ruta de su proyecto, y un sprint
+// de resolucion tiene que ser de ese proyecto: lo de otro proyecto, inexistente o mal formado responde 404 y no
+// cambia nada.
+func TestPantallasDefectos_CambioQueNoCorresponde(t *testing.T) {
+	e := nuevoEntorno(t)
+	a := e.proyectoParaDefectos(t, "Proyecto A")
+	b := e.proyectoParaDefectos(t, "Proyecto B")
+	deA := e.defectoGuardado(t, a.proyecto, a.historia, a.sprint, "Defecto de A", defecto.SeveridadAlta)
+
+	// Control: por la ruta de su proyecto el defecto si se cambia. Sin esto, un 404 de cualquier ruta que no
+	// existe pasaria por un 404 de "no corresponde".
+	if w := e.cambiar(a.proyecto, deA.ID, "en_correccion", ""); w.Code != http.StatusSeeOther {
+		t.Fatalf("cambiar por la ruta de su proyecto: %d %s, quiero 303", w.Code, w.Body.String())
+	}
+
+	casos := []struct {
+		nombre, proyecto, defecto, sprint string
+	}{
+		{"defecto de otro proyecto", b.proyecto, deA.ID, ""},
+		{"defecto inexistente", a.proyecto, "00000000-0000-0000-0000-000000000000", ""},
+		{"defecto mal formado", a.proyecto, "no-es-un-uuid", ""},
+		{"proyecto inexistente", "00000000-0000-0000-0000-000000000000", deA.ID, ""},
+		{"proyecto mal formado", "no-es-un-uuid", deA.ID, ""},
+		{"sprint de resolucion de otro proyecto", a.proyecto, deA.ID, b.sprint},
+		{"sprint de resolucion inexistente", a.proyecto, deA.ID, "00000000-0000-0000-0000-000000000000"},
+		{"sprint de resolucion mal formado", a.proyecto, deA.ID, "no-es-un-uuid"},
+	}
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			estado := "resuelto"
+			if c.sprint == "" {
+				estado = "descartado"
+			}
+			if w := e.cambiar(c.proyecto, c.defecto, estado, c.sprint); w.Code != http.StatusNotFound {
+				t.Errorf("estado %d, quiero 404:\n%s", w.Code, w.Body.String())
+			}
+		})
+	}
+	if f := defectoEnLaLista(t, e, a.proyecto, "Defecto de A"); !strings.Contains(f, "En corrección") {
+		t.Errorf("el defecto no tiene que cambiar despues del control:\n%s", f)
+	}
+}
+
+// T-021 / RN-T021-17, RN-T021-9: cada control de la fila dice a que defecto corresponde con la accion y el comienzo de su
+// descripcion (hasta 40 caracteres, sin saltos de linea), y el HTML de la descripcion se escapa tambien ahi.
+func TestPantallasDefectos_NombresAccesibles(t *testing.T) {
+	e := nuevoEntorno(t)
+	d := e.proyectoParaDefectos(t, "Demo")
+	e.defectoGuardado(t, d.proyecto, d.historia, d.sprint, "Esperado: guarda\nObservado: falla al guardar el proyecto en la base", defecto.SeveridadAlta)
+	e.defectoGuardado(t, d.proyecto, d.historia, d.sprint, `<b>Corto</b>`, defecto.SeveridadBaja)
+
+	w := e.get(rutaDeDefectos(d.proyecto))
+	largo := "Esperado: guarda Observado: falla al gua"
+	contiene(t, w, `aria-label="Resolver: `+largo+`"`, `aria-label="Descartar: `+largo+`"`, `aria-label="En corrección: `+largo+`"`,
+		`aria-label="Sprint de resolución: `+largo+`"`)
+	noContiene(t, w, largo+"r")
+	contiene(t, w, `aria-label="Descartar: &lt;b&gt;Corto&lt;/b&gt;"`)
+}
+
+// baseQueCambiaAntesDeGuardar es la base en memoria con otra persona que cambia el defecto justo despues de que el
+// caso de uso lo leyo y antes de que lo guarde: la condicion de carrera de CL-023-14.
+type baseQueCambiaAntesDeGuardar struct {
+	*memoria.Base
+	antes func()
+}
+
+func (b baseQueCambiaAntesDeGuardar) ActualizarEstadoDefecto(ctx context.Context, d defecto.Defecto, anterior defecto.Estado) error {
+	b.antes()
+	return b.Base.ActualizarEstadoDefecto(ctx, d, anterior)
+}
+
+// entornoConBase arma el router real con los casos de uso de las pantallas de defectos sobre la base indicada para
+// el cambio de estado, para probar fallas que la base en memoria no produce sola.
+func entornoConBase(base *memoria.Base, cambio app.RepositorioCambioDeEstadoDefecto) entorno {
+	casos := httpadapter.CasosDeUso{
+		ConsultarProyecto:    app.NuevoConsultarProyecto(base),
+		ListarBacklog:        app.NuevoListarBacklog(base),
+		ListarSprints:        app.NuevoListarSprints(base),
+		CrearItem:            app.NuevoCrearItemBacklog(base, time.Now),
+		CrearSprint:          app.NuevoCrearSprint(base),
+		CrearProyecto:        app.NuevoCrearProyecto(base),
+		ListarDefectos:       app.NuevoListarDefectos(base),
+		RegistrarDefecto:     app.NuevoRegistrarDefecto(base),
+		CambiarEstadoDefecto: app.NuevoCambiarEstadoDefecto(cambio),
+	}
+	manejador := httpadapter.NuevoManejadorDeErrores(httpadapter.CatalogoDeErrores(), slog.New(slog.NewTextHandler(io.Discard, nil)))
+	router := httpadapter.NuevoRouter(verificadorFalso{}, time.Second, http.FS(fstest.MapFS{}),
+		httpadapter.ConPantallas(httpadapter.NuevasPantallas(casos, manejador)))
+	return entorno{router: router, base: base}
+}
+
+// T-021 / CL-T021-14: dos cambios simultaneos del mismo defecto: el segundo responde ErrDefectoModificado (409, sin
+// campo) y no cambia nada; la pagina queda como estaba.
+func TestPantallasDefectos_CambiosSimultaneos(t *testing.T) {
+	base := memoria.NuevaBase()
+	var otraPersona func()
+	e := entornoConBase(base, baseQueCambiaAntesDeGuardar{Base: base, antes: func() { otraPersona() }})
+	d := e.proyectoParaDefectos(t, "Demo")
+	falla := e.defectoGuardado(t, d.proyecto, d.historia, d.sprint, "Falla", defecto.SeveridadAlta)
+	otraPersona = func() {
+		otraPersona = func() {}
+		e.forzar(t, falla, defecto.EstadoEnCorreccion, "")
+	}
+
+	w := e.cambiar(d.proyecto, falla.ID, "descartado", "")
+	if w.Code != http.StatusConflict {
+		t.Fatalf("estado %d, quiero 409:\n%s", w.Code, w.Body.String())
+	}
+	noContiene(t, w, "data-campo=")
+	if guardados := base.Defectos(d.proyecto); len(guardados) != 1 || guardados[0].Estado != defecto.EstadoEnCorreccion {
+		t.Errorf("el defecto tiene que quedar como lo dejo la otra persona (en correccion): %+v", guardados)
+	}
 }
