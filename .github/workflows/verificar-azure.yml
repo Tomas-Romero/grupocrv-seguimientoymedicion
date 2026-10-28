@@ -1,0 +1,230 @@
+name: Verificar Azure (solo lectura)
+
+# Diagnostico a mano (Actions > Verificar Azure > Run workflow) para correr ANTES del primer despliegue y
+# cada vez que se cambie una credencial. No crea, cambia ni borra nada en Azure, no publica ninguna imagen y
+# no despliega: solo lee. Comprueba, con las credenciales y variables reales del Environment "azure":
+#   - que esten los secretos y las variables (dice si estan, nunca sus valores);
+#   - que el nombre de la Container App cumpla el limite de Azure (32 caracteres);
+#   - que la base de datos (DATABASE_URL) acepte la conexion con nuestro driver;
+#   - que el service principal pueda entrar a Azure y ver el grupo de recursos, el entorno de Container Apps y
+#     la Container App (si ya existe), y con que roles cuenta;
+#   - que la clave del registro (ACR_PASSWORD) funcione y que etiquetas de la imagen del grupo hay.
+# El resumen de la ejecucion deja una tabla con cada comprobacion. Como lee el Environment azure, solo corre
+# desde main.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verificar-azure
+  cancel-in-progress: false
+
+jobs:
+  verificar:
+    name: Verificar la configuracion
+    runs-on: ubuntu-latest
+    environment: azure
+    env:
+      ACR_NAME: ${{ vars.ACR_NAME || 'ingcalidad2026' }}
+      REGISTRO: ${{ vars.ACR_URL || format('{0}.azurecr.io', vars.ACR_NAME || 'ingcalidad2026') }}
+      ACR_USUARIO: ${{ vars.ACR_USERNAME || vars.ACR_NAME || 'ingcalidad2026' }}
+      IMAGEN: ${{ vars.IMAGE_NAME || 'grupo03-grupocrv' }}
+      GRUPO_RECURSOS: ${{ vars.RESOURCE_GROUP || vars.AZURE_RESOURCE_GROUP || 'frsrutn' }}
+      APP: ${{ vars.CONTAINER_APP_NAME || 'grupo03-grupocrv-seguimiento' }}
+      ENTORNO_APPS: ${{ vars.CONTAINER_APPS_ENV || vars.AZURE_CONTAINERAPPS_ENVIRONMENT }}
+      # Solo se pasa si el secreto existe, nunca su valor.
+      TIENE_CREDENCIALES: ${{ secrets.AZURE_CREDENTIALS != '' }}
+      TIENE_BASE: ${{ secrets.DATABASE_URL != '' }}
+      TIENE_CLAVE_ACR: ${{ secrets.ACR_PASSWORD != '' }}
+    steps:
+      - name: Revisar secretos, variables y nombres
+        id: datos
+        run: |
+          set -uo pipefail
+          falta=0
+          {
+            echo "### Verificacion de Azure (solo lectura)"
+            echo ""
+            echo "| Comprobacion | Resultado |"
+            echo "|---|---|"
+          } >> "$GITHUB_STEP_SUMMARY"
+          fila() { echo "| $1 | $2 |" >> "$GITHUB_STEP_SUMMARY"; }
+
+          for par in "AZURE_CREDENTIALS:$TIENE_CREDENCIALES" "DATABASE_URL:$TIENE_BASE" "ACR_PASSWORD:$TIENE_CLAVE_ACR"; do
+            nombre=${par%%:*}
+            if [ "${par#*:}" = "true" ]; then
+              fila "Secreto \`$nombre\`" "esta cargado"
+            elif [ "$nombre" = "ACR_PASSWORD" ]; then
+              fila "Secreto \`$nombre\`" "no esta (opcional: se usa el service principal para el registro)"
+            else
+              fila "Secreto \`$nombre\`" "**FALTA**"
+              falta=1
+            fi
+          done
+
+          if [ -n "$ENTORNO_APPS" ]; then
+            fila "Entorno de Container Apps" "\`$ENTORNO_APPS\`"
+          else
+            fila "Entorno de Container Apps" "sin variable (solo hace falta si la app todavia no existe)"
+          fi
+          fila "Registro" "\`$REGISTRO\` (usuario \`$ACR_USUARIO\`)"
+          fila "Grupo de recursos" "\`$GRUPO_RECURSOS\`"
+          fila "Imagen" "\`$IMAGEN\`"
+
+          case "$APP" in
+            grupo03-*) ;;
+            *) fila "Nombre de la Container App" "**\`$APP\` no empieza con grupo03-**"; falta=1 ;;
+          esac
+          if [ "${#APP}" -gt 32 ] || ! [[ "$APP" =~ ^[a-z][a-z0-9-]*[a-z0-9]$ ]]; then
+            fila "Nombre de la Container App" "**\`$APP\` (${#APP} caracteres) no es valido en Azure: maximo 32, minusculas, numeros y guiones**"
+            falta=1
+          else
+            fila "Nombre de la Container App" "\`$APP\` (${#APP} caracteres, valido)"
+          fi
+          echo "falta=$falta" >> "$GITHUB_OUTPUT"
+
+      # La base de Neon: el mismo motor y el mismo formato que usa la app al arrancar.
+      - name: Probar la base de datos (DATABASE_URL)
+        id: base
+        if: env.TIENE_BASE == 'true'
+        continue-on-error: true
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          PGCONNECT_TIMEOUT: "40"
+        run: |
+          set -uo pipefail
+          fila() { echo "| $1 | $2 |" >> "$GITHUB_STEP_SUMMARY"; }
+          if [[ "$DATABASE_URL" == *channel_binding* ]]; then
+            fila "Base de datos: formato" "**la cadena tiene channel_binding: hay que quitarlo (la app no arranca con el)**"
+            exit 1
+          fi
+          if [[ "$DATABASE_URL" != *sslmode=* ]]; then
+            fila "Base de datos: formato" "**falta sslmode=require**"
+            exit 1
+          fi
+          if [[ "$DATABASE_URL" == *-pooler* ]]; then
+            fila "Base de datos: formato" "usa el host con pooler: conviene la conexion directa (sin -pooler)"
+          else
+            fila "Base de datos: formato" "sin channel_binding, con sslmode, conexion directa"
+          fi
+          if version=$(psql "$DATABASE_URL" --tuples-only --no-align --command "select version()" 2>&1); then
+            fila "Base de datos: conexion" "responde (${version%%,*})"
+          else
+            fila "Base de datos: conexion" "**no responde** (${version//$'\n'/ })"
+            exit 1
+          fi
+
+      # azure/login v3.1.0
+      - name: Login en Azure
+        id: login
+        if: env.TIENE_CREDENCIALES == 'true'
+        continue-on-error: true
+        uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Instalar la extension containerapp de la CLI
+        if: steps.login.outcome == 'success'
+        run: az extension add --name containerapp --upgrade --yes --only-show-errors
+
+      # Cada comprobacion de Azure es independiente: una que falla no corta a las demas.
+      - name: Leer lo que existe en Azure
+        id: azure
+        if: steps.login.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -uo pipefail
+          fila() { echo "| $1 | $2 |" >> "$GITHUB_STEP_SUMMARY"; }
+          jsonc() { az "$@" --output json --only-show-errors | jq -c .; }
+          comprobar() { # $1 descripcion, $2 ... comando; la salida (una linea) va a la tabla
+            local descripcion=$1 salida
+            shift
+            if salida=$("$@" 2>&1); then
+              fila "$descripcion" "${salida//$'\n'/ }"
+            else
+              fila "$descripcion" "**no se pudo:** ${salida//$'\n'/ }"
+              return 1
+            fi
+          }
+          fallas=0
+
+          comprobar "Cuenta de Azure" jsonc account show --query "{suscripcion:name, estado:state}" || fallas=$((fallas + 1))
+          comprobar "Grupo de recursos \`$GRUPO_RECURSOS\`" jsonc group show --name "$GRUPO_RECURSOS" --query "{region:location, estado:properties.provisioningState}" || fallas=$((fallas + 1))
+
+          if [ -n "$ENTORNO_APPS" ]; then
+            comprobar "Entorno de Container Apps \`$ENTORNO_APPS\`" jsonc containerapp env show --name "$ENTORNO_APPS" --resource-group "$GRUPO_RECURSOS" \
+              --query "{region:location, estado:properties.provisioningState}" || fallas=$((fallas + 1))
+          fi
+
+          if az containerapp show --name "$APP" --resource-group "$GRUPO_RECURSOS" --only-show-errors > /dev/null 2>&1; then
+            comprobar "Container App \`$APP\`" jsonc containerapp show --name "$APP" --resource-group "$GRUPO_RECURSOS" \
+              --query "{estado:properties.provisioningState, cpu:properties.template.containers[0].resources.cpu, memoria:properties.template.containers[0].resources.memory, minimoReplicas:properties.template.scale.minReplicas, maximoReplicas:properties.template.scale.maxReplicas, url:properties.configuration.ingress.fqdn}" \
+              || fallas=$((fallas + 1))
+          else
+            fila "Container App \`$APP\`" "todavia no existe (el primer despliegue la crea, y para eso hace falta la variable del entorno)"
+          fi
+          comprobar "Container Apps del grupo (grupo03-*) en el grupo de recursos" az containerapp list --resource-group "$GRUPO_RECURSOS" \
+            --query "[?starts_with(name, 'grupo03-')].name" --output tsv --only-show-errors || fallas=$((fallas + 1))
+
+          comprobar "Registro \`$ACR_NAME\`" jsonc acr show --name "$ACR_NAME" --query "{plan:sku.name, usuarioAdmin:adminUserEnabled}" \
+            || fila "Registro \`$ACR_NAME\`" "el service principal no puede leerlo (no es grave si ACR_PASSWORD funciona)"
+
+          # Los roles del service principal, sin mostrar el identificador de la suscripcion.
+          if sp=$(az account show --query user.name --output tsv --only-show-errors 2> /dev/null) && [ -n "$sp" ]; then
+            if roles=$(az role assignment list --assignee "$sp" --all --query "[].join(' en ', [roleDefinitionName, split(scope, '/')[-1]])" --output tsv --only-show-errors 2>&1); then
+              fila "Roles del service principal" "${roles//$'\n'/ ; }"
+            else
+              fila "Roles del service principal" "no se pudieron leer (el service principal no puede listar roles)"
+            fi
+          fi
+          echo "fallas=$fallas"
+          [ "$fallas" -eq 0 ]
+
+      - name: Probar el registro (ACR_PASSWORD) y ver las etiquetas del grupo
+        id: registro
+        if: env.TIENE_CLAVE_ACR == 'true'
+        continue-on-error: true
+        env:
+          ACR_PASSWORD: ${{ secrets.ACR_PASSWORD }}
+        run: |
+          set -uo pipefail
+          fila() { echo "| $1 | $2 |" >> "$GITHUB_STEP_SUMMARY"; }
+          if printf '%s' "$ACR_PASSWORD" | docker login "$REGISTRO" --username "$ACR_USUARIO" --password-stdin > /dev/null 2>&1; then
+            fila "Registro: usuario y clave (ACR_PASSWORD)" "el login funciona"
+          else
+            fila "Registro: usuario y clave (ACR_PASSWORD)" "**el login falla** (usuario \`$ACR_USUARIO\`): revisar ACR_USERNAME y la clave"
+            exit 1
+          fi
+          if etiquetas=$(az acr repository show-tags --name "$ACR_NAME" --repository "$IMAGEN" --username "$ACR_USUARIO" --password "$ACR_PASSWORD" --output tsv 2>&1); then
+            cantidad=$(printf '%s\n' "$etiquetas" | grep -c '^sha-' || true)
+            fila "Imagen \`$IMAGEN\` en el registro" "$cantidad etiquetas sha-* (todavia no hay imagen si es 0)"
+          else
+            fila "Imagen \`$IMAGEN\` en el registro" "todavia no hay un repositorio con ese nombre (lo crea la primera publicacion)"
+          fi
+
+      - name: Resultado
+        if: always()
+        env:
+          FALTA: ${{ steps.datos.outputs.falta }}
+          BASE: ${{ steps.base.outcome }}
+          LOGIN: ${{ steps.login.outcome }}
+          AZURE: ${{ steps.azure.outcome }}
+          REGISTRO_CLAVE: ${{ steps.registro.outcome }}
+        run: |
+          bien=1
+          [ "$FALTA" = "0" ] || bien=0
+          for resultado in "$BASE" "$LOGIN" "$AZURE" "$REGISTRO_CLAVE"; do
+            [ "$resultado" != "failure" ] || bien=0
+          done
+          {
+            echo ""
+            if [ "$bien" = "1" ]; then
+              echo "Todo lo que se pudo comprobar esta bien. Esta comprobacion no cambio nada en Azure ni gasto creditos."
+            else
+              echo "**Hay algo para corregir antes de desplegar** (ver las filas marcadas)."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          [ "$bien" = "1" ]
