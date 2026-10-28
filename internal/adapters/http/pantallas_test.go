@@ -53,6 +53,12 @@ func nuevoEntorno(t *testing.T) entorno {
 		ConsultarEsfuerzo:          app.NuevoConsultarEsfuerzo(base),
 		CompararEsfuerzo:           app.NuevoCompararEsfuerzo(base),
 		Ahora:                      ahora,
+		IniciarSesionPlanningPoker: app.NuevoIniciarSesionPlanningPoker(base),
+		ConsultarSesion:            app.NuevoConsultarSesionPlanningPoker(base),
+		VotarEnSesion:              app.NuevoVotarEnSesion(base),
+		RevelarVotos:               app.NuevoRevelarVotos(base),
+		AbrirNuevaRonda:            app.NuevoAbrirNuevaRonda(base),
+		RegistrarAcuerdo:           app.NuevoRegistrarEstimacionAcordada(base),
 	}
 	manejador := httpadapter.NuevoManejadorDeErrores(httpadapter.CatalogoDeErrores(), slog.New(slog.NewTextHandler(io.Discard, nil)))
 	router := httpadapter.NuevoRouter(verificadorFalso{}, time.Second, http.FS(fstest.MapFS{}),
