@@ -9,6 +9,7 @@
 //	/proyectos/{id}                resumen de un proyecto
 //	/proyectos/{id}/backlog        backlog
 //	/proyectos/{id}/sprints        sprints
+//	/proyectos/{id}/esfuerzo       esfuerzo (horas registradas)
 //	/proyectos/{id}/metricas       metricas
 //	/proyectos/{id}/defectos       defectos
 package plantillas
@@ -43,6 +44,7 @@ const (
 	SeccionResumen   Seccion = "resumen"
 	SeccionBacklog   Seccion = "backlog"
 	SeccionSprints   Seccion = "sprints"
+	SeccionEsfuerzo  Seccion = "esfuerzo"
 	SeccionMetricas  Seccion = "metricas"
 	SeccionDefectos  Seccion = "defectos"
 )
@@ -94,6 +96,7 @@ func (p Pagina) EnlacesProyecto() []Enlace {
 		{Texto: "Resumen", Href: base, Activo: p.Activo == SeccionResumen},
 		{Texto: "Backlog", Href: base + "/backlog", Activo: p.Activo == SeccionBacklog},
 		{Texto: "Sprints", Href: base + "/sprints", Activo: p.Activo == SeccionSprints},
+		{Texto: "Esfuerzo", Href: base + "/esfuerzo", Activo: p.Activo == SeccionEsfuerzo},
 		{Texto: "Métricas", Href: base + "/metricas", Activo: p.Activo == SeccionMetricas},
 		{Texto: "Defectos", Href: base + "/defectos", Activo: p.Activo == SeccionDefectos},
 	}
