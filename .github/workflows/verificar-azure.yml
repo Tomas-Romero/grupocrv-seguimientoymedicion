@@ -4,10 +4,10 @@ name: Verificar Azure (solo lectura)
 # cada vez que se cambie una credencial. No crea, cambia ni borra nada en Azure, no publica ninguna imagen y
 # no despliega: solo lee. Comprueba, con las credenciales y variables reales del Environment "azure":
 #   - que esten los secretos y las variables (dice si estan, nunca sus valores);
-#   - que el nombre de la Container App cumpla el limite de Azure (32 caracteres);
+#   - que el nombre del contenedor y la etiqueta DNS cumplan los limites de Azure Container Instances (ACI);
 #   - que la base de datos (DATABASE_URL) acepte la conexion con nuestro driver;
-#   - que el service principal pueda entrar a Azure y ver el grupo de recursos, el entorno de Container Apps y
-#     la Container App (si ya existe), y con que roles cuenta;
+#   - que el service principal pueda entrar a Azure y ver el grupo de recursos y el contenedor (si ya existe), si el
+#     proveedor de ACI esta registrado y con que roles cuenta;
 #   - que la clave del registro (ACR_PASSWORD) funcione y que etiquetas de la imagen del grupo hay.
 # El resumen de la ejecucion deja una tabla con cada comprobacion. Como lee el Environment azure, solo corre
 # desde main.
@@ -33,13 +33,14 @@ jobs:
       ACR_USUARIO: ${{ vars.ACR_USERNAME || vars.ACR_NAME || 'ingcalidad2026' }}
       IMAGEN: ${{ vars.IMAGE_NAME || 'grupo03-grupocrv' }}
       GRUPO_RECURSOS: ${{ vars.RESOURCE_GROUP || vars.AZURE_RESOURCE_GROUP || 'frsrutn' }}
-      APP: ${{ vars.CONTAINER_APP_NAME || 'grupo03-grupocrv-seguimiento' }}
-      ENTORNO_APPS: ${{ vars.CONTAINER_APPS_ENV || vars.AZURE_CONTAINERAPPS_ENVIRONMENT }}
+      CONTENEDOR: ${{ vars.CONTAINER_APP_NAME || vars.ACI_NAME || 'grupo03-grupocrv-seguimientoymedicion' }}
+      ETIQUETA_DNS: ${{ vars.ACI_DNS_LABEL || vars.CONTAINER_APP_NAME || vars.ACI_NAME || 'grupo03-grupocrv-seguimientoymedicion' }}
       # Solo se pasa si el secreto existe, nunca su valor.
       TIENE_CREDENCIALES: ${{ secrets.AZURE_CREDENTIALS != '' }}
       TIENE_BASE: ${{ secrets.DATABASE_URL != '' }}
       TIENE_CLAVE_ACR: ${{ secrets.ACR_PASSWORD != '' }}
       CD_ACTIVO: ${{ vars.CD_ACTIVO || 'false' }}
+      MANTENER_ENCENDIDO: ${{ vars.MANTENER_ENCENDIDO || 'false' }}
     steps:
       - name: Revisar secretos, variables y nombres
         id: datos
@@ -58,19 +59,12 @@ jobs:
             nombre=${par%%:*}
             if [ "${par#*:}" = "true" ]; then
               fila "Secreto \`$nombre\`" "esta cargado"
-            elif [ "$nombre" = "ACR_PASSWORD" ]; then
-              fila "Secreto \`$nombre\`" "no esta (opcional: se usa el service principal para el registro)"
             else
               fila "Secreto \`$nombre\`" "**FALTA**"
               falta=1
             fi
           done
 
-          if [ -n "$ENTORNO_APPS" ]; then
-            fila "Entorno de Container Apps" "\`$ENTORNO_APPS\`"
-          else
-            fila "Entorno de Container Apps" "sin variable (solo hace falta si la app todavia no existe)"
-          fi
           fila "Registro" "\`$REGISTRO\` (usuario \`$ACR_USUARIO\`)"
           fila "Grupo de recursos" "\`$GRUPO_RECURSOS\`"
           fila "Imagen" "\`$IMAGEN\`"
@@ -79,16 +73,27 @@ jobs:
           else
             fila "Despliegue automatico (\`CD_ACTIVO\`)" "apagado (solo se valida el Dockerfile)"
           fi
+          if [ "$MANTENER_ENCENDIDO" = "true" ]; then
+            fila "Contenedor despues de desplegar (\`MANTENER_ENCENDIDO\`)" "**se mantiene ENCENDIDO** (cobra por segundo mientras tanto)"
+          else
+            fila "Contenedor despues de desplegar (\`MANTENER_ENCENDIDO\`)" "se apaga solo (y se apaga cada noche si quedo encendido)"
+          fi
 
-          case "$APP" in
+          case "$CONTENEDOR" in
             grupo03-*) ;;
-            *) fila "Nombre de la Container App" "**\`$APP\` no empieza con grupo03-**"; falta=1 ;;
+            *) fila "Nombre del contenedor" "**\`$CONTENEDOR\` no empieza con grupo03-**"; falta=1 ;;
           esac
-          if [ "${#APP}" -gt 32 ] || ! [[ "$APP" =~ ^[a-z][a-z0-9-]*[a-z0-9]$ ]]; then
-            fila "Nombre de la Container App" "**\`$APP\` (${#APP} caracteres) no es valido en Azure: maximo 32, minusculas, numeros y guiones**"
+          if [ "${#CONTENEDOR}" -gt 63 ] || ! [[ "$CONTENEDOR" =~ ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$ ]]; then
+            fila "Nombre del contenedor" "**\`$CONTENEDOR\` (${#CONTENEDOR} caracteres) no es valido en ACI: maximo 63, minusculas, numeros y guiones**"
             falta=1
           else
-            fila "Nombre de la Container App" "\`$APP\` (${#APP} caracteres, valido)"
+            fila "Nombre del contenedor" "\`$CONTENEDOR\` (${#CONTENEDOR} caracteres, valido en ACI)"
+          fi
+          if [ "${#ETIQUETA_DNS}" -lt 5 ] || [ "${#ETIQUETA_DNS}" -gt 63 ] || ! [[ "$ETIQUETA_DNS" =~ ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$ ]]; then
+            fila "Etiqueta DNS" "**\`$ETIQUETA_DNS\` no es valida: de 5 a 63 caracteres, minusculas, numeros y guiones**"
+            falta=1
+          else
+            fila "Etiqueta DNS" "\`$ETIQUETA_DNS\` (la URL sera http://$ETIQUETA_DNS.<region>.azurecontainer.io:8080)"
           fi
           echo "falta=$falta" >> "$GITHUB_OUTPUT"
 
@@ -132,10 +137,6 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Instalar la extension containerapp de la CLI
-        if: steps.login.outcome == 'success'
-        run: az extension add --name containerapp --upgrade --yes --only-show-errors
-
       # Cada comprobacion de Azure es independiente: una que falla no corta a las demas.
       - name: Leer lo que existe en Azure
         id: azure
@@ -159,20 +160,17 @@ jobs:
 
           comprobar "Cuenta de Azure" jsonc account show --query "{suscripcion:name, estado:state}" || fallas=$((fallas + 1))
           comprobar "Grupo de recursos \`$GRUPO_RECURSOS\`" jsonc group show --name "$GRUPO_RECURSOS" --query "{region:location, estado:properties.provisioningState}" || fallas=$((fallas + 1))
+          comprobar "Proveedor Microsoft.ContainerInstance (ACI)" az provider show --namespace Microsoft.ContainerInstance --query registrationState --output tsv --only-show-errors \
+            || fila "Proveedor Microsoft.ContainerInstance (ACI)" "no se pudo leer (el service principal puede no tener permiso; si no esta Registered, ACI no funciona)"
 
-          if [ -n "$ENTORNO_APPS" ]; then
-            comprobar "Entorno de Container Apps \`$ENTORNO_APPS\`" jsonc containerapp env show --name "$ENTORNO_APPS" --resource-group "$GRUPO_RECURSOS" \
-              --query "{region:location, estado:properties.provisioningState}" || fallas=$((fallas + 1))
-          fi
-
-          if az containerapp show --name "$APP" --resource-group "$GRUPO_RECURSOS" --only-show-errors > /dev/null 2>&1; then
-            comprobar "Container App \`$APP\`" jsonc containerapp show --name "$APP" --resource-group "$GRUPO_RECURSOS" \
-              --query "{estado:properties.provisioningState, cpu:properties.template.containers[0].resources.cpu, memoria:properties.template.containers[0].resources.memory, minimoReplicas:properties.template.scale.minReplicas, maximoReplicas:properties.template.scale.maxReplicas, url:properties.configuration.ingress.fqdn}" \
+          if az container show --name "$CONTENEDOR" --resource-group "$GRUPO_RECURSOS" --only-show-errors > /dev/null 2>&1; then
+            comprobar "Contenedor \`$CONTENEDOR\`" jsonc container show --name "$CONTENEDOR" --resource-group "$GRUPO_RECURSOS" \
+              --query "{estado:instanceView.state, cpu:containers[0].resources.requests.cpu, memoriaGb:containers[0].resources.requests.memoryInGb, url:ipAddress.fqdn, reinicio:restartPolicy}" \
               || fallas=$((fallas + 1))
           else
-            fila "Container App \`$APP\`" "todavia no existe (el primer despliegue la crea, y para eso hace falta la variable del entorno)"
+            fila "Contenedor \`$CONTENEDOR\`" "todavia no existe (el primer despliegue lo crea)"
           fi
-          comprobar "Container Apps del grupo (grupo03-*) en el grupo de recursos" az containerapp list --resource-group "$GRUPO_RECURSOS" \
+          comprobar "Contenedores del grupo (grupo03-*) en el grupo de recursos" az container list --resource-group "$GRUPO_RECURSOS" \
             --query "[?starts_with(name, 'grupo03-')].name" --output tsv --only-show-errors || fallas=$((fallas + 1))
 
           comprobar "Registro \`$ACR_NAME\`" jsonc acr show --name "$ACR_NAME" --query "{plan:sku.name, usuarioAdmin:adminUserEnabled}" \
@@ -199,7 +197,7 @@ jobs:
           set -uo pipefail
           fila() { echo "| $1 | $2 |" >> "$GITHUB_STEP_SUMMARY"; }
           if printf '%s' "$ACR_PASSWORD" | docker login "$REGISTRO" --username "$ACR_USUARIO" --password-stdin > /dev/null 2>&1; then
-            fila "Registro: usuario y clave (ACR_PASSWORD)" "el login funciona"
+            fila "Registro: usuario y clave (ACR_PASSWORD)" "el login funciona (es lo que usa ACI para bajar la imagen)"
           else
             fila "Registro: usuario y clave (ACR_PASSWORD)" "**el login falla** (usuario \`$ACR_USUARIO\`): revisar ACR_USERNAME y la clave"
             exit 1
