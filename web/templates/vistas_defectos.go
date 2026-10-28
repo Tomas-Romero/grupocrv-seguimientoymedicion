@@ -18,7 +18,20 @@ type FilaDefecto struct {
 	SprintResolucion string
 }
 
-// VistaDefectos es la lista de defectos de un proyecto.
+// FormDefecto es el formulario de alta de un defecto. Cada lista de opciones trae como primera una
+// opcion sin valor, para que la persona tenga que elegir (RN-T021-15). SinHistorias y SinSprints
+// muestran el aviso de que todavia no hay nada para elegir (CL-T021-2).
+type FormDefecto struct {
+	Accion       string
+	Severidades  []Opcion
+	Historias    []Opcion
+	Sprints      []Opcion
+	SinHistorias bool
+	SinSprints   bool
+}
+
+// VistaDefectos es la lista de defectos de un proyecto con el formulario para registrar uno.
 type VistaDefectos struct {
 	Defectos []FilaDefecto
+	Alta     FormDefecto
 }

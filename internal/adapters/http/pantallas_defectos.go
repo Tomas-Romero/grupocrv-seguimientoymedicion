@@ -4,10 +4,22 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/app"
+	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/backlog"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/defecto"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/sprint"
+	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/platform/errores"
 	plantillas "github.com/Tomas-Romero/grupocrv-seguimientoymedicion/web/templates"
 )
+
+// Textos de los dos campos que la pantalla revisa antes de llamar al caso de uso (RN-T021-5). Son los
+// unicos mensajes de esta pantalla que no salen del catalogo de errores.
+const (
+	mensajeHistoriaSinElegir = "Elegí la historia relacionada"
+	mensajeSprintSinElegir   = "Elegí el sprint de detección"
+)
+
+func rutaDeDefectos(proyectoID string) string { return rutaDeProyecto(proyectoID) + "/defectos" }
 
 // Handlers de las pantallas de defectos (spec T-021). Igual que los de T-011 y T-015, solo leen la
 // peticion, llaman a un caso de uso y escriben la respuesta (RN-T021-1).
@@ -49,7 +61,40 @@ func textoDeSprintDeDefecto(numero int) string {
 	return sprint.Sprint{Numero: numero}.Nombre()
 }
 
-// listaDeDefectos es la pantalla con la lista de defectos del proyecto (RN-T021-2).
+// opcionesDeSeveridad son las cuatro severidades con su etiqueta, tras una opcion inicial sin valor
+// (RN-T021-15): la persona tiene que elegir una, no hay una por defecto.
+func opcionesDeSeveridad() []plantillas.Opcion {
+	severidades := []defecto.Severidad{defecto.SeveridadCritica, defecto.SeveridadAlta, defecto.SeveridadMedia, defecto.SeveridadBaja}
+	opciones := []plantillas.Opcion{{Valor: "", Texto: "Elegí una severidad"}}
+	for _, s := range severidades {
+		opciones = append(opciones, plantillas.Opcion{Valor: string(s), Texto: textoDeSeveridad(s)})
+	}
+	return opciones
+}
+
+// opcionesDeHistoriasDeDefecto son las historias del backlog como "#N titulo", en el orden en que las
+// devuelve ListarBacklog (RN-T021-16), tras una opcion inicial sin valor.
+func opcionesDeHistoriasDeDefecto(items []backlog.ItemBacklog) []plantillas.Opcion {
+	opciones := []plantillas.Opcion{{Valor: "", Texto: "Elegí una historia"}}
+	for _, item := range items {
+		opciones = append(opciones, plantillas.Opcion{Valor: item.ID, Texto: fmt.Sprintf("#%d %s", item.Numero, item.Titulo)})
+	}
+	return opciones
+}
+
+// opcionesDeSprintsDeDefecto son todos los sprints del proyecto, abiertos y cerrados, por numero
+// descendente como los devuelve ListarSprints (RN-T021-15, RN-T021-16), tras una opcion inicial sin
+// valor. No se filtran por el sprint de deteccion: esa regla es del dominio (RN-023-4).
+func opcionesDeSprintsDeDefecto(sprints []app.ResumenDeSprint) []plantillas.Opcion {
+	opciones := []plantillas.Opcion{{Valor: "", Texto: "Elegí un sprint"}}
+	for _, s := range sprints {
+		opciones = append(opciones, plantillas.Opcion{Valor: s.Sprint.ID, Texto: s.Sprint.Nombre()})
+	}
+	return opciones
+}
+
+// listaDeDefectos es la pantalla con la lista de defectos del proyecto y el formulario de alta
+// (RN-T021-2). Las listas del formulario salen de lecturas que ya existen.
 func (p *Pantallas) listaDeDefectos(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	detalle, err := p.casos.ConsultarProyecto.Ejecutar(r.Context(), id)
@@ -58,6 +103,16 @@ func (p *Pantallas) listaDeDefectos(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defectos, err := p.casos.ListarDefectos.Ejecutar(r.Context(), id)
+	if err != nil {
+		p.fallaDeLectura(w, r, err)
+		return
+	}
+	historias, err := p.casos.ListarBacklog.Ejecutar(r.Context(), id)
+	if err != nil {
+		p.fallaDeLectura(w, r, err)
+		return
+	}
+	sprints, err := p.casos.ListarSprints.Ejecutar(r.Context(), id)
 	if err != nil {
 		p.fallaDeLectura(w, r, err)
 		return
@@ -74,6 +129,54 @@ func (p *Pantallas) listaDeDefectos(w http.ResponseWriter, r *http.Request) {
 			SprintResolucion: textoDeSprintDeDefecto(d.SprintResolucion),
 		}
 	}
-	Responder(w, r, http.StatusOK, paginaDeProyecto(detalle.Proyecto, plantillas.SeccionDefectos),
-		plantillas.ListaDeDefectos(plantillas.VistaDefectos{Defectos: filas}))
+	vista := plantillas.VistaDefectos{
+		Defectos: filas,
+		Alta: plantillas.FormDefecto{
+			Accion:       rutaDeDefectos(id),
+			Severidades:  opcionesDeSeveridad(),
+			Historias:    opcionesDeHistoriasDeDefecto(historias),
+			Sprints:      opcionesDeSprintsDeDefecto(sprints),
+			SinHistorias: len(historias) == 0,
+			SinSprints:   len(sprints) == 0,
+		},
+	}
+	Responder(w, r, http.StatusOK, paginaDeProyecto(detalle.Proyecto, plantillas.SeccionDefectos), plantillas.ListaDeDefectos(vista))
+}
+
+// registrarDefecto registra el defecto (US-022). La descripcion y la severidad se pasan tal como llegan:
+// el recorte, el largo y las cuatro severidades los decide el dominio (RN-T021-6). Lo unico que revisa la
+// pantalla es que se hayan elegido la historia y el sprint de deteccion (RN-T021-5): un ID vacio es
+// "inexistente" para el dominio, y mostrarle un 404 a quien se olvido de elegir seria mala respuesta.
+func (p *Pantallas) registrarDefecto(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	if _, err := leerFormulario(r); err != nil {
+		p.errores.ResponderError(w, r, err)
+		return
+	}
+	historia, sprintDeteccion := r.PostForm.Get("historia"), r.PostForm.Get("sprint_deteccion")
+
+	var sinElegir []errores.ErrorDeCampo
+	if historia == "" {
+		sinElegir = append(sinElegir, errores.ErrorDeCampo{Campo: "historia", Mensaje: mensajeHistoriaSinElegir})
+	}
+	if sprintDeteccion == "" {
+		sinElegir = append(sinElegir, errores.ErrorDeCampo{Campo: "sprint_deteccion", Mensaje: mensajeSprintSinElegir})
+	}
+	if len(sinElegir) > 0 {
+		// RN-T021-10: un proyecto que no existe es un 404 antes que el aviso de una lista sin elegir.
+		if _, err := p.casos.ConsultarProyecto.Ejecutar(r.Context(), id); err != nil {
+			p.errores.ResponderError(w, r, err)
+			return
+		}
+		p.errores.ResponderError(w, r, &errores.ErrorDeValidacion{Errores: sinElegir})
+		return
+	}
+
+	_, err := p.casos.RegistrarDefecto.Ejecutar(r.Context(), id, historia, sprintDeteccion,
+		r.PostForm.Get("descripcion"), defecto.Severidad(r.PostForm.Get("severidad")))
+	if err != nil {
+		p.errores.ResponderError(w, r, err)
+		return
+	}
+	redirigir(w, r, rutaDeDefectos(id))
 }
