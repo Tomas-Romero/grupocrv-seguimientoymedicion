@@ -4,7 +4,7 @@
 > No se edita a mano: se regenera. Enlaza Historia → Spec → Criterios de aceptación →
 > Escenarios BDD → Tests → Código (la guía de la cátedra la pide como evidencia).
 
-Total: 38 especificaciones, 261 criterios de aceptación, 180 con escenario BDD y 199 con test.
+Total: 38 especificaciones, 261 criterios de aceptación, 184 con escenario BDD y 204 con test.
 
 Un criterio sin escenario BDD o sin test se muestra con `—`: o falta la evidencia, o el criterio
 se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no llevan `.feature`).
@@ -28,7 +28,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | US-014 | [specs/US-014-iniciar-sesion-planning-poker.md](../specs/US-014-iniciar-sesion-planning-poker.md) | borrador | 7 | 7 | 7 | `internal/domain/planningpoker/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/00009_sesiones_planning_poker.sql` |
 | US-015 | [specs/US-015-voto-individual-oculto.md](../specs/US-015-voto-individual-oculto.md) | borrador | 7 | 7 | 7 | `internal/domain/planningpoker/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/00010_votos_planning_poker.sql` |
 | US-016 | [specs/US-016-revelar-estimaciones.md](../specs/US-016-revelar-estimaciones.md) | borrador | 8 | 8 | 8 | `internal/domain/planningpoker/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/` |
-| US-017 | [specs/US-017-nueva-ronda.md](../specs/US-017-nueva-ronda.md) | borrador | 5 | 0 | 0 | `internal/domain/planningpoker/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/` |
+| US-017 | [specs/US-017-nueva-ronda.md](../specs/US-017-nueva-ronda.md) | borrador | 5 | 4 | 5 | `internal/domain/planningpoker/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/` |
 | US-018 | [specs/US-018-registrar-estimacion-acordada.md](../specs/US-018-registrar-estimacion-acordada.md) | borrador | 8 | 8 | 8 | `internal/domain/planningpoker/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`, `migraciones/00011_sesiones_valor_acordado.sql` |
 | US-019 | [specs/US-019-registrar-esfuerzo.md](../specs/US-019-registrar-esfuerzo.md) | borrador | 11 | 9 | 7 | `internal/domain/esfuerzo/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/` |
 | US-020 | [specs/US-020-consultar-esfuerzo.md](../specs/US-020-consultar-esfuerzo.md) | borrador | 9 | 9 | 9 | `internal/domain/esfuerzo/`, `internal/app/consultar_esfuerzo.go` |
@@ -279,7 +279,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 - **Spec:** [specs/US-015-voto-individual-oculto.md](../specs/US-015-voto-individual-oculto.md) · **Issue:** #26
 - **Escenarios BDD:** [features/US-015-voto-individual-oculto.feature](../features/US-015-voto-individual-oculto.feature)
 - **Código:** `internal/domain/planningpoker/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/00010_votos_planning_poker.sql`
-- **Tests que la citan:** 31
+- **Tests que la citan:** 32
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
@@ -312,17 +312,17 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 ### US-017 — Abrir una nueva ronda de votación cuando hay divergencia
 
 - **Spec:** [specs/US-017-nueva-ronda.md](../specs/US-017-nueva-ronda.md) · **Issue:** #28
-- **Escenarios BDD:** ninguno
+- **Escenarios BDD:** [features/US-017-nueva-ronda.feature](../features/US-017-nueva-ronda.feature)
 - **Código:** `internal/domain/planningpoker/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`
-- **Tests que la citan:** 2
+- **Tests que la citan:** 24
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
-| CA-017-1 | normal | — | — |
-| CA-017-2 | alternativo | — | — |
-| CA-017-3 | límite | — | — |
-| CA-017-4 | error | — | — |
-| CA-017-5 | error | — | — |
+| CA-017-1 | normal | Con divergencia, la nueva ronda deja la sesión votando en la ronda siguiente sin votos, Valores contiguos de la escala también abren una nueva ronda | TestBase_GuardarNuevaRonda, TestGuardarNuevaRonda, TestAbrirNuevaRonda_Abre, TestAbrirNuevaRonda |
+| CA-017-2 | alternativo | Los votos de la ronda anterior se conservan y se ven, y los de la ronda nueva quedan ocultos, Revelar la ronda nueva muestra solo sus votos | TestBase_GuardarNuevaRonda, TestGuardarNuevaRonda, TestVotacionDeRonda |
+| CA-017-3 | límite | Si todos votaron lo mismo no se abre una nueva ronda, Con un único voto emitido no hay divergencia y no se abre una nueva ronda | TestBase_GuardarNuevaRonda_Reglas, TestGuardarNuevaRonda_Reglas, TestAbrirNuevaRonda_ReglasDelDominio, TestAbrirNuevaRonda_Rechazos |
+| CA-017-4 | error | Con la sesión votando no se abre una nueva ronda, Un integrante que no participa de la sesión no abre una nueva ronda, Abrir una nueva ronda en una historia sin sesión se rechaza, +1 más | TestBase_GuardarNuevaRonda_Reglas, TestGuardarNuevaRonda_Reglas, TestAbrirNuevaRonda_LoQueNoExiste, TestAbrirNuevaRonda_ReglasDelDominio, +1 más |
+| CA-017-5 | error | — | TestBase_GuardarNuevaRonda_Reglas, TestGuardarNuevaRonda_DosPedidos |
 
 ### US-018 — Registrar la estimación acordada como valor final de la historia
 
