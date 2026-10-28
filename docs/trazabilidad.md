@@ -4,7 +4,7 @@
 > No se edita a mano: se regenera. Enlaza Historia → Spec → Criterios de aceptación →
 > Escenarios BDD → Tests → Código (la guía de la cátedra la pide como evidencia).
 
-Total: 32 especificaciones, 227 criterios de aceptación, 180 con escenario BDD y 193 con test.
+Total: 38 especificaciones, 261 criterios de aceptación, 180 con escenario BDD y 199 con test.
 
 Un criterio sin escenario BDD o sin test se muestra con `—`: o falta la evidencia, o el criterio
 se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no llevan `.feature`).
@@ -16,6 +16,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | US-001 | [specs/US-001-crear-proyecto.md](../specs/US-001-crear-proyecto.md) | borrador | 5 | 5 | 5 | `internal/domain/proyecto/`, `internal/app/`, `migraciones/` |
 | US-002 | [specs/US-002-modificar-proyecto.md](../specs/US-002-modificar-proyecto.md) | borrador | 5 | 5 | 5 | `internal/domain/proyecto/`, `internal/app/` |
 | US-003 | [specs/US-003-registrar-integrantes.md](../specs/US-003-registrar-integrantes.md) | borrador | 9 | 9 | 9 | `internal/domain/integrante/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`, `migraciones/00005_integrantes_id_por_defecto.sql` |
+| US-004 | [specs/US-004-estado-proyecto.md](../specs/US-004-estado-proyecto.md) | borrador | 6 | 0 | 0 | `internal/domain/proyecto/`, `internal/app/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
 | US-005 | [specs/US-005-crear-item-backlog.md](../specs/US-005-crear-item-backlog.md) | borrador | 8 | 8 | 8 | `internal/domain/backlog/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/` |
 | US-006 | [specs/US-006-editar-item-backlog.md](../specs/US-006-editar-item-backlog.md) | borrador | 7 | 5 | 6 | `internal/domain/backlog/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/` |
 | US-008 | [specs/US-008-crear-sprint.md](../specs/US-008-crear-sprint.md) | borrador | 11 | 11 | 11 | `internal/domain/sprint/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/` |
@@ -27,6 +28,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | US-014 | [specs/US-014-iniciar-sesion-planning-poker.md](../specs/US-014-iniciar-sesion-planning-poker.md) | borrador | 7 | 7 | 7 | `internal/domain/planningpoker/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/00009_sesiones_planning_poker.sql` |
 | US-015 | [specs/US-015-voto-individual-oculto.md](../specs/US-015-voto-individual-oculto.md) | borrador | 7 | 7 | 7 | `internal/domain/planningpoker/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/00010_votos_planning_poker.sql` |
 | US-016 | [specs/US-016-revelar-estimaciones.md](../specs/US-016-revelar-estimaciones.md) | borrador | 8 | 8 | 8 | `internal/domain/planningpoker/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/` |
+| US-017 | [specs/US-017-nueva-ronda.md](../specs/US-017-nueva-ronda.md) | borrador | 5 | 0 | 0 | `internal/domain/planningpoker/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/` |
 | US-018 | [specs/US-018-registrar-estimacion-acordada.md](../specs/US-018-registrar-estimacion-acordada.md) | borrador | 8 | 8 | 8 | `internal/domain/planningpoker/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`, `migraciones/00011_sesiones_valor_acordado.sql` |
 | US-019 | [specs/US-019-registrar-esfuerzo.md](../specs/US-019-registrar-esfuerzo.md) | borrador | 11 | 9 | 7 | `internal/domain/esfuerzo/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/` |
 | US-020 | [specs/US-020-consultar-esfuerzo.md](../specs/US-020-consultar-esfuerzo.md) | borrador | 9 | 9 | 9 | `internal/domain/esfuerzo/`, `internal/app/consultar_esfuerzo.go` |
@@ -38,12 +40,16 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | US-027 | [specs/US-027-horas-estimadas-reales.md](../specs/US-027-horas-estimadas-reales.md) | borrador | 6 | 6 | 6 | `internal/domain/metricas/` |
 | US-028 | [specs/US-028-porcentaje-historias-completadas.md](../specs/US-028-porcentaje-historias-completadas.md) | borrador | 5 | 5 | 1 | `internal/domain/metricas/` |
 | US-029 | [specs/US-029-defectos-por-sprint.md](../specs/US-029-defectos-por-sprint.md) | borrador | 6 | 6 | 6 | `internal/domain/metricas/` |
+| US-030 | [specs/US-030-dashboard.md](../specs/US-030-dashboard.md) | borrador | 7 | 0 | 0 | `internal/app/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
+| US-033 | [specs/US-033-reporte-pantalla.md](../specs/US-033-reporte-pantalla.md) | borrador | 5 | 0 | 0 | `internal/app/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
+| US-034 | [specs/US-034-vista-imprimible.md](../specs/US-034-vista-imprimible.md) | borrador | 4 | 0 | 0 | `web/static/css/input.css`, `web/static/js/`, `web/templates/`, `internal/adapters/http/` |
 | T-004 | [specs/T-004-layout-base.md](../specs/T-004-layout-base.md) | revision | 5 | 0 | 4 | `web/templates/`, `internal/adapters/http/`, `cmd/server/` |
 | T-005 | [specs/T-005-validaciones-errores-uniformes.md](../specs/T-005-validaciones-errores-uniformes.md) | borrador | 8 | 0 | 7 | `internal/platform/errores/`, `internal/adapters/http/` |
 | T-011 | [specs/T-011-pantallas-proyectos-backlog.md](../specs/T-011-pantallas-proyectos-backlog.md) | borrador | 5 | 0 | 4 | `internal/app/`, `internal/adapters/memoria/`, `internal/adapters/postgres/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
 | T-015 | [specs/T-015-pantallas-sprints.md](../specs/T-015-pantallas-sprints.md) | borrador | 5 | 0 | 4 | `internal/app/`, `internal/adapters/memoria/`, `internal/adapters/postgres/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
 | T-016 | [specs/T-016-cerrar-sprint.md](../specs/T-016-cerrar-sprint.md) | borrador | 5 | 0 | 4 | `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
-| T-019 | [specs/T-019-pantallas-esfuerzo.md](../specs/T-019-pantallas-esfuerzo.md) | borrador | 6 | 0 | 0 | `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
+| T-019 | [specs/T-019-pantallas-esfuerzo.md](../specs/T-019-pantallas-esfuerzo.md) | borrador | 6 | 0 | 6 | `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
+| T-020 | [specs/T-020-pantallas-planning-poker.md](../specs/T-020-pantallas-planning-poker.md) | borrador | 7 | 0 | 0 | `internal/adapters/http/`, `web/templates/`, `internal/app/`, `cmd/server/` |
 | T-021 | [specs/T-021-pantallas-defectos.md](../specs/T-021-pantallas-defectos.md) | borrador | 6 | 0 | 0 | `internal/app/`, `internal/adapters/memoria/`, `internal/adapters/postgres/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
 
 ## Detalle
@@ -96,6 +102,22 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | CA-003-7 | error | Un rol fuera de los tres permitidos se rechaza, El rol no se normaliza: en mayúsculas se rechaza | TestRegistrarIntegrante_DatosInvalidos, TestNuevo_Invalido |
 | CA-003-8 | error | Un email ya registrado en el proyecto se rechaza, El email repetido se rechaza sin importar mayúsculas ni espacios | TestBase_RegistrarIntegrante_EmailDuplicado, TestRegistrarIntegrante_EmailDuplicado, TestRegistrarIntegrante_ErroresDelRepositorio |
 | CA-003-9 | error | Registrar un integrante en un proyecto que no existe se rechaza | TestBase_RegistrarIntegrante_ProyectoInexistente, TestRegistrarIntegrante_ProyectoInexistente |
+
+### US-004 — Consultar el estado general de un proyecto
+
+- **Spec:** [specs/US-004-estado-proyecto.md](../specs/US-004-estado-proyecto.md) · **Issue:** #16
+- **Escenarios BDD:** ninguno
+- **Código:** `internal/domain/proyecto/`, `internal/app/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/`
+- **Tests que la citan:** 0
+
+| Criterio | Tipo | Escenarios BDD | Tests |
+|---|---|---|---|
+| CA-004-1 | normal | — | — |
+| CA-004-2 | alternativo | — | — |
+| CA-004-3 | alternativo | — | — |
+| CA-004-4 | límite | — | — |
+| CA-004-5 | límite | — | — |
+| CA-004-6 | error | — | — |
 
 ### US-005 — Crear un ítem de Product Backlog
 
@@ -287,6 +309,21 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | CA-016-7 | error | Una sesión ya revelada no se revela de nuevo | TestBase_GuardarRevelado_Rechazos, TestBase_GuardarRevelado_DespuesNoSeVota, TestGuardarRevelado_Reglas, TestGuardarRevelado_DespuesNoSeVota, +2 más |
 | CA-016-8 | error | Revelar en una historia sin sesión se rechaza, Un integrante que no existe no revela | TestRevelarVotos_LoQueNoExiste |
 
+### US-017 — Abrir una nueva ronda de votación cuando hay divergencia
+
+- **Spec:** [specs/US-017-nueva-ronda.md](../specs/US-017-nueva-ronda.md) · **Issue:** #28
+- **Escenarios BDD:** ninguno
+- **Código:** `internal/domain/planningpoker/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`
+- **Tests que la citan:** 2
+
+| Criterio | Tipo | Escenarios BDD | Tests |
+|---|---|---|---|
+| CA-017-1 | normal | — | — |
+| CA-017-2 | alternativo | — | — |
+| CA-017-3 | límite | — | — |
+| CA-017-4 | error | — | — |
+| CA-017-5 | error | — | — |
+
 ### US-018 — Registrar la estimación acordada como valor final de la historia
 
 - **Spec:** [specs/US-018-registrar-estimacion-acordada.md](../specs/US-018-registrar-estimacion-acordada.md) · **Issue:** #29
@@ -350,7 +387,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 - **Spec:** [specs/US-021-comparar-esfuerzo.md](../specs/US-021-comparar-esfuerzo.md) · **Issue:** #24
 - **Escenarios BDD:** [features/US-021-comparar-esfuerzo.feature](../features/US-021-comparar-esfuerzo.feature)
 - **Código:** `internal/domain/metricas/`, `internal/app/comparar_esfuerzo.go`
-- **Tests que la citan:** 22
+- **Tests que la citan:** 23
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
@@ -485,6 +522,52 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | CA-029-5 | error | Un defecto resuelto antes de detectarse se rechaza | TestCalcularDefectosDelSprint_Rechazos |
 | CA-029-6 | error | Un número de sprint menor que 1 se rechaza | TestCalcularDefectosDelSprint_Rechazos |
 
+### US-030 — Ver un Dashboard con el estado del proyecto y sus métricas principales
+
+- **Spec:** [specs/US-030-dashboard.md](../specs/US-030-dashboard.md) · **Issue:** #36
+- **Escenarios BDD:** ninguno
+- **Código:** `internal/app/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/`
+- **Tests que la citan:** 0
+
+| Criterio | Tipo | Escenarios BDD | Tests |
+|---|---|---|---|
+| CA-030-1 | normal | — | — |
+| CA-030-2 | normal | — | — |
+| CA-030-3 | alternativo | — | — |
+| CA-030-4 | límite | — | — |
+| CA-030-5 | error | — | — |
+| CA-030-6 | normal | — | — |
+| CA-030-7 | límite | — | — |
+
+### US-033 — Generar en pantalla el reporte completo de un proyecto o Sprint
+
+- **Spec:** [specs/US-033-reporte-pantalla.md](../specs/US-033-reporte-pantalla.md) · **Issue:** #39
+- **Escenarios BDD:** ninguno
+- **Código:** `internal/app/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/`
+- **Tests que la citan:** 0
+
+| Criterio | Tipo | Escenarios BDD | Tests |
+|---|---|---|---|
+| CA-033-1 | normal | — | — |
+| CA-033-2 | alternativo | — | — |
+| CA-033-3 | límite | — | — |
+| CA-033-4 | error | — | — |
+| CA-033-5 | plataforma | — | — |
+
+### US-034 — Imprimir el reporte o guardarlo como PDF desde el navegador
+
+- **Spec:** [specs/US-034-vista-imprimible.md](../specs/US-034-vista-imprimible.md) · **Issue:** #40
+- **Escenarios BDD:** ninguno
+- **Código:** `web/static/css/input.css`, `web/static/js/`, `web/templates/`, `internal/adapters/http/`
+- **Tests que la citan:** 0
+
+| Criterio | Tipo | Escenarios BDD | Tests |
+|---|---|---|---|
+| CA-034-1 | normal | — | — |
+| CA-034-2 | alternativo | — | — |
+| CA-034-3 | límite | — | — |
+| CA-034-4 | plataforma | — | — |
+
 ### T-004 — Layout base, navegación y sistema visual con Tailwind
 
 - **Spec:** [specs/T-004-layout-base.md](../specs/T-004-layout-base.md) · **Issue:** #128 (spec) · tarea: #14
@@ -568,16 +651,33 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 - **Spec:** [specs/T-019-pantallas-esfuerzo.md](../specs/T-019-pantallas-esfuerzo.md) · **Issue:** #189 (tarea) · #193 (spec)
 - **Escenarios BDD:** ninguno
 - **Código:** `internal/adapters/http/`, `web/templates/`, `cmd/server/`
+- **Tests que la citan:** 15
+
+| Criterio | Tipo | Escenarios BDD | Tests |
+|---|---|---|---|
+| CA-T019-1 | normal | — | TestPantallasEsfuerzo_Recorrido |
+| CA-T019-2 | alternativo | — | TestPantallasEsfuerzo_Filtros |
+| CA-T019-3 | alternativo | — | TestPantallasEsfuerzo_Comparacion |
+| CA-T019-4 | límite | — | TestPantallasEsfuerzo_SinCoincidencias |
+| CA-T019-5 | error | — | TestPantallasEsfuerzo_Rechazos |
+| CA-T019-6 | plataforma | — | TestPantallasEsfuerzo_ConYSinHTMX |
+
+### T-020 — Pantallas de Planning Poker: iniciar, votar, revelar y acordar
+
+- **Spec:** [specs/T-020-pantallas-planning-poker.md](../specs/T-020-pantallas-planning-poker.md) · **Issue:** #190
+- **Escenarios BDD:** ninguno
+- **Código:** `internal/adapters/http/`, `web/templates/`, `internal/app/`, `cmd/server/`
 - **Tests que la citan:** 0
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
-| CA-T019-1 | normal | — | — |
-| CA-T019-2 | alternativo | — | — |
-| CA-T019-3 | alternativo | — | — |
-| CA-T019-4 | límite | — | — |
-| CA-T019-5 | error | — | — |
-| CA-T019-6 | plataforma | — | — |
+| CA-T020-1 | normal | — | — |
+| CA-T020-2 | normal | — | — |
+| CA-T020-3 | alternativo | — | — |
+| CA-T020-4 | alternativo | — | — |
+| CA-T020-5 | alternativo | — | — |
+| CA-T020-6 | límite | — | — |
+| CA-T020-7 | error | — | — |
 
 ### T-021 — Pantallas de defectos: registrar, listar y cambiar el estado
 
