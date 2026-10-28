@@ -163,10 +163,10 @@ func casosDeUsoDePantallas(pool *pgxpool.Pool) httpadapter.CasosDeUso {
 
 		ConsultarSprintsAnteriores: app.NuevoConsultarSprintsAnteriores(asignaciones),
 
-		RegistrarEsfuerzo: app.NuevoRegistrarEsfuerzo(esfuerzo, time.Now),
-		ConsultarEsfuerzo: app.NuevoConsultarEsfuerzo(esfuerzo),
-		CompararEsfuerzo:  app.NuevoCompararEsfuerzo(esfuerzo),
-		Ahora:             time.Now,
+		RegistrarEsfuerzo:          app.NuevoRegistrarEsfuerzo(esfuerzo, time.Now),
+		ConsultarEsfuerzo:          app.NuevoConsultarEsfuerzo(esfuerzo),
+		CompararEsfuerzo:           app.NuevoCompararEsfuerzo(esfuerzo),
+		Ahora:                      time.Now,
 		IniciarSesionPlanningPoker: app.NuevoIniciarSesionPlanningPoker(poker),
 		ConsultarSesion:            app.NuevoConsultarSesionPlanningPoker(poker),
 		VotarEnSesion:              app.NuevoVotarEnSesion(poker),
