@@ -49,6 +49,10 @@ func nuevoEntorno(t *testing.T) entorno {
 		DesmarcarCompletado:        app.NuevoDesmarcarCompletado(base),
 		CerrarSprint:               app.NuevoCerrarSprint(base),
 		ConsultarSprintsAnteriores: app.NuevoConsultarSprintsAnteriores(base),
+		RegistrarEsfuerzo:          app.NuevoRegistrarEsfuerzo(base, ahora),
+		ConsultarEsfuerzo:          app.NuevoConsultarEsfuerzo(base),
+		CompararEsfuerzo:           app.NuevoCompararEsfuerzo(base),
+		Ahora:                      ahora,
 	}
 	manejador := httpadapter.NuevoManejadorDeErrores(httpadapter.CatalogoDeErrores(), slog.New(slog.NewTextHandler(io.Discard, nil)))
 	router := httpadapter.NuevoRouter(verificadorFalso{}, time.Second, http.FS(fstest.MapFS{}),
