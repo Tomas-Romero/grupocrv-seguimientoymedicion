@@ -4,7 +4,7 @@
 > No se edita a mano: se regenera. Enlaza Historia → Spec → Criterios de aceptación →
 > Escenarios BDD → Tests → Código (la guía de la cátedra la pide como evidencia).
 
-Total: 38 especificaciones, 261 criterios de aceptación, 184 con escenario BDD y 204 con test.
+Total: 38 especificaciones, 261 criterios de aceptación, 184 con escenario BDD y 211 con test.
 
 Un criterio sin escenario BDD o sin test se muestra con `—`: o falta la evidencia, o el criterio
 se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no llevan `.feature`).
@@ -49,7 +49,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | T-015 | [specs/T-015-pantallas-sprints.md](../specs/T-015-pantallas-sprints.md) | borrador | 5 | 0 | 4 | `internal/app/`, `internal/adapters/memoria/`, `internal/adapters/postgres/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
 | T-016 | [specs/T-016-cerrar-sprint.md](../specs/T-016-cerrar-sprint.md) | borrador | 5 | 0 | 4 | `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
 | T-019 | [specs/T-019-pantallas-esfuerzo.md](../specs/T-019-pantallas-esfuerzo.md) | borrador | 6 | 0 | 6 | `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
-| T-020 | [specs/T-020-pantallas-planning-poker.md](../specs/T-020-pantallas-planning-poker.md) | borrador | 7 | 0 | 0 | `internal/adapters/http/`, `web/templates/`, `internal/app/`, `cmd/server/` |
+| T-020 | [specs/T-020-pantallas-planning-poker.md](../specs/T-020-pantallas-planning-poker.md) | borrador | 7 | 0 | 7 | `internal/adapters/http/`, `web/templates/`, `internal/app/`, `cmd/server/` |
 | T-021 | [specs/T-021-pantallas-defectos.md](../specs/T-021-pantallas-defectos.md) | borrador | 6 | 0 | 0 | `internal/app/`, `internal/adapters/memoria/`, `internal/adapters/postgres/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
 
 ## Detalle
@@ -588,7 +588,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 - **Spec:** [specs/T-005-validaciones-errores-uniformes.md](../specs/T-005-validaciones-errores-uniformes.md) · **Issue:** #15
 - **Escenarios BDD:** ninguno
 - **Código:** `internal/platform/errores/`, `internal/adapters/http/`
-- **Tests que la citan:** 38
+- **Tests que la citan:** 39
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
@@ -667,17 +667,17 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 - **Spec:** [specs/T-020-pantallas-planning-poker.md](../specs/T-020-pantallas-planning-poker.md) · **Issue:** #190
 - **Escenarios BDD:** ninguno
 - **Código:** `internal/adapters/http/`, `web/templates/`, `internal/app/`, `cmd/server/`
-- **Tests que la citan:** 0
+- **Tests que la citan:** 12
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
-| CA-T020-1 | normal | — | — |
-| CA-T020-2 | normal | — | — |
-| CA-T020-3 | alternativo | — | — |
-| CA-T020-4 | alternativo | — | — |
-| CA-T020-5 | alternativo | — | — |
-| CA-T020-6 | límite | — | — |
-| CA-T020-7 | error | — | — |
+| CA-T020-1 | normal | — | TestPantallasPoker_Recorrido |
+| CA-T020-2 | normal | — | TestConsultarSesionPlanningPoker_Votando |
+| CA-T020-3 | alternativo | — | TestConsultarSesionPlanningPoker_Revelada |
+| CA-T020-4 | alternativo | — | TestPantallasPoker_Recorrido |
+| CA-T020-5 | alternativo | — | TestPantallasPoker_NuevaRonda, TestConsultarSesionPlanningPoker_Votando |
+| CA-T020-6 | límite | — | TestPantallasPoker_SesionAbiertaYCompletada |
+| CA-T020-7 | error | — | TestPantallasPoker_Errores |
 
 ### T-021 — Pantallas de defectos: registrar, listar y cambiar el estado
 
