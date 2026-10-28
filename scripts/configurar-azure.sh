@@ -40,11 +40,14 @@ echo "2/4 Variables (no son secretas)"
 preguntar "Nombre del registro (acr_name)" "ingcalidad2026"; ACR_NAME=$RESPUESTA
 preguntar "URL del registro (acrname_url)" "${ACR_NAME}.azurecr.io"; ACR_URL=$RESPUESTA
 preguntar "Grupo de recursos (AZURE_RESOURCE_GROUP)" "frsrutn"; GRUPO=$RESPUESTA
-preguntar "Entorno de Container Apps (AZURE_CONTAINERAPPS_ENVIRONMENT)"; ENTORNO_APPS=$RESPUESTA
-[ -n "$ENTORNO_APPS" ] || { echo "El entorno de Container Apps es obligatorio."; exit 1; }
-preguntar "Nombre de la Container App (container_app_name, maximo 32 caracteres, empieza con grupo03-)" "grupo03-grupocrv-seguimiento"; APP=$RESPUESTA
-if [ "${#APP}" -gt 32 ] || ! [[ "$APP" =~ ^grupo03-[a-z0-9-]*[a-z0-9]$ ]]; then
-  echo "El nombre '$APP' tiene ${#APP} caracteres o un formato que Azure no acepta (2 a 32, minusculas, numeros y guiones, empieza con grupo03-)."
+preguntar "Nombre del contenedor (container_app_name; en ACI, hasta 63 caracteres, empieza con grupo03-)" "grupo03-grupocrv-seguimientoymedicion"; APP=$RESPUESTA
+if [ "${#APP}" -gt 63 ] || ! [[ "$APP" =~ ^grupo03-[a-z0-9-]*[a-z0-9]$ ]]; then
+  echo "El nombre '$APP' tiene ${#APP} caracteres o un formato que Azure no acepta (hasta 63, minusculas, numeros y guiones, empieza con grupo03-)."
+  exit 1
+fi
+preguntar "Etiqueta DNS de la URL (de 5 a 63 caracteres; la URL queda http://<etiqueta>.<region>.azurecontainer.io:8080)" "$APP"; ETIQUETA_DNS=$RESPUESTA
+if [ "${#ETIQUETA_DNS}" -lt 5 ] || [ "${#ETIQUETA_DNS}" -gt 63 ] || ! [[ "$ETIQUETA_DNS" =~ ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$ ]]; then
+  echo "La etiqueta DNS '$ETIQUETA_DNS' no es valida (5 a 63 caracteres, minusculas, numeros y guiones)."
   exit 1
 fi
 preguntar "Imagen dentro del registro" "grupo03-grupocrv"; IMAGEN=$RESPUESTA
@@ -54,11 +57,14 @@ read -r -p "Dejar el despliegue automatico APAGADO (CD_ACTIVO=false) hasta que c
 variable ACR_NAME "$ACR_NAME"
 variable ACR_URL "$ACR_URL"
 variable AZURE_RESOURCE_GROUP "$GRUPO"
-variable AZURE_CONTAINERAPPS_ENVIRONMENT "$ENTORNO_APPS"
 variable CONTAINER_APP_NAME "$APP"
+variable ACI_DNS_LABEL "$ETIQUETA_DNS"
 variable IMAGE_NAME "$IMAGEN"
 variable CARGAR_DATOS_EJEMPLO "true"
-variable MIN_REPLICAS "0"
+variable ACI_CPU "1"
+variable ACI_MEMORIA "1"
+# ACI cobra mientras el contenedor esta encendido y no escala a cero: por defecto se apaga despues de desplegar.
+variable MANTENER_ENCENDIDO "false"
 case "${APAGADO:-S}" in
   [nN]*) variable CD_ACTIVO "true" ;;
   *) variable CD_ACTIVO "false" ;;
@@ -102,3 +108,6 @@ echo "Siguiente paso: Actions > Verificar Azure (solo lectura) > Run workflow. N
 echo "deja en el resumen que se pudo comprobar. Cuando este todo bien:"
 echo "  gh variable set CD_ACTIVO --env ${ENTORNO} --body true    # enciende el despliegue automatico"
 echo "  gh workflow run 'CD (Azure)'                               # primer despliegue a mano"
+echo
+echo "OJO: ACI cobra por segundo mientras el contenedor esta ENCENDIDO (no escala a cero). Despues de desplegar se"
+echo "apaga solo; para verlo funcionando: Actions > ACI: encender o apagar > Run workflow > encender (y apagar al terminar)."
