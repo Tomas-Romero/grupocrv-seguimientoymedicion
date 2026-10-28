@@ -21,7 +21,8 @@ name: CD (Azure)
 #   CONTAINER_APPS_ENV    solo hace falta si la Container App todavia no existe (AZURE_CONTAINERAPPS_ENVIRONMENT)
 #   CARGAR_DATOS_EJEMPLO  true: carga el proyecto de ejemplo al arrancar (para la demo)
 #   MIN_REPLICAS          0 (la app se apaga sin visitas); 1 solo el dia de la presentacion, para evitar el arranque en frio
-#   CD_ACTIVO             false: interruptor general; solo se valida el Dockerfile y no se publica ni se despliega nada
+#   CD_ACTIVO             interruptor general de costos: SOLO con `true` se publica y se despliega. Sin la variable (o con
+#                         cualquier otro valor) el workflow solo valida el Dockerfile, aunque esten todos los secretos
 #
 # Si falta algun secreto, el workflow construye la imagen igual (valida el Dockerfile) pero no se
 # loguea, publica ni despliega nada, asi que el repositorio no se pone en rojo antes de tener las
@@ -74,11 +75,11 @@ jobs:
           # Solo se pasa si el secreto existe, nunca su valor.
           TIENE_CREDENCIALES: ${{ secrets.AZURE_CREDENTIALS != '' }}
           TIENE_BASE: ${{ secrets.DATABASE_URL != '' }}
-          CD_ACTIVO: ${{ vars.CD_ACTIVO || 'true' }}
+          CD_ACTIVO: ${{ vars.CD_ACTIVO || 'false' }}
         run: |
-          if [ "$CD_ACTIVO" = "false" ]; then
+          if [ "$CD_ACTIVO" != "true" ]; then
             echo "completa=false" >> "$GITHUB_OUTPUT"
-            echo "::notice title=CD apagado::La variable CD_ACTIVO vale false: se construye la imagen para validar el Dockerfile, pero no se publica ni se despliega."
+            echo "::notice title=CD apagado::La variable CD_ACTIVO no vale true: se construye la imagen para validar el Dockerfile, pero no se publica ni se despliega."
             exit 0
           fi
           faltan=""
@@ -205,7 +206,7 @@ jobs:
                 echo "  - \`${etiqueta}\`"
               done <<< "$ETIQUETAS"
             else
-              echo "Construida y validada, **sin publicar**: faltan los secretos \`AZURE_CREDENTIALS\` o \`DATABASE_URL\` del Environment azure (ver docs/ci-cd.md)."
+              echo "Construida y validada, **sin publicar**: falta algun secreto (\`AZURE_CREDENTIALS\`, \`DATABASE_URL\`) del Environment azure o la variable \`CD_ACTIVO\` no vale \`true\` (ver docs/ci-cd.md)."
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 

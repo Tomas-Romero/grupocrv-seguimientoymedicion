@@ -39,6 +39,7 @@ jobs:
       TIENE_CREDENCIALES: ${{ secrets.AZURE_CREDENTIALS != '' }}
       TIENE_BASE: ${{ secrets.DATABASE_URL != '' }}
       TIENE_CLAVE_ACR: ${{ secrets.ACR_PASSWORD != '' }}
+      CD_ACTIVO: ${{ vars.CD_ACTIVO || 'false' }}
     steps:
       - name: Revisar secretos, variables y nombres
         id: datos
@@ -73,6 +74,11 @@ jobs:
           fila "Registro" "\`$REGISTRO\` (usuario \`$ACR_USUARIO\`)"
           fila "Grupo de recursos" "\`$GRUPO_RECURSOS\`"
           fila "Imagen" "\`$IMAGEN\`"
+          if [ "$CD_ACTIVO" = "true" ]; then
+            fila "Despliegue automatico (\`CD_ACTIVO\`)" "**ENCENDIDO**: cada merge a main que cambie la imagen publica y despliega"
+          else
+            fila "Despliegue automatico (\`CD_ACTIVO\`)" "apagado (solo se valida el Dockerfile)"
+          fi
 
           case "$APP" in
             grupo03-*) ;;

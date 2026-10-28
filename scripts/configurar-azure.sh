@@ -49,7 +49,7 @@ if [ "${#APP}" -gt 32 ] || ! [[ "$APP" =~ ^grupo03-[a-z0-9-]*[a-z0-9]$ ]]; then
 fi
 preguntar "Imagen dentro del registro" "grupo03-grupocrv"; IMAGEN=$RESPUESTA
 case "$IMAGEN" in grupo03-*) ;; *) echo "La imagen tiene que empezar con grupo03-."; exit 1 ;; esac
-read -r -p "Dejar el despliegue automatico APAGADO hasta que corras la verificacion (recomendado) [S/n]: " APAGADO
+read -r -p "Dejar el despliegue automatico APAGADO (CD_ACTIVO=false) hasta que corras la verificacion (recomendado) [S/n]: " APAGADO
 
 variable ACR_NAME "$ACR_NAME"
 variable ACR_URL "$ACR_URL"
