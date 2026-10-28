@@ -71,6 +71,11 @@ type FilaItem struct {
 	Editar    string
 	Estimar   string
 	Escala    []Opcion
+	// IniciarPoker es la ruta para iniciar una sesion de Planning Poker, y SesionAbierta la de
+	// la sesion abierta de la historia si la tiene (T-020). Una historia completada no tiene
+	// ninguna de las dos.
+	IniciarPoker  string
+	SesionAbierta string
 }
 
 // FormItem es el formulario de alta o de edicion de una historia.
