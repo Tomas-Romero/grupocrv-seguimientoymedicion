@@ -77,9 +77,9 @@ func TestPantallasDefectos_Lista(t *testing.T) {
 		"Crítica", "Media", "Baja", "Abierto", "En corrección", "Descartado",
 		"#1 Alta de proyectos", "Sprint 1", "—")
 	noContiene(t, w, "Todavía no hay defectos")
-	// La tabla muestra las etiquetas de la pantalla y no los valores del dominio. Se mira solo la tabla:
-	// el formulario ofrece esos valores como value de sus opciones.
-	tabla := w.Body.String()[strings.Index(w.Body.String(), "<table"):strings.Index(w.Body.String(), "</table>")]
+	// La tabla muestra las etiquetas de la pantalla y no los valores del dominio. Se miran solo las celdas: los
+	// formularios llevan esos valores en sus campos ocultos y en las opciones.
+	tabla := celdas(w.Body.String()[strings.Index(w.Body.String(), "<table"):strings.Index(w.Body.String(), "</table>")])
 	for _, valor := range []string{"critica", "en_correccion", "descartado"} {
 		if strings.Contains(tabla, valor) {
 			t.Errorf("la tabla no tiene que mostrar el valor del dominio %q:\n%s", valor, tabla)
@@ -425,7 +425,7 @@ func TestPantallasDefectos_SprintCerradoYRepetidos(t *testing.T) {
 		}
 	}
 	lista := e.get(rutaDeDefectos(d.proyecto))
-	if n := strings.Count(lista.Body.String(), "Falla repetida"); n != 2 {
+	if n := strings.Count(lista.Body.String(), ">Falla repetida</td>"); n != 2 {
 		t.Errorf("la lista tiene %d filas con la descripcion repetida, quiero 2", n)
 	}
 	contiene(t, lista, "Sprint 1")
@@ -471,6 +471,9 @@ func fila(t *testing.T, w *httptest.ResponseRecorder, texto string) string {
 	t.Helper()
 	var encontradas []string
 	for _, tr := range strings.Split(w.Body.String(), "<tr")[1:] {
+		if fin := strings.Index(tr, "</tr>"); fin >= 0 {
+			tr = tr[:fin]
+		}
 		if strings.Contains(tr, texto) {
 			encontradas = append(encontradas, tr)
 		}
@@ -480,6 +483,13 @@ func fila(t *testing.T, w *httptest.ResponseRecorder, texto string) string {
 	}
 	return encontradas[0]
 }
+
+var formularios = regexp.MustCompile(`(?s)<form.*?</form>`)
+
+// celdas es la fila sin los formularios de sus botones: lo que la fila muestra como texto. Las etiquetas de los
+// botones y las opciones de las listas repiten palabras como "Abierto" o "Sprint 2" que no son el estado ni el
+// sprint de resolucion del defecto.
+func celdas(fila string) string { return formularios.ReplaceAllString(fila, "") }
 
 // defectoEnLaLista es el estado y el sprint de resolucion que muestra la fila del defecto.
 func defectoEnLaLista(t *testing.T, e entorno, proyecto, descripcion string) string {
@@ -562,13 +572,13 @@ func TestPantallasDefectos_CambiarElEstado(t *testing.T) {
 		quiero                 []string
 		noQuiero               []string
 	}{
-		{"pasar a en correccion", "en_correccion", "", []string{"En corrección", "—", `aria-label="Volver a abierto: Falla al guardar"`}, []string{"Sprint 2"}},
-		{"resolver con el Sprint 2", "resuelto", segundo, []string{"Resuelto", "Sprint 2", `aria-label="Reabrir: Falla al guardar"`}, []string{`aria-label="Resolver: Falla al guardar"`, `aria-label="Descartar: Falla al guardar"`}},
-		{"reabrir", "abierto", "", []string{"Abierto", "—", `aria-label="Resolver: Falla al guardar"`}, []string{"Resuelto", `aria-label="Reabrir: Falla al guardar"`}},
-		{"descartar", "descartado", "", []string{"Descartado", "—", `aria-label="Reabrir: Falla al guardar"`}, []string{`aria-label="Descartar: Falla al guardar"`}},
-		{"reabrir el descartado", "abierto", "", []string{"Abierto", "—"}, []string{"Descartado"}},
-		{"volver a abierto desde en correccion", "en_correccion", "", []string{"En corrección"}, nil},
-		{"y volver a abierto", "abierto", "", []string{"Abierto"}, []string{"En corrección</td>"}},
+		{"pasar a en correccion", "en_correccion", "", []string{">En corrección</td>", ">—</td>", `aria-label="Volver a abierto: Falla al guardar"`}, []string{">Sprint 2</td>"}},
+		{"resolver con el Sprint 2", "resuelto", segundo, []string{">Resuelto</td>", ">Sprint 2</td>", `aria-label="Reabrir: Falla al guardar"`}, []string{`aria-label="Resolver: Falla al guardar"`, `aria-label="Descartar: Falla al guardar"`}},
+		{"reabrir", "abierto", "", []string{">Abierto</td>", ">—</td>", `aria-label="Resolver: Falla al guardar"`}, []string{">Resuelto</td>", `aria-label="Reabrir: Falla al guardar"`}},
+		{"descartar", "descartado", "", []string{">Descartado</td>", ">—</td>", `aria-label="Reabrir: Falla al guardar"`}, []string{`aria-label="Descartar: Falla al guardar"`}},
+		{"reabrir el descartado", "abierto", "", []string{">Abierto</td>", ">—</td>"}, []string{">Descartado</td>"}},
+		{"volver a abierto desde en correccion", "en_correccion", "", []string{">En corrección</td>"}, nil},
+		{"y volver a abierto", "abierto", "", []string{">Abierto</td>"}, []string{">En corrección</td>"}},
 	}
 	for _, p := range pasos {
 		t.Run(p.nombre, func(t *testing.T) {
@@ -610,25 +620,26 @@ func TestPantallasDefectos_Resolver(t *testing.T) {
 		t.Fatalf("resolver sin sprint: %d, quiero 422", w.Code)
 	}
 	contiene(t, w, `data-campo="sprint_resolucion"`)
-	contiene(t, e.get(rutaDeDefectos(d.proyecto)), "Abierto")
+	contiene(t, e.get(rutaDeDefectos(d.proyecto)), ">Abierto</td>")
 
 	// El Sprint 1 esta cerrado y es el de deteccion: se acepta (CL-023-5, CL-023-6).
 	if w := e.cambiar(d.proyecto, falla.ID, "resuelto", d.sprint); w.Code != http.StatusSeeOther {
 		t.Fatalf("resolver en el sprint cerrado: %d %s", w.Code, w.Body.String())
 	}
-	if f := defectoEnLaLista(t, e, d.proyecto, "Falla"); !strings.Contains(f, "Resuelto") || !strings.Contains(f, "Sprint 1") {
+	// "Sprint 1" es tambien el de deteccion: la fila lo muestra en las dos columnas.
+	if f := celdas(defectoEnLaLista(t, e, d.proyecto, "Falla")); !strings.Contains(f, ">Resuelto</td>") || strings.Count(f, ">Sprint 1</td>") != 2 {
 		t.Errorf("la fila tiene que mostrar Resuelto en el Sprint 1:\n%s", f)
 	}
 
 	// Reabrir lo deja abierto y sin sprint de resolucion; resolverlo de nuevo con otro sprint deja el nuevo.
 	e.cambiar(d.proyecto, falla.ID, "abierto", "")
-	if f := defectoEnLaLista(t, e, d.proyecto, "Falla"); !strings.Contains(f, "Abierto") || strings.Contains(f, "Resuelto") || !strings.Contains(f, "—") {
+	if f := celdas(defectoEnLaLista(t, e, d.proyecto, "Falla")); !strings.Contains(f, ">Abierto</td>") || strings.Contains(f, ">Resuelto</td>") || !strings.Contains(f, ">—</td>") {
 		t.Errorf("reabrir tiene que dejar el defecto abierto y sin sprint de resolucion:\n%s", f)
 	}
 	if w := e.cambiar(d.proyecto, falla.ID, "resuelto", segundo); w.Code != http.StatusSeeOther {
 		t.Fatalf("resolver con otro sprint: %d %s", w.Code, w.Body.String())
 	}
-	if f := defectoEnLaLista(t, e, d.proyecto, "Falla"); !strings.Contains(f, "Sprint 2") {
+	if f := celdas(defectoEnLaLista(t, e, d.proyecto, "Falla")); !strings.Contains(f, ">Sprint 2</td>") {
 		t.Errorf("la fila tiene que mostrar el nuevo sprint de resolucion:\n%s", f)
 	}
 }
@@ -651,7 +662,7 @@ func TestPantallasDefectos_ResolverEnUnSprintAnterior(t *testing.T) {
 		t.Fatalf("resolver en un sprint anterior: %d, quiero 409", w.Code)
 	}
 	contiene(t, w, `data-campo="sprint_resolucion"`)
-	if f := defectoEnLaLista(t, e, d.proyecto, "Detectado en el Sprint 2"); !strings.Contains(f, "Abierto") {
+	if f := celdas(defectoEnLaLista(t, e, d.proyecto, "Detectado en el Sprint 2")); !strings.Contains(f, ">Abierto</td>") {
 		t.Errorf("el defecto no tiene que cambiar:\n%s", f)
 	}
 }
@@ -671,7 +682,7 @@ func TestPantallasDefectos_PaginaDesactualizada(t *testing.T) {
 		t.Fatalf("descartar uno resuelto: %d, quiero 409", w.Code)
 	}
 	contiene(t, w, `data-campo="estado"`)
-	if f := defectoEnLaLista(t, e, d.proyecto, "Falla"); !strings.Contains(f, "Resuelto") {
+	if f := celdas(defectoEnLaLista(t, e, d.proyecto, "Falla")); !strings.Contains(f, ">Resuelto</td>") {
 		t.Errorf("el defecto no tiene que cambiar:\n%s", f)
 	}
 
@@ -709,7 +720,7 @@ func TestPantallasDefectos_EstadoMandadoAMano(t *testing.T) {
 				t.Fatalf("estado %d, quiero 422:\n%s", w.Code, w.Body.String())
 			}
 			contiene(t, w, `data-campo="`+c.campo+`"`)
-			if f := defectoEnLaLista(t, e, d.proyecto, "Falla"); !strings.Contains(f, "Abierto") {
+			if f := celdas(defectoEnLaLista(t, e, d.proyecto, "Falla")); !strings.Contains(f, ">Abierto</td>") {
 				t.Errorf("el defecto no tiene que cambiar:\n%s", f)
 			}
 		})
@@ -754,7 +765,7 @@ func TestPantallasDefectos_CambioQueNoCorresponde(t *testing.T) {
 			}
 		})
 	}
-	if f := defectoEnLaLista(t, e, a.proyecto, "Defecto de A"); !strings.Contains(f, "En corrección") {
+	if f := celdas(defectoEnLaLista(t, e, a.proyecto, "Defecto de A")); !strings.Contains(f, ">En corrección</td>") {
 		t.Errorf("el defecto no tiene que cambiar despues del control:\n%s", f)
 	}
 }
