@@ -81,13 +81,14 @@ func TestEnlacesGlobales(t *testing.T) {
 	}
 }
 
-// enlacesDeProyecto arma los cinco enlaces esperados de un proyecto; base es la
+// enlacesDeProyecto arma los seis enlaces esperados de un proyecto; base es la
 // ruta del proyecto con el ID ya escapado.
 func enlacesDeProyecto(base, activo string) []plantillas.Enlace {
 	return []plantillas.Enlace{
 		{Texto: "Resumen", Href: base, Activo: activo == "Resumen"},
 		{Texto: "Backlog", Href: base + "/backlog", Activo: activo == "Backlog"},
 		{Texto: "Sprints", Href: base + "/sprints", Activo: activo == "Sprints"},
+		{Texto: "Esfuerzo", Href: base + "/esfuerzo", Activo: activo == "Esfuerzo"},
 		{Texto: "Métricas", Href: base + "/metricas", Activo: activo == "Métricas"},
 		{Texto: "Defectos", Href: base + "/defectos", Activo: activo == "Defectos"},
 	}
@@ -112,6 +113,12 @@ func TestEnlacesProyecto(t *testing.T) {
 			id:        "p1",
 			activo:    plantillas.SeccionResumen,
 			esperados: enlacesDeProyecto("/proyectos/p1", "Resumen"),
+		},
+		{
+			nombre:    "caso alternativo: Esfuerzo activo (T-019)",
+			id:        "p1",
+			activo:    plantillas.SeccionEsfuerzo,
+			esperados: enlacesDeProyecto("/proyectos/p1", "Esfuerzo"),
 		},
 		{
 			nombre:    "caso alternativo: Metricas activo",
