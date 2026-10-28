@@ -57,6 +57,8 @@ type CasosDeUso struct {
 	RevelarVotos               *app.RevelarVotos
 	AbrirNuevaRonda            *app.AbrirNuevaRonda
 	RegistrarAcuerdo           *app.RegistrarEstimacionAcordada
+	// Pantallas de defectos (T-021).
+	ListarDefectos *app.ListarDefectos
 }
 
 // Pantallas son los handlers de las pantallas de proyectos, integrantes y backlog.
@@ -105,6 +107,8 @@ func (p *Pantallas) registrar(mux *http.ServeMux) {
 	mux.HandleFunc("GET /proyectos/{id}/esfuerzo", p.verEsfuerzo)
 	mux.HandleFunc("POST /proyectos/{id}/esfuerzo", p.registrarEsfuerzo)
 	mux.HandleFunc("GET /proyectos/{id}/esfuerzo/comparacion", p.compararEsfuerzo)
+	// Defectos (T-021).
+	mux.HandleFunc("GET /proyectos/{id}/defectos", p.listaDeDefectos)
 }
 
 // ---------------------------------------------------------------- proyectos
