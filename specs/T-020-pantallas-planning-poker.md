@@ -7,7 +7,7 @@
 | **Issue** | #190 |
 | **Escenarios BDD** | ninguno: es una tarea técnica (ver "Decisiones") |
 | **Código** | `internal/adapters/http/`, `web/templates/`, `internal/app/` (la lectura de la sesión), `cmd/server/` |
-| **Última actualización** | 2026-10-27 |
+| **Última actualización** | 2026-10-28 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
 > implementación. Si durante la implementación descubrís que algo de acá está
@@ -85,7 +85,13 @@ No hay reglas de dominio nuevas. Son reglas de comportamiento de la interfaz.
   de los participantes (`ListarIntegrantes`), la votación de la ronda actual
   (`VotacionDeLaRonda`) y las de las rondas anteriores (US-017). El resultado de
   una ronda revelada se arma con la función de dominio que extrae US-017 de
-  `Revelar`: la pantalla no calcula la divergencia ni los extremos.
+  `Revelar`: la pantalla no calcula la divergencia ni los extremos. En el
+  código: `app.ConsultarSesionPlanningPoker`, que devuelve un
+  `app.DetalleDeSesion`, y su puerto `app.RepositorioConsultaDeSesion`. Los
+  nombres de los participantes salen de `ConsultarProyecto`, que el handler ya
+  llama para el layout. El mismo caso de uso tiene `AbiertasDelProyecto`, que
+  lee las sesiones abiertas de cada historia para el backlog (CL-T020-2), con
+  una lectura nueva del repositorio, `SesionesAbiertas`.
 - **RN-T020-4** — Una sesión solo se alcanza por la ruta de **su** proyecto (el
   de su historia): otra combinación responde 404, como RN-T015-5.
 - **RN-T020-5** — Los botones dependen del estado (tabla de la sección 3): votar
