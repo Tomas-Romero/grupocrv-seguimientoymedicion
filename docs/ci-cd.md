@@ -29,7 +29,7 @@ flowchart LR
 | `ci.yml` · **Trazabilidad** | PR y `main` | Avisa si una spec de historia no tiene su `.feature` |
 | `ci.yml` · **Perfil full** | PR y `main` | Levanta el `docker compose` completo sobre un volumen vacío y revisa la base (el camino de quien evalúa) |
 | `pr-title.yml` · **Convenciones del PR** | PR | Título en Conventional Commits con ID, rama con el formato `tipo/ID-slug`, `Closes #N` en el cuerpo y **el ID en cada commit** del PR (T-014) |
-| `cd-azure.yml` · **CD (Azure)** | push a `main` (menos cambios solo de documentación) y a mano | Construye la imagen Docker; si están los secretos y el interruptor `CD_ACTIVO` no vale `false`, la publica en el registro y despliega esa versión en la Container App |
+| `cd-azure.yml` · **CD (Azure)** | push a `main` (menos cambios solo de documentación) y a mano | Construye la imagen Docker; si están los secretos y la variable `CD_ACTIVO` vale `true`, la publica en el registro y despliega esa versión en la Container App |
 | `verificar-azure.yml` · **Verificar Azure (solo lectura)** | a mano (desde `main`) | Con las credenciales reales, comprueba secretos, nombre de la app, base de datos, acceso a Azure y al registro. No crea, cambia ni borra nada y no gasta créditos |
 
 ## Protección de `main`
@@ -81,7 +81,7 @@ bash scripts/configurar-azure.sh
 ```
 
 El script pide los nombres con los que los entregó la cátedra y deja el despliegue automático **apagado**
-(`CD_ACTIVO=false`) hasta que se verifique. Si se prefiere a mano, es lo mismo que *Settings → Environments →
+(`CD_ACTIVO=false`, que además es el valor si la variable no existe) hasta que se verifique. Si se prefiere a mano, es lo mismo que *Settings → Environments →
 azure* o `gh secret set <NOMBRE> --env azure` y `gh variable set <NOMBRE> --env azure --body <valor>`.
 
 | Secreto | Valor |
@@ -102,7 +102,7 @@ Variables (si no existen se usan los datos del grupo 03; entre paréntesis, el n
 | `CONTAINER_APPS_ENV` (`AZURE_CONTAINERAPPS_ENVIRONMENT`) | — | Entorno de Container Apps. Solo hace falta si la app todavía no existe |
 | `CARGAR_DATOS_EJEMPLO` | `true` | Carga el proyecto de ejemplo al arrancar, para la demo (es idempotente) |
 | `MIN_REPLICAS` | `0` | Réplicas mínimas. `0`: sin visitas no corre ni cobra. `1` solo el día de la presentación, para evitar el arranque en frío |
-| `CD_ACTIVO` | `true` | Interruptor general: con `false` el workflow solo valida el Dockerfile y no publica ni despliega nada |
+| `CD_ACTIVO` | `false` | Interruptor general de costos: **solo con `true`** se publica y se despliega. Sin la variable, o con cualquier otro valor, el workflow solo valida el Dockerfile aunque estén todos los secretos |
 
 El nombre que la cátedra asignó a la Container App (`grupo03-grupocrv-seguimientoymedicion`) tiene 37 caracteres y
 Azure acepta hasta 32, así que se usa `grupo03-grupocrv-seguimiento` (28). El workflow rechaza un nombre inválido
@@ -156,10 +156,15 @@ local (`make up`), sin tocar la base de Neon.
 - **GitHub Actions:** los cambios que no entran en la imagen (documentación, specs y escenarios) no construyen
   ni despliegan. El repositorio es público: los minutos de Actions son gratuitos.
 - **Base de datos:** Neon en su plan gratuito, fuera de Azure.
-- **Interruptor:** `gh variable set CD_ACTIVO --env azure --body false` frena toda publicación y despliegue sin tocar
-  código; `true` los vuelve a encender.
+- **Interruptor:** el despliegue está **apagado por defecto**. `gh variable set CD_ACTIVO --env azure --body true` lo
+  enciende y `false` lo frena otra vez, sin tocar código.
 - **El día de la presentación:** `gh variable set MIN_REPLICAS --env azure --body 1` y *Run workflow* dejan la app
   encendida (sin arranque en frío); al terminar, volver a `0`.
+- **Neon también se duerme:** en el plan gratuito, la base se suspende a los 5 minutos sin uso y no se puede cambiar; despertarla
+  tarda de unos cientos de milisegundos a unos segundos ([documentación de Neon](https://neon.com/docs/introduction/plans)).
+  Por eso, **10 minutos antes de presentar** se abre `/health` de la app (que consulta la base) y se recorre una pantalla.
+- **Plan B si Azure falla el día de la presentación:** la aplicación en local (`make up` y `make run`, o el `docker compose`
+  completo) con los mismos datos, y las capturas de cada pantalla guardadas de antemano. Se ensaya el domingo.
 - **Apagar todo después de la presentación:** `az containerapp delete --name grupo03-grupocrv-seguimiento
   --resource-group frsrutn` (no borrar nada que no empiece con `grupo03-`).
 
