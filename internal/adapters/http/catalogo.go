@@ -72,6 +72,8 @@ var entradasDelCatalogo = []entradaDelCatalogo{
 	{"planningpoker.ErrNoEsParticipante", planningpoker.ErrNoEsParticipante, errores.Conflicto, ""},
 	{"planningpoker.ErrSesionNoRevelada", planningpoker.ErrSesionNoRevelada, errores.Conflicto, ""},
 	{"planningpoker.ErrSinVotos", planningpoker.ErrSinVotos, errores.Conflicto, ""},
+	{"planningpoker.ErrNuevaRondaSinRevelar", planningpoker.ErrNuevaRondaSinRevelar, errores.Conflicto, ""},
+	{"planningpoker.ErrSinDivergencia", planningpoker.ErrSinDivergencia, errores.Conflicto, ""},
 
 	// proyecto
 	{"proyecto.ErrNombreVacio", proyecto.ErrNombreVacio, errores.Validacion, "nombre"},
