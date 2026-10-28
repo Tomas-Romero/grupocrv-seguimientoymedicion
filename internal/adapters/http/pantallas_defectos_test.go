@@ -2,6 +2,7 @@ package httpadapter_test
 
 import (
 	"context"
+	"errors"
 	"io"
 	"log/slog"
 	"net/http"
@@ -798,9 +799,17 @@ func (b baseQueCambiaAntesDeGuardar) ActualizarEstadoDefecto(ctx context.Context
 	return b.Base.ActualizarEstadoDefecto(ctx, d, anterior)
 }
 
-// entornoConBase arma el router real con los casos de uso de las pantallas de defectos sobre la base indicada para
-// el cambio de estado, para probar fallas que la base en memoria no produce sola.
-func entornoConBase(base *memoria.Base, cambio app.RepositorioCambioDeEstadoDefecto) entorno {
+// repositorioDeDefectos es lo que necesitan los tres casos de uso de defectos de las pantallas.
+type repositorioDeDefectos interface {
+	app.RepositorioListarDefectos
+	app.RepositorioDefectos
+	app.RepositorioCambioDeEstadoDefecto
+}
+
+// entornoConBase arma el router real con los casos de uso de las pantallas de defectos sobre el repositorio
+// indicado, para probar fallas que la base en memoria no produce sola. El proyecto, las historias y los
+// sprints salen siempre de la base.
+func entornoConBase(base *memoria.Base, defectos repositorioDeDefectos) entorno {
 	casos := httpadapter.CasosDeUso{
 		ConsultarProyecto:    app.NuevoConsultarProyecto(base),
 		ListarBacklog:        app.NuevoListarBacklog(base),
@@ -808,9 +817,9 @@ func entornoConBase(base *memoria.Base, cambio app.RepositorioCambioDeEstadoDefe
 		CrearItem:            app.NuevoCrearItemBacklog(base, time.Now),
 		CrearSprint:          app.NuevoCrearSprint(base),
 		CrearProyecto:        app.NuevoCrearProyecto(base),
-		ListarDefectos:       app.NuevoListarDefectos(base),
-		RegistrarDefecto:     app.NuevoRegistrarDefecto(base),
-		CambiarEstadoDefecto: app.NuevoCambiarEstadoDefecto(cambio),
+		ListarDefectos:       app.NuevoListarDefectos(defectos),
+		RegistrarDefecto:     app.NuevoRegistrarDefecto(defectos),
+		CambiarEstadoDefecto: app.NuevoCambiarEstadoDefecto(defectos),
 	}
 	manejador := httpadapter.NuevoManejadorDeErrores(httpadapter.CatalogoDeErrores(), slog.New(slog.NewTextHandler(io.Discard, nil)))
 	router := httpadapter.NuevoRouter(verificadorFalso{}, time.Second, http.FS(fstest.MapFS{}),
@@ -838,5 +847,59 @@ func TestPantallasDefectos_CambiosSimultaneos(t *testing.T) {
 	noContiene(t, w, "data-campo=")
 	if guardados := base.Defectos(d.proyecto); len(guardados) != 1 || guardados[0].Estado != defecto.EstadoEnCorreccion {
 		t.Errorf("el defecto tiene que quedar como lo dejo la otra persona (en correccion): %+v", guardados)
+	}
+}
+
+// baseCaida es la base en memoria con los defectos caidos: leer, registrar y guardar un cambio de estado fallan con
+// un error que no es de ninguna regla.
+type baseCaida struct {
+	*memoria.Base
+	err error
+}
+
+func (b baseCaida) ListarDefectosDelProyecto(context.Context, string) ([]app.DefectoListado, error) {
+	return nil, b.err
+}
+
+func (b baseCaida) RegistrarDefecto(context.Context, defecto.Defecto) (defecto.Defecto, error) {
+	return defecto.Defecto{}, b.err
+}
+
+func (b baseCaida) ActualizarEstadoDefecto(context.Context, defecto.Defecto, defecto.Estado) error {
+	return b.err
+}
+
+// T-021 / CL-T021-18: una falla inesperada de la base al listar, registrar o cambiar el estado responde 500 con el
+// mensaje fijo de T-005, sin mostrar el detalle, y no registra ni cambia nada.
+func TestPantallasDefectos_FallaInesperadaDeLaBase(t *testing.T) {
+	base := memoria.NuevaBase()
+	detalle := "conexion rechazada por 10.0.0.7"
+	e := entornoConBase(base, baseCaida{Base: base, err: errors.New(detalle)})
+	d := e.proyectoParaDefectos(t, "Demo")
+	falla := e.defectoGuardado(t, d.proyecto, d.historia, d.sprint, "Falla", defecto.SeveridadAlta)
+
+	casos := []struct {
+		nombre string
+		pedir  func() *httptest.ResponseRecorder
+	}{
+		{"listar", func() *httptest.ResponseRecorder { return e.get(rutaDeDefectos(d.proyecto)) }},
+		{"registrar", func() *httptest.ResponseRecorder {
+			return e.post(rutaDeDefectos(d.proyecto), d.datos("Otra falla", "alta"))
+		}},
+		{"cambiar el estado", func() *httptest.ResponseRecorder { return e.cambiar(d.proyecto, falla.ID, "descartado", "") }},
+	}
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			w := c.pedir()
+			if w.Code != http.StatusInternalServerError {
+				t.Fatalf("estado %d, quiero 500:\n%s", w.Code, w.Body.String())
+			}
+			contiene(t, w, "ocurrio un error inesperado")
+			noContiene(t, w, detalle)
+		})
+	}
+	guardados := base.Defectos(d.proyecto)
+	if len(guardados) != 1 || guardados[0].Estado != defecto.EstadoAbierto {
+		t.Errorf("las fallas no pueden registrar ni cambiar nada: %+v", guardados)
 	}
 }
