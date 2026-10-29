@@ -9,7 +9,7 @@ import (
 	"github.com/cucumber/godog"
 )
 
-// Steps del area Metricas (US-025, US-026, US-027, US-028 y US-029).
+// Steps del area Metricas (US-025, US-026, US-027, US-028, US-029 y US-030).
 
 func registrarMetricas(sc *godog.ScenarioContext, m *mundo) {
 	sc.Step(`^el sprint "([^"]*)" con una historia de (-?\d+) story points completada$`, m.dadoHistoriaDeSprintCompletada)
@@ -51,6 +51,8 @@ func registrarMetricas(sc *godog.ScenarioContext, m *mundo) {
 	sc.Step(`^se consultan los defectos del sprint (-?\d+)$`, m.cuandoSeConsultanLosDefectos)
 	sc.Step(`^los defectos detectados son (\d+)$`, m.entoncesDefectosDetectadosSon)
 	sc.Step(`^los defectos resueltos son (\d+)$`, m.entoncesDefectosResueltosSon)
+
+	registrarDashboard(sc, m)
 }
 
 // dadoHistoriaDeSprintCompletada y dadoHistoriaDeSprintSinCompletar arman el

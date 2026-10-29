@@ -178,6 +178,10 @@ type Metricas interface {
 	// que tiene que rechazar el dominio.
 	RegistrarDefecto(detectadoEn, resueltoEn int) error
 	DefectosDelSprint(sprint int) (ResumenDeDefectos, error)
+
+	// ConsultarDashboard es el dashboard de US-030: usa el caso de uso real sobre la base del escenario, con el reloj fijo. El
+	// proyecto que el escenario nombra y no existe se manda con un ID que no esta en la base.
+	ConsultarDashboard(proyecto string) (DashboardDelProyecto, error)
 }
 
 // ResumenDeDefectos son los defectos detectados y resueltos de un sprint (US-029).
@@ -368,6 +372,7 @@ type mundo struct {
 	porcentajeHistorias float64
 	estadoProyecto      EstadoDelProyecto
 	defectos            ResumenDeDefectos
+	dashboard           DashboardDelProyecto
 	anteriores          SprintsAnteriores
 	consultaEsfuerzo    ConsultaDeEsfuerzo
 }
