@@ -4,7 +4,7 @@
 > No se edita a mano: se regenera. Enlaza Historia → Spec → Criterios de aceptación →
 > Escenarios BDD → Tests → Código (la guía de la cátedra la pide como evidencia).
 
-Total: 39 especificaciones, 267 criterios de aceptación, 190 con escenario BDD y 223 con test.
+Total: 39 especificaciones, 267 criterios de aceptación, 196 con escenario BDD y 229 con test.
 
 Un criterio sin escenario BDD o sin test se muestra con `—`: o falta la evidencia, o el criterio
 se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no llevan `.feature`).
@@ -453,14 +453,14 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 - **Spec:** [specs/US-024-listar-defectos.md](../specs/US-024-listar-defectos.md) · **Issue:** #32 (historia) · issue de la spec: pendiente
 - **Escenarios BDD:** [features/US-024-listar-defectos.feature](../features/US-024-listar-defectos.feature)
 - **Código:** `internal/app/`, `internal/domain/defecto/`, `internal/adapters/http/`, `web/templates/`
-- **Tests que la citan:** 30
+- **Tests que la citan:** 31
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
-| CA-024-1 | normal | Filtrar por un sprint deja solo los defectos detectados en él, Filtrar por una severidad deja solo los defectos de esa severidad, de cualquier sprint, El sprint de resolución no cuenta: el defecto sale con el sprint en que se detectó | TestPantallasDefectosFiltros_PorSprint, TestPantallasDefectosFiltros_PorSeveridad, TestListarDefectos_FiltroPorSprint, TestListarDefectos_FiltroPorSeveridad |
-| CA-024-2 | alternativo | Los dos filtros se combinan: salen solo los defectos que cumplen ambos | TestPantallasDefectosFiltros_Combinados, TestListarDefectos_LosFiltrosSeCombinanConY |
-| CA-024-3 | límite | Un sprint del proyecto sin defectos da una lista vacía, no un error, Una severidad sin defectos da una lista vacía, no un error, Dos filtros que tienen defectos por separado pero no en común dan una lista vacía, +1 más | TestPantallasDefectosFiltros_SinCoincidencias, TestPantallasDefectosFiltros_Controles, TestListarDefectos_SinCoincidenciasEsListaVacia |
-| CA-024-4 | error | Un sprint que no existe en el proyecto se rechaza, Una severidad que no es una de las cuatro se rechaza, sin normalizarla | TestPantallasDefectosFiltros_SprintInexistente, TestPantallasDefectosFiltros_SeveridadInvalida, TestListarDefectos_SprintInexistente, TestListarDefectos_SeveridadInvalida, +1 más |
+| CA-024-1 | normal | Filtrar por un sprint deja solo los defectos detectados en él, Filtrar por una severidad deja solo los defectos de esa severidad, de cualquier sprint, El sprint de resolución no cuenta: el defecto sale con el sprint en que se detectó | TestPantallasDefectosFiltros_PorSprint, TestPantallasDefectosFiltros_PorSeveridad, TestListarDefectos_MemoriaYPostgresDevuelvenLoMismo, TestListarDefectos_FiltroPorSprint, +1 más |
+| CA-024-2 | alternativo | Los dos filtros se combinan: salen solo los defectos que cumplen ambos | TestPantallasDefectosFiltros_Combinados, TestListarDefectos_MemoriaYPostgresDevuelvenLoMismo, TestListarDefectos_LosFiltrosSeCombinanConY |
+| CA-024-3 | límite | Un sprint del proyecto sin defectos da una lista vacía, no un error, Una severidad sin defectos da una lista vacía, no un error, Dos filtros que tienen defectos por separado pero no en común dan una lista vacía, +1 más | TestPantallasDefectosFiltros_SinCoincidencias, TestPantallasDefectosFiltros_Controles, TestListarDefectos_MemoriaYPostgresDevuelvenLoMismo, TestListarDefectos_SinCoincidenciasEsListaVacia |
+| CA-024-4 | error | Un sprint que no existe en el proyecto se rechaza, Una severidad que no es una de las cuatro se rechaza, sin normalizarla | TestPantallasDefectosFiltros_SprintInexistente, TestPantallasDefectosFiltros_SeveridadInvalida, TestListarDefectos_MemoriaYPostgresDevuelvenLoMismo, TestListarDefectos_SprintInexistente, +2 más |
 | CA-024-5 | alternativo | Sin filtros se devuelve la lista completa, en cualquier estado | TestPantallasDefectosFiltros_SinFiltros, TestListarDefectos_SinFiltrosEsLaListaCompleta |
 | CA-024-6 | error | Con el sprint inexistente y la severidad inválida a la vez, se rechaza por el sprint | TestPantallasDefectosFiltros_OrdenDeLosRechazos, TestListarDefectos_SprintInexistenteYSeveridadInvalida |
 
