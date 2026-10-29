@@ -190,6 +190,11 @@ type Metricas interface {
 	// ConsultarDashboard es el dashboard de US-030: usa el caso de uso real sobre la base del escenario, con el reloj fijo. El
 	// proyecto que el escenario nombra y no existe se manda con un ID que no esta en la base.
 	ConsultarDashboard(proyecto string) (DashboardDelProyecto, error)
+
+	// ConsultarReporteDelProyecto y ConsultarReporteDelSprint son los reportes de US-033: usan los casos de uso reales sobre la base del
+	// escenario, con el reloj fijo. Lo que el escenario nombra y no existe (el proyecto o el sprint) se manda con un ID que no esta en la base.
+	ConsultarReporteDelProyecto(proyecto string) (Reporte, error)
+	ConsultarReporteDelSprint(proyecto, sprint string) (Reporte, error)
 }
 
 // ResumenDeDefectos son los defectos detectados y resueltos de un sprint (US-029).
@@ -381,6 +386,7 @@ type mundo struct {
 	estadoProyecto      EstadoDelProyecto
 	defectos            ResumenDeDefectos
 	dashboard           DashboardDelProyecto
+	reporte             Reporte
 	anteriores          SprintsAnteriores
 	consultaEsfuerzo    ConsultaDeEsfuerzo
 }

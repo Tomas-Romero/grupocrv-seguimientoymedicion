@@ -88,7 +88,7 @@ definidas en `features/steps/mundo.go`. Cada área se conecta en
 | Proyectos | `Proyectos` | US-001, US-002, US-003, US-004 | `features/steps/proyectos.go` |
 | Backlog | `Backlog` | US-005, US-006, US-007, US-013 | `features/steps/backlog.go` |
 | Sprints | `Sprints` | US-008, US-009, US-010, US-011, US-012 | `features/steps/sprints.go` |
-| Métricas | `Metricas` | US-025, US-026, US-027, US-028, US-029, US-030 | `features/steps/metricas.go` |
+| Métricas | `Metricas` | US-025, US-026, US-027, US-028, US-029, US-030, US-033 | `features/steps/metricas.go` |
 | Planning Poker | `PlanningPoker` | US-014 a US-018 | `features/steps/planningpoker.go` |
 | Defectos | `Defectos` | US-022, US-023, US-024 | `features/steps/defectos.go` |
 
@@ -220,6 +220,8 @@ inexistente (CA-005-8, CA-008-10); con esa frase el escenario no lleva
 | `Cuando se compara el esfuerzo del proyecto "Demo"` | `^se compara el esfuerzo del proyecto "([^"]*)"$` |
 | `Cuando se consultan los defectos del sprint 3` | `^se consultan los defectos del sprint (-?\d+)$` |
 | `Cuando se consulta el dashboard del proyecto "Demo"` | `^se consulta el dashboard del proyecto "([^"]*)"$` |
+| `Cuando se consulta el reporte del proyecto "Demo"` | `^se consulta el reporte del proyecto "([^"]*)"$` |
+| `Cuando se consulta el reporte del sprint "Sprint 1" del proyecto "Demo"` | `^se consulta el reporte del sprint "([^"]*)" del proyecto "([^"]*)"$` |
 | `Cuando se inicia una sesión de Planning Poker sobre la historia "Crear proyecto"` | `^se inicia una sesión de Planning Poker sobre la historia "([^"]*)"$` |
 | `Cuando el integrante "Ana" vota 5 en la sesión de la historia "Crear proyecto"` | `^el integrante "([^"]*)" vota (-?\d+) en la sesión de la historia "([^"]*)"$` |
 | `Cuando se consultan las horas del sprint "Sprint 1"` | `^se consultan las horas del sprint "([^"]*)"$` |
@@ -433,6 +435,12 @@ cuenta caracteres y no bytes.
 | `Y el dashboard lista 2 sprints cerrados` | `^el dashboard lista (\d+) sprints? cerrados?$` |
 | `Y el sprint cerrado "Sprint 1" figura con 1 defecto detectado y 0 resueltos` | `^el sprint cerrado "([^"]*)" figura con (\d+) defectos? detectados? y (\d+) resueltos?$` |
 | `Y el dashboard cuenta 3 defectos` | `^el dashboard cuenta (\d+) defectos?$` |
+| `Y el reporte tiene las secciones:` (con una tabla de una columna) | `^el reporte tiene las secciones:$` |
+| `Y la sección "Defectos" del reporte está vacía` | `^la sección "([^"]*)" del reporte está vacía$` |
+| `Y la sección "Product Backlog" del reporte tiene 2 elementos` | `^la sección "([^"]*)" del reporte tiene (\d+) elementos?$` |
+| `Y ninguna sección del reporte informa un error` | `^ninguna sección del reporte informa un error$` |
+| `Y el reporte del sprint muestra la historia "Login" como "Completada"` | `^el reporte del sprint muestra la historia "([^"]*)" como "(Completada\|No completada)"$` |
+| `Y el reporte del sprint lista 1 defecto detectado y 0 resueltos` | `^el reporte del sprint lista (\d+) defectos? detectados? y (\d+) resueltos?$` |
 | `Y las horas estimadas son 7,5` | `^las horas estimadas son (-?\d+(?:[.,]\d+)?)$` |
 | `Y las horas reales son 8` | `^las horas reales son (-?\d+(?:[.,]\d+)?)$` |
 | `Y la desviación de horas es -3` | `^la desviación de horas es (-?\d+(?:[.,]\d+)?)$` |
@@ -544,6 +552,18 @@ son las de los registros con fecha dentro del sprint. `el dashboard lista N spri
 de la tabla (cero sin sprints cerrados). `la barra de "planificados"` o `"completados"` `del "Sprint N"` mide la
 altura de 0 a 100 sobre la barra más alta del gráfico, no píxeles. `el dashboard cuenta N defectos` incluye los
 descartados; `el sprint cerrado "S" figura con N defectos detectados y M resueltos` no los cuenta.
+
+**Reportes en pantalla (US-033):** `se consulta el reporte del proyecto "P"` y `se consulta el reporte del sprint "Sprint N" del
+proyecto "P"` usan los casos de uso reales sobre la base en memoria, con el reloj fijo de los escenarios. Como los reportes componen
+lecturas que ya existen, el contexto se arma con las frases de sprints, historias, esfuerzo y defectos de siempre: no hay frases de
+contexto nuevas. `el reporte tiene las secciones:` compara los **títulos** de la tabla, uno por fila, con los del reporte y **en ese
+orden** (el del proyecto: Proyecto, Integrantes, Product Backlog, Sprints, Esfuerzo, Defectos y Métricas; el de un sprint: Sprint,
+Historias, Métricas, Esfuerzo registrado y Defectos). `la sección "S" del reporte está vacía` es una sección sin datos (la página escribe
+«Sin datos») y `la sección "S" del reporte tiene N elementos` cuenta sus filas: integrantes, historias, sprints, historias comparadas,
+defectos o registros de esfuerzo; **no** dice nada del texto, que es de la pantalla y lo prueban sus tests. Después de consultar el
+reporte de un sprint, las frases de Story Points, porcentaje y horas de US-025, US-027 y US-028 se refieren a las métricas de ese
+sprint. `lista N defectos detectados y M resueltos` cuenta los del sprint **sin los descartados**, y un defecto detectado y resuelto
+en el mismo sprint está en las dos cuentas.
 
 ## Un escenario completo, de ejemplo
 
