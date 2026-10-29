@@ -79,8 +79,9 @@ func validarDatos(datos DatosItem) (DatosItem, error) {
 	if err := validarTitulo(titulo); err != nil {
 		errs = append(errs, err)
 	}
-	if !datos.Prioridad.valida() {
-		errs = append(errs, fmt.Errorf("%w: se recibio %q", ErrPrioridadInvalida, string(datos.Prioridad)))
+	// RN-007-8: la regla de la prioridad es la misma que usa el filtro del backlog.
+	if err := ValidarPrioridad(datos.Prioridad); err != nil {
+		errs = append(errs, err)
 	}
 	criterios, errsCriterios := recortarCriterios(datos.Criterios)
 	errs = append(errs, errsCriterios...)
