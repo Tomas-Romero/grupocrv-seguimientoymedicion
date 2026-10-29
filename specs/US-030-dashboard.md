@@ -116,7 +116,8 @@ desviación con signo y porcentaje con un decimal.
 - **RN-030-11** — El dashboard es una lectura: no modifica nada. Hace una sola lectura de cada tipo (RN-004-8),
   no una por sprint ni una por historia.
 - **RN-030-12** — La página usa el layout, el router y `Responder` existentes. El menú del proyecto suma
-  «Dashboard» (sección nueva, activa en la página). Un texto con HTML se muestra escapado (RN-T011-8).
+  «Dashboard» (sección nueva, activa en la página) y **saca el enlace «Métricas»**, que apuntaba a una pantalla que nunca
+  existió (respondía «Página no encontrada»): el dashboard es la pantalla de las métricas. Un texto con HTML se muestra escapado (RN-T011-8).
 - **RN-030-13** — El handler solo lee la petición, llama a `ConsultarDashboard` y escribe la respuesta
   (RN-T011-1). Todo el armado y los cálculos viven en el caso de uso y el dominio, no en la plantilla.
 - **RN-030-14** — El **gráfico de Story Points** tiene un grupo de dos barras (planificados y completados) por
@@ -236,6 +237,9 @@ Que no haya sprints, horas, historias o defectos **no es un error**: son casos l
   miden en un navegador). Se descartó una librería de gráficos: es una dependencia más para dos gráficos de barras
   y rompe la regla de no usar JavaScript. Se descartaron las barras con `div` y `style`: el SVG permite el título,
   la descripción y el rol para lectores de pantalla.
+- **Se saca el enlace «Métricas» del menú en vez de dejarlo junto a «Dashboard».** Venía de T-011 como un lugar reservado y
+  nunca tuvo ruta: en la demo habría quedado un enlace que da 404 al lado del que sí funciona. Se descartó que «Métricas» fuera
+  el nombre de la pestaña del dashboard: la spec y el layout ya lo llaman «Dashboard», como el requerimiento 8 de la guía.
 - **Cada tarjeta falla por separado.** Un dato corrupto en un sprint no tiene que dejar a todo el equipo sin
   dashboard; tampoco se esconde. Se descartó un error único para toda la página.
 - **El sprint de referencia es el abierto, o el último cerrado.** Es el que importa en la Daily y en la Review; el
