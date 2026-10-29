@@ -178,6 +178,7 @@ func (p *Pantallas) verSprint(w http.ResponseWriter, r *http.Request) {
 		AccionAsignar: rutaDeSprint(id, sprintID) + "/historias",
 		Disponibles:   disponibles,
 		Volver:        rutaDeProyecto(id) + "/sprints",
+		Reporte:       rutaDelReporteDelSprint(id, sprintID),
 	}
 	if abierto {
 		vista.ConfirmaCierre = "¿Cerrar el " + vista.Nombre + "? Las historias no completadas vuelven al backlog y el sprint no se puede reabrir."
