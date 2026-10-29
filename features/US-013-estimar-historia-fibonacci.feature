@@ -1,8 +1,7 @@
 # language: es
 # Usa SOLO frases de docs/diccionario-steps.md. Despues de "Dado" no va "que".
-# CA-013-5 (estimar una historia completada) no tiene escenario todavia: depende
-# de `Dado la historia "X" completada`, que es del area Sprints y no esta
-# conectada hasta US-010. Mientras tanto lo cubren los tests del dominio.
+# CA-013-5 (estimar una historia completada) usa `la historia "X" completada`, de US-010:
+# la historia se completa en un sprint abierto.
 @US-013
 Característica: Estimar una historia con Story Points en escala Fibonacci
   Como integrante del equipo
@@ -61,6 +60,18 @@ Característica: Estimar una historia con Story Points en escala Fibonacci
     Cuando se estima la historia "Alta de proyectos" en 21 story points
     Entonces la operación se rechaza
     Y la historia "Alta de proyectos" está sin estimar
+
+  @CA-013-5 @error
+  Escenario: Una historia completada no se puede estimar
+    Dado un proyecto "Demo"
+    Y un sprint "Sprint 1" con el objetivo "MVP navegable"
+    Y una historia "Alta de proyectos" con prioridad "must", 5 story points y 2 criterios de aceptación
+    Y la historia "Alta de proyectos" asignada al sprint "Sprint 1"
+    Y la historia "Alta de proyectos" completada
+    Cuando se estima la historia "Alta de proyectos" en 8 story points
+    Entonces la operación se rechaza
+    Y el mensaje de error indica "el item esta completado"
+    Y la historia "Alta de proyectos" tiene 5 story points
 
   @CA-013-6 @error
   Escenario: Estimar una historia que no existe se rechaza
