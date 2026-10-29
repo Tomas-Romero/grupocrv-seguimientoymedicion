@@ -12,6 +12,7 @@
 //	/proyectos/{id}/esfuerzo       esfuerzo (horas registradas)
 //	/proyectos/{id}/dashboard      dashboard de metricas y graficos
 //	/proyectos/{id}/defectos       defectos
+//	/proyectos/{id}/reporte        reporte en pantalla
 package plantillas
 
 import (
@@ -47,6 +48,7 @@ const (
 	SeccionEsfuerzo  Seccion = "esfuerzo"
 	SeccionDashboard Seccion = "dashboard"
 	SeccionDefectos  Seccion = "defectos"
+	SeccionReporte   Seccion = "reporte"
 )
 
 // ProyectoActual es el proyecto dentro del cual esta la pagina, si hay uno.
@@ -99,6 +101,7 @@ func (p Pagina) EnlacesProyecto() []Enlace {
 		{Texto: "Esfuerzo", Href: base + "/esfuerzo", Activo: p.Activo == SeccionEsfuerzo},
 		{Texto: "Dashboard", Href: base + "/dashboard", Activo: p.Activo == SeccionDashboard},
 		{Texto: "Defectos", Href: base + "/defectos", Activo: p.Activo == SeccionDefectos},
+		{Texto: "Reporte", Href: base + "/reporte", Activo: p.Activo == SeccionReporte},
 	}
 }
 
