@@ -202,7 +202,7 @@ func TestListarBacklog_Orden(t *testing.T) {
 		}},
 	}
 
-	got, err := app.NuevoListarBacklog(repo).Ejecutar(context.Background(), "p1")
+	got, err := app.NuevoListarBacklog(repo).Ejecutar(context.Background(), "p1", app.FiltroBacklog{})
 	if err != nil {
 		t.Fatalf("Ejecutar: %v", err)
 	}
@@ -217,18 +217,18 @@ func TestListarBacklog_Orden(t *testing.T) {
 func TestListarBacklog_VacioEInexistente(t *testing.T) {
 	repo := &lecturasFalsas{proyectos: []proyecto.Proyecto{proyectoDe("p1", "Demo", fechaDe(2026, time.October, 1))}}
 
-	got, err := app.NuevoListarBacklog(repo).Ejecutar(context.Background(), "p1")
+	got, err := app.NuevoListarBacklog(repo).Ejecutar(context.Background(), "p1", app.FiltroBacklog{})
 	if err != nil || len(got) != 0 {
 		t.Errorf("proyecto sin items: %v, %v; quiero lista vacia y sin error", got, err)
 	}
-	if _, err := app.NuevoListarBacklog(repo).Ejecutar(context.Background(), "otro"); !errors.Is(err, app.ErrProyectoInexistente) {
+	if _, err := app.NuevoListarBacklog(repo).Ejecutar(context.Background(), "otro", app.FiltroBacklog{}); !errors.Is(err, app.ErrProyectoInexistente) {
 		t.Errorf("proyecto inexistente: %v, quiero ErrProyectoInexistente", err)
 	}
 }
 
 func TestListarBacklog_ErrorDeLaBase(t *testing.T) {
 	errBase := errors.New("base caida")
-	_, err := app.NuevoListarBacklog(&lecturasFalsas{err: errBase}).Ejecutar(context.Background(), "p1")
+	_, err := app.NuevoListarBacklog(&lecturasFalsas{err: errBase}).Ejecutar(context.Background(), "p1", app.FiltroBacklog{})
 	if !errors.Is(err, errBase) {
 		t.Errorf("Ejecutar() = %v, quiero un error que envuelva %v", err, errBase)
 	}
