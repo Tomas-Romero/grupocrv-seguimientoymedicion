@@ -13,3 +13,27 @@
 #mensajes [role="alert"] ul {
   @apply list-disc pl-5;
 }
+
+/* Vista imprimible del reporte (spec US-034). El encabezado de impresion solo se ve en papel. */
+.solo-impresion { display: none; }
+
+@media print {
+  /* RN-034-8: A4 vertical con margenes fijos, y el contenido usa todo el ancho de la hoja. */
+  @page { size: A4 portrait; margin: 15mm; }
+  main { max-width: none; padding: 0; }
+
+  /* RN-034-10: texto oscuro sobre fondo blanco. */
+  body { background: #fff; color: #000; }
+
+  /* RN-034-5: lo que no se imprime se marca con su clase. RN-034-9: el encabezado de impresion si. */
+  .no-imprimir { display: none !important; }
+  .solo-impresion { display: block !important; }
+
+  /* RN-034-6: una seccion que entra en una pagina no se corta, y un titulo no queda solo al pie. */
+  .reporte section { break-inside: avoid; }
+  .reporte h2, .reporte h3 { break-after: avoid; }
+
+  /* RN-034-7: una fila no se parte y el encabezado de la tabla se repite en cada pagina. */
+  .reporte tr { break-inside: avoid; }
+  .reporte thead { display: table-header-group; }
+}
