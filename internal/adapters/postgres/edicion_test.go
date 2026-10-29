@@ -195,3 +195,28 @@ func TestGuardarEdicion_Concurrente(t *testing.T) {
 		t.Errorf("titulo = %q, se esperaba el de la ultima edicion", guardado.titulo)
 	}
 }
+
+// US-006 / CA-006-3, RN-006-6: un item asignado a un sprint abierto se edita y sigue en ese
+// sprint, con su fila pendiente sin cambios.
+func TestGuardarEdicion_ItemEnSprintAbierto(t *testing.T) {
+	ctx := contexto(t)
+	e := asignadoEnPostgres(ctx, t)
+	item, _, err := e.backlog.ObtenerItem(ctx, e.item)
+	if err != nil {
+		t.Fatalf("ObtenerItem: %v", err)
+	}
+
+	if err := e.backlog.GuardarEdicion(ctx, editarCon(t, item, "Crear proyecto con integrantes")); err != nil {
+		t.Fatalf("GuardarEdicion: %v", err)
+	}
+
+	if guardado := leerFila(ctx, t, e.pool, e.item); guardado.titulo != "Crear proyecto con integrantes" {
+		t.Errorf("titulo guardado = %q, se esperaba el editado", guardado.titulo)
+	}
+	if en, _ := e.repo.ItemEnSprintAbierto(ctx, e.item); !en {
+		t.Error("el item editado salio del sprint abierto")
+	}
+	if filas := filasDeLaRelacion(ctx, t, e.pool, e.item); !slices.Equal(filas, []string{"pendiente"}) {
+		t.Errorf("filas de la relacion = %v, se esperaba [pendiente]", filas)
+	}
+}

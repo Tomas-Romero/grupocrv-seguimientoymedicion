@@ -144,3 +144,25 @@ func TestBase_GuardarEdicion_ItemCompletado(t *testing.T) {
 		t.Errorf("se edito un item completado: %+v", guardado)
 	}
 }
+
+// US-006 / CA-006-3, RN-006-6: un item asignado a un sprint abierto se edita y sigue en ese
+// sprint, con su fila pendiente sin cambios.
+func TestBase_GuardarEdicion_ItemEnSprintAbierto(t *testing.T) {
+	ctx := context.Background()
+	b := asignado(t)
+	item, _, _ := b.base.ObtenerItem(ctx, b.item)
+
+	if err := b.base.GuardarEdicion(ctx, editado(t, item)); err != nil {
+		t.Fatalf("GuardarEdicion: %v", err)
+	}
+
+	if guardado, _, _ := b.base.ObtenerItem(ctx, b.item); guardado.Titulo != "Alta de proyectos con integrantes" {
+		t.Errorf("titulo guardado = %q, se esperaba el editado", guardado.Titulo)
+	}
+	if en, _ := b.base.ItemEnSprintAbierto(ctx, b.item); !en {
+		t.Error("el item editado salio del sprint abierto")
+	}
+	if filas := b.base.FilasDelSprint(b.sprint); len(filas) != 1 || filas[0].ItemID != b.item {
+		t.Errorf("filas del sprint = %+v, se esperaba solo la del item editado", filas)
+	}
+}
