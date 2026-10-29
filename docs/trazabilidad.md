@@ -4,7 +4,7 @@
 > No se edita a mano: se regenera. Enlaza Historia → Spec → Criterios de aceptación →
 > Escenarios BDD → Tests → Código (la guía de la cátedra la pide como evidencia).
 
-Total: 39 especificaciones, 267 criterios de aceptación, 196 con escenario BDD y 229 con test.
+Total: 39 especificaciones, 267 criterios de aceptación, 203 con escenario BDD y 236 con test.
 
 Un criterio sin escenario BDD o sin test se muestra con `—`: o falta la evidencia, o el criterio
 se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no llevan `.feature`).
@@ -41,7 +41,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | US-027 | [specs/US-027-horas-estimadas-reales.md](../specs/US-027-horas-estimadas-reales.md) | borrador | 6 | 6 | 6 | `internal/domain/metricas/` |
 | US-028 | [specs/US-028-porcentaje-historias-completadas.md](../specs/US-028-porcentaje-historias-completadas.md) | borrador | 5 | 5 | 1 | `internal/domain/metricas/` |
 | US-029 | [specs/US-029-defectos-por-sprint.md](../specs/US-029-defectos-por-sprint.md) | borrador | 6 | 6 | 6 | `internal/domain/metricas/` |
-| US-030 | [specs/US-030-dashboard.md](../specs/US-030-dashboard.md) | borrador | 7 | 0 | 0 | `internal/app/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
+| US-030 | [specs/US-030-dashboard.md](../specs/US-030-dashboard.md) | borrador | 7 | 7 | 7 | `internal/app/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
 | US-033 | [specs/US-033-reporte-pantalla.md](../specs/US-033-reporte-pantalla.md) | borrador | 5 | 0 | 0 | `internal/app/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
 | US-034 | [specs/US-034-vista-imprimible.md](../specs/US-034-vista-imprimible.md) | borrador | 4 | 0 | 0 | `web/static/css/input.css`, `web/static/js/`, `web/templates/`, `internal/adapters/http/` |
 | T-004 | [specs/T-004-layout-base.md](../specs/T-004-layout-base.md) | revision | 5 | 0 | 4 | `web/templates/`, `internal/adapters/http/`, `cmd/server/` |
@@ -542,19 +542,19 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 ### US-030 — Ver un Dashboard con el estado del proyecto y sus métricas principales
 
 - **Spec:** [specs/US-030-dashboard.md](../specs/US-030-dashboard.md) · **Issue:** #36
-- **Escenarios BDD:** ninguno
+- **Escenarios BDD:** [features/US-030-dashboard.feature](../features/US-030-dashboard.feature)
 - **Código:** `internal/app/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/`
-- **Tests que la citan:** 0
+- **Tests que la citan:** 23
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
-| CA-030-1 | normal | — | — |
-| CA-030-2 | normal | — | — |
-| CA-030-3 | alternativo | — | — |
-| CA-030-4 | límite | — | — |
-| CA-030-5 | error | — | — |
-| CA-030-6 | normal | — | — |
-| CA-030-7 | límite | — | — |
+| CA-030-1 | normal | La tarjeta del sprint abierto muestra sus Story Points, su porcentaje y sus horas, Un sprint abierto sin historias ni horas muestra todo en cero | TestPantallasDashboard_Tarjetas, TestConsultarDashboard_TarjetaDelSprintAbierto |
+| CA-030-2 | normal | La velocidad y la tabla de sprints cerrados van del sprint más reciente al más antiguo, Cada sprint cerrado figura con sus defectos detectados y resueltos | TestPantallasDashboard_Tarjetas, TestConsultarDashboard_VelocidadYSprintsCerrados |
+| CA-030-3 | alternativo | Los defectos se cuentan todos, también los descartados, Un defecto descartado no cuenta en los defectos de su sprint | TestPantallasDashboard_Tarjetas, TestConsultarDashboard_Defectos |
+| CA-030-4 | límite | Un proyecto sin sprints, horas ni defectos muestra todo en cero y sin gráficos, Con todos los sprints cerrados la tarjeta es la del sprint de número más alto | TestPantallasDashboard_ProyectoNuevo, TestConsultarDashboard_ProyectoNuevo |
+| CA-030-5 | error | Un proyecto que no existe se rechaza | TestPantallasDashboard_ProyectoInexistente |
+| CA-030-6 | normal | El gráfico de Story Points tiene un grupo por sprint cerrado, con las alturas sobre la barra más alta | TestPantallasDashboard_GraficoDeStoryPoints |
+| CA-030-7 | límite | Un proyecto sin sprints, horas ni defectos muestra todo en cero y sin gráficos | TestPantallasDashboard_ProyectoNuevo |
 
 ### US-033 — Generar en pantalla el reporte completo de un proyecto o Sprint
 
