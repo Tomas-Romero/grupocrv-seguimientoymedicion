@@ -1,14 +1,9 @@
 # language: es
 # Usa SOLO frases de docs/diccionario-steps.md. Despues de "Dado" no va "que".
-# Sin escenario todavia:
-# - CA-006-3 (editar una historia asignada a un sprint abierto) necesita crear un
-#   sprint y asignarle la historia, y US-008 y US-009 no estan en main. Lo cubren
-#   los tests del dominio y del repositorio; el escenario llega con esas historias.
-# - CA-006-6 (una historia completada no se edita) necesita
-#   `Dado la historia "X" completada`, que conecta US-010. Lo cubren los tests del
-#   dominio y del repositorio.
-# - La parte de CA-006-4 de la lista de criterios vacia: una tabla de Gherkin no
-#   puede estar vacia, asi que no hay frase que la escriba. La cubren los tests.
+# CA-006-3 y CA-006-6 usan las frases de sprints de US-008 a US-010: la historia se asigna a
+# un sprint abierto y, en CA-006-6, se completa en el.
+# Sin escenario: la parte de CA-006-4 de la lista de criterios vacia. Una tabla de Gherkin
+# no puede estar vacia, asi que no hay frase que la escriba. La cubren los tests.
 @US-006
 Característica: Editar y repriorizar ítems del backlog
   Como integrante del equipo
@@ -47,6 +42,18 @@ Característica: Editar y repriorizar ítems del backlog
     Y la historia "Alta de proyectos" tiene el número 1
     Y la historia "Alta de proyectos" tiene estado "pendiente"
 
+  @CA-006-3
+  Escenario: Una historia asignada a un sprint abierto se edita y sigue en ese sprint
+    Dado un proyecto "Demo"
+    Y un sprint "Sprint 1" con el objetivo "MVP navegable"
+    Y una historia "Alta de proyectos" con prioridad "must", 5 story points y 2 criterios de aceptación
+    Y la historia "Alta de proyectos" asignada al sprint "Sprint 1"
+    Cuando se edita la historia "Alta de proyectos" con el título "Alta de proyectos con integrantes", la prioridad "should", la descripción "Con su equipo" y los criterios:
+      | Se guardan los integrantes |
+    Entonces la operación es exitosa
+    Y la historia "Alta de proyectos con integrantes" tiene prioridad "should"
+    Y la historia "Alta de proyectos con integrantes" está en el sprint "Sprint 1"
+
   # ---------------------------------------------------------------- casos limite
   @CA-006-4 @limite
   Esquema del escenario: El título editado tiene como máximo 120 caracteres
@@ -79,6 +86,20 @@ Característica: Editar y repriorizar ítems del backlog
       |                   | must      | Se guarda | el titulo es obligatorio                            |
       | Alta de proyectos | urgente   | Se guarda | la prioridad tiene que ser must, should, could o wont |
       | Alta de proyectos | must      |           | el criterio de aceptacion de la posicion 1 esta vacio |
+
+  @CA-006-6 @error
+  Escenario: Una historia completada no se edita y queda como estaba
+    Dado un proyecto "Demo"
+    Y un sprint "Sprint 1" con el objetivo "MVP navegable"
+    Y una historia "Alta de proyectos" con prioridad "must", 5 story points y 2 criterios de aceptación
+    Y la historia "Alta de proyectos" asignada al sprint "Sprint 1"
+    Y la historia "Alta de proyectos" completada
+    Cuando se edita la historia "Alta de proyectos" con el título "Alta de proyectos con integrantes", la prioridad "could", la descripción "Con su equipo" y los criterios:
+      | Se guardan los integrantes |
+    Entonces la operación se rechaza
+    Y el mensaje de error indica "el item esta completado"
+    Y la historia "Alta de proyectos" tiene prioridad "must"
+    Y la historia "Alta de proyectos" tiene estado "completado"
 
   @CA-006-7 @error
   Escenario: Editar una historia que no existe se rechaza y no cambia nada
