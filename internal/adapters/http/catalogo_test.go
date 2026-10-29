@@ -173,6 +173,8 @@ func TestCatalogoDeErrores_Clasifica(t *testing.T) {
 		{"fecha de fin del sprint", sprint.ErrDuracionExcedida, errores.Validacion, "fecha_fin", http.StatusUnprocessableEntity},
 		{"mismo nombre en otro paquete", proyecto.ErrNombreLargo, errores.Validacion, "nombre", http.StatusUnprocessableEntity},
 		{"email del integrante", integrante.ErrEmailInvalido, errores.Validacion, "email", http.StatusUnprocessableEntity},
+		// US-007 / spec seccion 5 (catalogo): el estado invalido del filtro del backlog es una validacion del campo estado.
+		{"estado invalido del filtro del backlog", backlog.ErrEstadoInvalido, errores.Validacion, "estado", http.StatusUnprocessableEntity},
 		{"inexistente", app.ErrItemInexistente, errores.NoEncontrado, "", http.StatusNotFound},
 		{"inexistente envuelto", fmt.Errorf("asignar: %w (id 9)", app.ErrProyectoInexistente), errores.NoEncontrado, "", http.StatusNotFound},
 		{"email duplicado", app.ErrEmailDuplicado, errores.Conflicto, "email", http.StatusConflict},
