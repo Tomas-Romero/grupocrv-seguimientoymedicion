@@ -83,6 +83,9 @@ Interfaz web renderizada en el servidor con `templ` y HTMX. PostgreSQL.
 
 | Documento | Para qué |
 |---|---|
+| [`docs/documentacion-tecnica.md`](docs/documentacion-tecnica.md) | Qué es el sistema, arquitectura en capas, modelo de datos, decisiones clave, cómo correrlo y cómo se trabajó |
+| [`docs/manual-de-usuario.md`](docs/manual-de-usuario.md) | Recorrido pantalla por pantalla, con capturas |
+| [`docs/informe-metricas-cobertura.md`](docs/informe-metricas-cobertura.md) | Cobertura, tests, trazabilidad y métricas del proceso por sprint |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | Cómo trabajamos: carpetas, nombres, ramas, commits, PRs |
 | [`docs/plan-de-trabajo.md`](docs/plan-de-trabajo.md) | Sprint Goals, responsables por historia y calendario hasta la entrega |
 | [`specs/`](specs/) | Especificaciones SDD, una por funcionalidad |
