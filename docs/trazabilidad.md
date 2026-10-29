@@ -4,7 +4,7 @@
 > No se edita a mano: se regenera. Enlaza Historia → Spec → Criterios de aceptación →
 > Escenarios BDD → Tests → Código (la guía de la cátedra la pide como evidencia).
 
-Total: 40 especificaciones, 273 criterios de aceptación, 209 con escenario BDD y 242 con test.
+Total: 40 especificaciones, 273 criterios de aceptación, 213 con escenario BDD y 247 con test.
 
 Un criterio sin escenario BDD o sin test se muestra con `—`: o falta la evidencia, o el criterio
 se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no llevan `.feature`).
@@ -43,7 +43,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | US-028 | [specs/US-028-porcentaje-historias-completadas.md](../specs/US-028-porcentaje-historias-completadas.md) | borrador | 5 | 5 | 1 | `internal/domain/metricas/` |
 | US-029 | [specs/US-029-defectos-por-sprint.md](../specs/US-029-defectos-por-sprint.md) | borrador | 6 | 6 | 6 | `internal/domain/metricas/` |
 | US-030 | [specs/US-030-dashboard.md](../specs/US-030-dashboard.md) | borrador | 7 | 7 | 7 | `internal/app/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
-| US-033 | [specs/US-033-reporte-pantalla.md](../specs/US-033-reporte-pantalla.md) | borrador | 5 | 0 | 0 | `internal/app/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
+| US-033 | [specs/US-033-reporte-pantalla.md](../specs/US-033-reporte-pantalla.md) | borrador | 5 | 4 | 5 | `internal/app/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
 | US-034 | [specs/US-034-vista-imprimible.md](../specs/US-034-vista-imprimible.md) | borrador | 4 | 0 | 0 | `web/static/css/input.css`, `web/static/js/`, `web/templates/`, `internal/adapters/http/` |
 | T-004 | [specs/T-004-layout-base.md](../specs/T-004-layout-base.md) | revision | 5 | 0 | 4 | `web/templates/`, `internal/adapters/http/`, `cmd/server/` |
 | T-005 | [specs/T-005-validaciones-errores-uniformes.md](../specs/T-005-validaciones-errores-uniformes.md) | borrador | 8 | 0 | 7 | `internal/platform/errores/`, `internal/adapters/http/` |
@@ -576,17 +576,17 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 ### US-033 — Generar en pantalla el reporte completo de un proyecto o Sprint
 
 - **Spec:** [specs/US-033-reporte-pantalla.md](../specs/US-033-reporte-pantalla.md) · **Issue:** #39
-- **Escenarios BDD:** ninguno
+- **Escenarios BDD:** [features/US-033-reporte-pantalla.feature](../features/US-033-reporte-pantalla.feature)
 - **Código:** `internal/app/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/`
-- **Tests que la citan:** 0
+- **Tests que la citan:** 28
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
-| CA-033-1 | normal | — | — |
-| CA-033-2 | alternativo | — | — |
-| CA-033-3 | límite | — | — |
-| CA-033-4 | error | — | — |
-| CA-033-5 | plataforma | — | — |
+| CA-033-1 | normal | El reporte del proyecto tiene sus siete secciones, siempre en el mismo orden, El defecto descartado sí está en la sección de defectos del reporte del proyecto | TestPantallasReporte_ProyectoConSusSieteSecciones, TestPantallasReporte_ContenidoDeCadaSeccion, TestConsultarReporteDelProyecto_TodoCargado |
+| CA-033-2 | alternativo | El reporte de un sprint muestra sus historias, sus métricas, su esfuerzo y sus defectos, Una historia se muestra con el resultado de su fila en cada sprint, no con su estado actual, Un defecto aparece como detectado en el sprint donde se detectó y como resuelto en el sprint donde se resolvió, +1 más | TestPantallasReporte_SprintConSusCincoSecciones, TestPantallasReporte_ContenidoDelSprint, TestConsultarReporteDelSprint_HistoriasYMetricas |
+| CA-033-3 | límite | Un proyecto recién creado muestra todas sus secciones, vacías y sin error, Un sprint sin historias ni horas muestra todas sus secciones vacías y el porcentaje en cero | TestPantallasReporte_ProyectoNuevoConTodasLasSecciones, TestPantallasReporte_SprintSinDatos, TestConsultarReporteDelProyecto_ProyectoNuevo, TestConsultarReporteDelSprint_SprintSinDatos |
+| CA-033-4 | error | Un proyecto que no existe se rechaza, Un sprint que no existe se rechaza | TestPantallasReporte_ProyectoInexistente, TestPantallasReporte_SprintInexistenteODeOtroProyecto, TestConsultarReporteDelProyecto_ProyectoInexistente, TestConsultarReporteDelSprint_Inexistentes |
+| CA-033-5 | plataforma | — | TestPantallasReporte_ProyectoConSusSieteSecciones, TestPantallasReporte_SprintConSusCincoSecciones, TestConsultarReporteDelProyecto_UnaLecturaDeCadaTipo |
 
 ### US-034 — Imprimir el reporte o guardarlo como PDF desde el navegador
 
