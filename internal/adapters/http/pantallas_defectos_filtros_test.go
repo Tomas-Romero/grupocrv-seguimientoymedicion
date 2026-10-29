@@ -154,9 +154,9 @@ func selectDe(t *testing.T, w *httptest.ResponseRecorder, id string) string {
 }
 
 // textosDeOpciones son los textos de las <option> de un <select>, en el orden en que salen.
-func textosDeOpciones(select_ string) []string {
+func textosDeOpciones(desplegable string) []string {
 	var textos []string
-	for _, m := range regexp.MustCompile(`<option[^>]*>([^<]*)</option>`).FindAllStringSubmatch(select_, -1) {
+	for _, m := range regexp.MustCompile(`<option[^>]*>([^<]*)</option>`).FindAllStringSubmatch(desplegable, -1) {
 		textos = append(textos, m[1])
 	}
 	return textos
