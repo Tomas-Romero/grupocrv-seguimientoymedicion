@@ -2,6 +2,7 @@ package plantillas_test
 
 import (
 	"slices"
+	"strings"
 	"testing"
 
 	plantillas "github.com/Tomas-Romero/grupocrv-seguimientoymedicion/web/templates"
@@ -81,7 +82,7 @@ func TestEnlacesGlobales(t *testing.T) {
 	}
 }
 
-// enlacesDeProyecto arma los siete enlaces esperados de un proyecto; base es la
+// enlacesDeProyecto arma los seis enlaces esperados de un proyecto; base es la
 // ruta del proyecto con el ID ya escapado.
 func enlacesDeProyecto(base, activo string) []plantillas.Enlace {
 	return []plantillas.Enlace{
@@ -90,7 +91,6 @@ func enlacesDeProyecto(base, activo string) []plantillas.Enlace {
 		{Texto: "Sprints", Href: base + "/sprints", Activo: activo == "Sprints"},
 		{Texto: "Esfuerzo", Href: base + "/esfuerzo", Activo: activo == "Esfuerzo"},
 		{Texto: "Dashboard", Href: base + "/dashboard", Activo: activo == "Dashboard"},
-		{Texto: "Métricas", Href: base + "/metricas", Activo: activo == "Métricas"},
 		{Texto: "Defectos", Href: base + "/defectos", Activo: activo == "Defectos"},
 	}
 }
@@ -128,12 +128,6 @@ func TestEnlacesProyecto(t *testing.T) {
 			esperados: enlacesDeProyecto("/proyectos/p1", "Dashboard"),
 		},
 		{
-			nombre:    "caso alternativo: Metricas activo",
-			id:        "p1",
-			activo:    plantillas.SeccionMetricas,
-			esperados: enlacesDeProyecto("/proyectos/p1", "Métricas"),
-		},
-		{
 			nombre:    "caso limite: una seccion global no activa ningun enlace del proyecto",
 			id:        "p1",
 			activo:    plantillas.SeccionProyectos,
@@ -162,5 +156,17 @@ func TestEnlacesProyecto_SinProyecto(t *testing.T) {
 	pagina := plantillas.Pagina{Activo: plantillas.SeccionBacklog}
 	if obtenidos := pagina.EnlacesProyecto(); len(obtenidos) != 0 {
 		t.Errorf("EnlacesProyecto() sin proyecto = %+v, se esperaba vacio", obtenidos)
+	}
+}
+
+// US-030 / RN-030-12: el menu del proyecto no tiene un enlace a /metricas. Esa pantalla nunca existio y el enlace respondia
+// «Pagina no encontrada»: el dashboard es la pantalla de las metricas.
+func TestEnlacesProyecto_SinEnlaceAMetricas(t *testing.T) {
+	pagina := plantillas.Pagina{Proyecto: &plantillas.ProyectoActual{ID: "p1", Nombre: "Demo"}}
+
+	for _, e := range pagina.EnlacesProyecto() {
+		if strings.Contains(e.Href, "metricas") || e.Texto == "Métricas" {
+			t.Errorf("el menu tiene el enlace %q (%s): esa pantalla no existe", e.Texto, e.Href)
+		}
 	}
 }
