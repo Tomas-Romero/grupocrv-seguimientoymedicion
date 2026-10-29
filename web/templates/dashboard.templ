@@ -1,0 +1,122 @@
+package plantillas
+
+// DashboardDeProyecto es la pagina /proyectos/{id}/dashboard (spec US-030): el estado general, el sprint de referencia, la
+// velocidad con los sprints cerrados, los defectos y dos graficos en SVG. Cada tarjeta falla por separado (RN-030-9): una que no
+// se pudo calcular informa su error y las demas se muestran.
+templ DashboardDeProyecto(v VistaDashboard) {
+	<h1 class={ claseTitulo }>Dashboard</h1>
+	@tarjetaDeEstado(v.Estado)
+	<div class="mt-6 grid gap-6 md:grid-cols-2">
+		<section aria-labelledby="dash-sprint" class="rounded border border-slate-200 p-4 text-sm">
+			<h2 id="dash-sprint" class="text-base font-semibold text-slate-900">
+				if v.Sprint.SinSprints != "" {
+					Sprint
+				} else {
+					{ v.Sprint.Titulo }
+				}
+			</h2>
+			if v.Sprint.SinSprints != "" {
+				<p class="mt-2 text-slate-700">{ v.Sprint.SinSprints }</p>
+			} else if v.Sprint.Error != "" {
+				<p role="alert" class="mt-2 text-red-700">{ v.Sprint.Error }</p>
+			} else {
+				<ul class="mt-2 space-y-1 text-slate-800">
+					for _, l := range v.Sprint.Lineas {
+						<li>{ l }</li>
+					}
+				</ul>
+			}
+		</section>
+		<section aria-labelledby="dash-defectos" class="rounded border border-slate-200 p-4 text-sm">
+			<h2 id="dash-defectos" class="text-base font-semibold text-slate-900">Defectos</h2>
+			if v.Defectos.Error != "" {
+				<p role="alert" class="mt-2 text-red-700">{ v.Defectos.Error }</p>
+			} else {
+				<p class="mt-2 text-slate-800">{ v.Defectos.Total }</p>
+			}
+			if v.Defectos.PorSeveridad != "" {
+				<p class="mt-1 text-slate-800">{ v.Defectos.PorSeveridad }</p>
+				<p class="mt-1 text-slate-800">{ v.Defectos.PorEstado }</p>
+			}
+		</section>
+	</div>
+	<section aria-labelledby="dash-velocidad" class="mt-6 rounded border border-slate-200 p-4 text-sm">
+		<h2 id="dash-velocidad" class="text-base font-semibold text-slate-900">Velocidad y sprints cerrados</h2>
+		if v.Velocidad.Velocidad != "" {
+			<p class="mt-2 font-semibold text-slate-900">{ v.Velocidad.Velocidad }</p>
+		}
+		if v.Velocidad.Error != "" {
+			<p role="alert" class="mt-2 text-red-700">{ v.Velocidad.Error }</p>
+		} else if len(v.Velocidad.Filas) > 0 {
+			<table class="mt-3 w-full border-collapse text-left">
+				<caption class="sr-only">Sprints cerrados, del más reciente al más antiguo, con sus Story Points y sus defectos</caption>
+				<thead>
+					<tr class="border-b border-slate-300">
+						<th scope="col" class="py-1 pr-3 font-semibold">Sprint</th>
+						<th scope="col" class="py-1 pr-3 font-semibold">Story Points planificados</th>
+						<th scope="col" class="py-1 pr-3 font-semibold">Story Points completados</th>
+						<th scope="col" class="py-1 pr-3 font-semibold">Defectos detectados</th>
+						<th scope="col" class="py-1 font-semibold">Defectos resueltos</th>
+					</tr>
+				</thead>
+				<tbody>
+					for _, f := range v.Velocidad.Filas {
+						<tr class="border-b border-slate-200">
+							<th scope="row" class="py-1 pr-3 font-normal">{ f.Nombre }</th>
+							<td class="py-1 pr-3">{ f.Planificados }</td>
+							<td class="py-1 pr-3">{ f.Completados }</td>
+							<td class="py-1 pr-3">{ f.Detectados }</td>
+							<td class="py-1">{ f.Resueltos }</td>
+						</tr>
+					}
+				</tbody>
+			</table>
+		}
+	</section>
+	<section aria-labelledby="dash-graficos" class="mt-6 rounded border border-slate-200 p-4 text-sm">
+		<h2 id="dash-graficos" class="text-base font-semibold text-slate-900">Gráficos</h2>
+		<h3 class="mt-3 font-semibold text-slate-900">Story Points por sprint cerrado</h3>
+		@graficoDeBarras(v.StoryPoints)
+		<h3 class="mt-6 font-semibold text-slate-900">Historias completadas del sprint de referencia</h3>
+		@graficoDePorcentaje(v.Porcentaje)
+	</section>
+}
+
+templ graficoDeBarras(g VistaGraficoDeBarras) {
+	if g.Error != "" {
+		<p role="alert" class="mt-2 text-red-700">{ g.Error }</p>
+	} else if len(g.Barras) == 0 {
+		<p class="mt-2 text-slate-700">{ g.Vacio }</p>
+	} else {
+		<svg viewBox={ "0 0 " + g.Ancho + " " + g.Alto } role="img" aria-labelledby="grafico-sp-titulo grafico-sp-descripcion" class="mt-2 w-full max-w-2xl">
+			<title id="grafico-sp-titulo">{ g.Titulo }</title>
+			<desc id="grafico-sp-descripcion">{ g.Descripcion }</desc>
+			for _, b := range g.Barras {
+				<rect data-sprint={ b.Sprint } data-serie={ b.Serie } x={ b.X } y={ b.Y } width={ b.Ancho } height={ b.Alto } class={ b.Clase }></rect>
+			}
+			for _, e := range g.Etiquetas {
+				<text x={ e.X } y={ e.Y } text-anchor="middle" class={ e.Clase }>{ e.Texto }</text>
+			}
+			for _, l := range g.Leyenda {
+				<rect x={ l.X } y={ l.Y } width="10" height="10" class={ l.Clase }></rect>
+				<text x={ l.TextoX } y={ l.Y } dy="9" class="fill-slate-800 text-[10px]">{ l.Nombre }</text>
+			}
+		</svg>
+	}
+}
+
+templ graficoDePorcentaje(g VistaGraficoDePorcentaje) {
+	if g.Error != "" {
+		<p role="alert" class="mt-2 text-red-700">{ g.Error }</p>
+	} else if !g.Dibujar {
+		<p class="mt-2 text-slate-700">{ g.Vacio }</p>
+	} else {
+		<svg viewBox="0 0 160 24" role="img" aria-labelledby="grafico-pc-titulo grafico-pc-descripcion" class="mt-2 w-full max-w-md">
+			<title id="grafico-pc-titulo">{ g.Titulo }</title>
+			<desc id="grafico-pc-descripcion">{ g.Descripcion }</desc>
+			<rect x="0" y="6" width="100" height="12" class="fill-slate-200"></rect>
+			<rect data-serie="porcentaje" x="0" y="6" width={ g.AnchoBarra } height="12" class="fill-indigo-700"></rect>
+			<text x="104" y="16" class="fill-slate-900 text-[10px] font-semibold">{ g.Valor }</text>
+		</svg>
+	}
+}
