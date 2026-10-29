@@ -2,12 +2,11 @@
 
 Este manual recorre **Software Metrics & Estimation** pantalla por pantalla, en el orden en que la usa
 un equipo: primero el proyecto y sus integrantes, después el backlog, los sprints, la estimación con
-Planning Poker, las horas trabajadas y los defectos. Para cada pantalla dice para qué sirve, qué se
-carga y qué errores puede mostrar.
+Planning Poker, las horas trabajadas y los defectos, y al final el dashboard y el reporte. Para cada
+pantalla dice para qué sirve, qué se carga y qué errores puede mostrar.
 
 Las capturas son de la aplicación real, en una máquina local con los datos de ejemplo y un proyecto de
-demostración, **Tienda online**, que se cargó desde las mismas pantallas (28/10/2026). Las pantallas que
-todavía no están en `main` se marcan **(en desarrollo)**.
+demostración, **Tienda online**, que se cargó desde las mismas pantallas (29/10/2026).
 
 ## Antes de empezar
 
@@ -24,7 +23,7 @@ con tres integrantes. Para desarrollar, ver la [documentación técnica](documen
 
 - La **principal**, con *Inicio* y *Proyectos*.
 - La **del proyecto**, que aparece cuando se entra a uno: *Resumen*, *Backlog*, *Sprints*, *Esfuerzo*,
-  *Métricas* y *Defectos*. La sección en la que se está queda subrayada.
+  *Dashboard*, *Defectos* y *Reporte*. La sección en la que se está queda subrayada.
 
 **Cómo se ven los errores.** Cuando algo no se puede guardar, la pantalla no cambia y aparece arriba un
 recuadro rojo con **todos** los problemas juntos, para corregirlos de una vez (no uno por uno). Hay tres
@@ -129,8 +128,9 @@ prioridad tiene que ser must, should, could o wont", "el criterio de aceptacion 
 estimacion tiene que ser 1, 2, 3, 5, 8 o 13" y "el item esta completado" (una historia completada no se
 edita ni se estima).
 
-**Listar y filtrar el backlog (fuera de alcance).** Filtrar por estado y prioridad (US-007) quedó afuera
-del alcance del proyecto.
+**Filtrar el backlog por estado y prioridad.** La aplicación ya sabe filtrar (US-007), pero la pantalla
+del backlog todavía no ofrece los controles: la spec de US-007 deja la pantalla fuera de su alcance. Hoy
+el backlog se ve siempre completo.
 
 ## 4. Sprints
 
@@ -159,7 +159,8 @@ las del proyecto", "el sprint tiene que empezar despues de que termine el ultimo
 ### Detalle de un sprint: asignar, marcar y cerrar
 
 Se entra tocando el nombre del sprint. Muestra su Sprint Goal, fechas, estado y los Story Points
-planificados y completados, y la lista de sus historias.
+planificados y completados, y la lista de sus historias. El enlace **Reporte** abre el
+[reporte del sprint](#9-reporte-imprimir-o-guardar-como-pdf).
 
 ![Sprint abierto](manual/09-sprint-abierto.png)
 
@@ -289,21 +290,64 @@ al mismo tiempo: hay que recargar) y, si se toca **Resolver** sin elegir sprint:
 
 ![Error: resolver sin sprint](manual/15-error-defecto.png)
 
-**Filtrar por sprint y severidad (en desarrollo).** El filtro (US-024) tiene su spec, pero todavía no
-está implementado.
+### Filtrar por sprint y severidad
 
-## 8. Dashboard y métricas (en desarrollo)
+Arriba de la lista, **Sprint de detección** y **Severidad** acotan los defectos que se ven; **Filtrar**
+aplica los dos a la vez y *Todos* / *Todas* los quita. Si ningún defecto cumple los filtros, la lista lo
+dice ("Ningún defecto cumple los filtros"), que no es lo mismo que un proyecto sin defectos ("Todavía no
+hay defectos").
 
-La pestaña **Métricas** va a mostrar el dashboard del proyecto (US-030): Story Points planificados y
-completados, velocidad, horas estimadas contra reales, porcentaje de historias completadas y defectos por
-sprint, con dos gráficos. Los cálculos ya están hechos y probados, y algunos se ven en otras pantallas
-(la velocidad en *Sprints anteriores*, la desviación en *Estimado contra real*), pero la pantalla todavía
-no está en `main`: hoy el enlace muestra "Página no encontrada".
+![Defectos filtrados por severidad alta](manual/18-defectos-filtrados.png)
 
-## 9. Reporte imprimible (en desarrollo)
+## 8. Dashboard
 
-El reporte de un proyecto o de un sprint en pantalla (US-033) y su vista imprimible para guardarlo como
-PDF desde el navegador (US-034) tienen su spec, pero todavía no están en `main`.
+La pestaña **Dashboard** reúne el estado del proyecto y sus métricas en una sola pantalla:
+
+- **Estado general:** la misma tarjeta del [resumen](#2-resumen-del-proyecto-e-integrantes).
+- **Sprint de referencia** (el abierto, o el último cerrado): Story Points completados sobre planificados,
+  porcentaje de historias completadas, horas estimadas, horas reales y desviación.
+- **Defectos:** el total, por severidad y por estado.
+- **Velocidad y sprints cerrados:** la velocidad del equipo y, por cada sprint cerrado, los Story Points
+  planificados y completados y los defectos detectados y resueltos en él.
+- **Gráficos:** barras con los Story Points planificados y completados de cada sprint cerrado, y una barra
+  con el porcentaje de historias completadas del sprint de referencia.
+
+No se carga nada: los números salen de lo que ya se registró en las otras pantallas. Si una tarjeta no se
+puede calcular, muestra su error y las demás se ven igual. Un proyecto sin sprints cerrados no tiene
+velocidad ni barras, y el dashboard lo dice.
+
+![Dashboard](manual/16-dashboard.png)
+
+## 9. Reporte: imprimir o guardar como PDF
+
+La pestaña **Reporte** muestra el reporte completo del proyecto, en una sola página y siempre con las
+mismas secciones: proyecto (con su estado general), integrantes, Product Backlog, sprints, esfuerzo
+(con el estimado contra real), defectos y métricas. El de un sprint se abre desde el enlace **Reporte** de
+la pantalla del sprint, y tiene el sprint, sus historias con el resultado de cada una, sus métricas, las
+horas registradas en él y los defectos detectados y resueltos. Una sección sin información dice "Sin
+datos"; una que no se pudo calcular muestra su error y el resto del reporte se ve igual. Los números se
+calculan en cada visita.
+
+![Reporte del proyecto](manual/17-reporte.png)
+
+**Imprimir o guardar como PDF.** El botón abre el diálogo de impresión del navegador; ahí se elige la
+impresora o "Guardar como PDF". Da lo mismo que imprimir con `Ctrl+P`. La versión impresa:
+
+- no tiene el menú, los botones ni los enlaces de la pantalla;
+- empieza con un encabezado con el nombre del proyecto, el título del reporte y "Generado el
+  dd/mm/aaaa", para que una hoja suelta diga de qué proyecto y de qué día es;
+- es A4 vertical, en negro sobre blanco;
+- no corta una sección que entra en una página, no deja un título solo al pie y no parte una fila de
+  tabla; una tabla que no entra en una hoja sigue en la siguiente repitiendo su encabezado.
+
+El PDF lo genera el navegador: la aplicación no crea archivos. Sin JavaScript el botón no aparece, pero
+`Ctrl+P` imprime igual. Ejemplos generados con Chrome: el
+[reporte del proyecto](evidencias/US-034/reporte-del-proyecto.pdf), el
+[del Sprint 1](evidencias/US-034/reporte-del-sprint-1.pdf) y uno con una
+[tabla de 60 historias](evidencias/US-034/reporte-con-tabla-larga.pdf) que ocupa dos hojas.
+
+**Errores posibles:** si el proyecto o el sprint no existen, o el sprint es de otro proyecto, se ve la
+página "Página no encontrada", sin botón de imprimir.
 
 ---
 
@@ -319,3 +363,5 @@ PDF desde el navegador (US-034) tienen su spec, pero todavía no están en `main
 7. **Defectos:** registrar un defecto y pasarlo a resuelto en un sprint.
 8. **Sprints → Cerrar sprint:** las historias no completadas vuelven al backlog. Crear el Sprint 2 y mirar
    **Ver sprints anteriores** para ver la velocidad.
+9. **Dashboard:** ver el estado, la velocidad y los gráficos.
+10. **Reporte → Imprimir o guardar como PDF:** guardar el reporte del proyecto como PDF.
