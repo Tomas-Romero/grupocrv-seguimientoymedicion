@@ -11,7 +11,6 @@
 //	/proyectos/{id}/sprints        sprints
 //	/proyectos/{id}/esfuerzo       esfuerzo (horas registradas)
 //	/proyectos/{id}/dashboard      dashboard de metricas y graficos
-//	/proyectos/{id}/metricas       metricas
 //	/proyectos/{id}/defectos       defectos
 package plantillas
 
@@ -47,7 +46,6 @@ const (
 	SeccionSprints   Seccion = "sprints"
 	SeccionEsfuerzo  Seccion = "esfuerzo"
 	SeccionDashboard Seccion = "dashboard"
-	SeccionMetricas  Seccion = "metricas"
 	SeccionDefectos  Seccion = "defectos"
 )
 
@@ -100,7 +98,6 @@ func (p Pagina) EnlacesProyecto() []Enlace {
 		{Texto: "Sprints", Href: base + "/sprints", Activo: p.Activo == SeccionSprints},
 		{Texto: "Esfuerzo", Href: base + "/esfuerzo", Activo: p.Activo == SeccionEsfuerzo},
 		{Texto: "Dashboard", Href: base + "/dashboard", Activo: p.Activo == SeccionDashboard},
-		{Texto: "Métricas", Href: base + "/metricas", Activo: p.Activo == SeccionMetricas},
 		{Texto: "Defectos", Href: base + "/defectos", Activo: p.Activo == SeccionDefectos},
 	}
 }
