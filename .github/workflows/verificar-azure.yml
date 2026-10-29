@@ -150,7 +150,14 @@ jobs:
             [[ "$(campo "$nombre")" =~ ^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$ ]] || mal="$mal \`$nombre\`"
           done
           secreto=$(campo clientSecret)
-          if [ -z "$secreto" ] || [[ "$secreto" == *[[:space:]{}\"]* ]]; then mal="$mal \`clientSecret\`"; fi
+          # La clave no puede estar vacia ni tener espacios, llaves o comillas (es señal de que se pego el JSON entero).
+          if [ -z "$secreto" ]; then
+            mal="$mal \`clientSecret\`"
+          else
+            case "$secreto" in
+              *[[:space:]]* | *"{"* | *"}"* | *'"'*) mal="$mal \`clientSecret\`" ;;
+            esac
+          fi
           if [ -n "$mal" ]; then
             fila "Credenciales de Azure: formato" "**estos campos no tienen el formato correcto:**$mal (cada uno lleva solo su valor; volve a cargarlas con \`bash scripts/configurar-azure.sh --solo-credenciales\`). No se intento el login."
             exit 1
