@@ -245,3 +245,91 @@ func (m *metricasEnMemoria) ConsultarDashboard(proyecto string) (steps.Dashboard
 	}
 	return resultado, nil
 }
+
+// fuentesDelReporteDelProyecto junta los casos de uso reales que componen el reporte, sobre la base del escenario.
+func (m *metricasEnMemoria) fuentesDelReporteDelProyecto() app.FuentesDelReporteDelProyecto {
+	b := m.escenario.base
+	return app.FuentesDelReporteDelProyecto{
+		Proyecto:    app.NuevoConsultarProyecto(b).Ejecutar,
+		Backlog:     app.NuevoListarBacklog(b).Ejecutar,
+		Sprints:     app.NuevoListarSprints(b).Ejecutar,
+		Anteriores:  app.NuevoConsultarSprintsAnteriores(b).Ejecutar,
+		Esfuerzo:    app.NuevoConsultarEsfuerzo(b).Ejecutar,
+		Comparacion: app.NuevoCompararEsfuerzo(b).Ejecutar,
+		Defectos:    app.NuevoListarDefectos(b).Ejecutar,
+		Dashboard:   app.NuevoConsultarDashboard(b, ahoraEnEscenarios).Ejecutar,
+	}
+}
+
+func seccionDelReporte(titulo string, elementos int, vacia bool, err error) steps.SeccionDelReporte {
+	return steps.SeccionDelReporte{Titulo: titulo, Elementos: elementos, Vacia: vacia, ConError: err != nil}
+}
+
+// ConsultarReporteDelProyecto usa el caso de uso real de US-033. El proyecto que el escenario no creo se manda con un ID que no existe.
+func (m *metricasEnMemoria) ConsultarReporteDelProyecto(proyecto string) (steps.Reporte, error) {
+	proyectoID, ok := m.escenario.proyectos[proyecto]
+	if !ok {
+		proyectoID = idDeProyectoInexistente
+	}
+	r, err := app.NuevoConsultarReporteDelProyecto(m.fuentesDelReporteDelProyecto()).Ejecutar(context.Background(), proyectoID)
+	if err != nil {
+		return steps.Reporte{}, err
+	}
+	return steps.Reporte{Secciones: []steps.SeccionDelReporte{
+		seccionDelReporte("Proyecto", 1, false, r.Proyecto.Err),
+		seccionDelReporte("Integrantes", len(r.Integrantes), r.IntegrantesVacios(), nil),
+		seccionDelReporte("Product Backlog", len(r.Backlog.Items), r.Backlog.Vacia(), r.Backlog.Err),
+		seccionDelReporte("Sprints", len(r.Sprints.Sprints), r.Sprints.Vacia(), r.Sprints.Err),
+		seccionDelReporte("Esfuerzo", len(r.Esfuerzo.Comparacion.Historias), r.Esfuerzo.Vacia(), r.Esfuerzo.Err),
+		seccionDelReporte("Defectos", len(r.Defectos.Lista), r.Defectos.Vacia(), r.Defectos.Err),
+		seccionDelReporte("Métricas", len(r.Metricas.Velocidad.Cerrados), r.Metricas.Vacia(), r.Metricas.Err),
+	}}, nil
+}
+
+// ConsultarReporteDelSprint usa el caso de uso real de US-033. El sprint se busca por su nombre en el proyecto; uno que no existe se
+// manda con un ID que no esta en la base, asi el rechazo lo produce la aplicacion.
+func (m *metricasEnMemoria) ConsultarReporteDelSprint(proyecto, nombreDelSprint string) (steps.Reporte, error) {
+	proyectoID, ok := m.escenario.proyectos[proyecto]
+	if !ok {
+		proyectoID = idDeProyectoInexistente
+	}
+	sprintID := idDeProyectoInexistente
+	for _, s := range m.escenario.base.Sprints(proyectoID) {
+		if s.Nombre() == nombreDelSprint {
+			sprintID = s.ID
+		}
+	}
+	b := m.escenario.base
+	fuentes := app.FuentesDelReporteDelSprint{
+		Proyecto: app.NuevoConsultarProyecto(b).Ejecutar,
+		Sprint:   app.NuevoConsultarSprint(b).Ejecutar,
+		Esfuerzo: app.NuevoConsultarEsfuerzo(b).Ejecutar,
+		Defectos: app.NuevoListarDefectos(b).Ejecutar,
+	}
+	r, err := app.NuevoConsultarReporteDelSprint(fuentes).Ejecutar(context.Background(), proyectoID, sprintID)
+	if err != nil {
+		return steps.Reporte{}, err
+	}
+
+	historias := make(map[string]bool, len(r.Historias.Items))
+	for _, h := range r.Historias.Items {
+		historias[h.Item.Titulo] = h.Completada
+	}
+	porcentaje, calculable := r.Metricas.Horas.DesviacionPorcentual()
+	return steps.Reporte{
+		Secciones: []steps.SeccionDelReporte{
+			seccionDelReporte("Sprint", 1, false, nil),
+			seccionDelReporte("Historias", len(r.Historias.Items), r.Historias.Vacia(), nil),
+			seccionDelReporte("Métricas", 1, false, r.Metricas.Err),
+			seccionDelReporte("Esfuerzo registrado", len(r.Esfuerzo.Registros), r.Esfuerzo.Vacia(), r.Esfuerzo.Err),
+			seccionDelReporte("Defectos", len(r.Defectos.Detectados)+len(r.Defectos.Resueltos), r.Defectos.Vacia(), r.Defectos.Err),
+		},
+		Historias:           historias,
+		Detectados:          len(r.Defectos.Detectados),
+		Resueltos:           len(r.Defectos.Resueltos),
+		PuntosPlanificados:  r.Metricas.Planificados,
+		PuntosCompletados:   r.Metricas.Completados,
+		PorcentajeHistorias: r.Metricas.PorcentajeHistorias,
+		Horas:               horasDelResumen(r.Metricas.Horas, porcentaje, calculable),
+	}, nil
+}
