@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -132,10 +133,43 @@ func ordenDePrioridad(p backlog.Prioridad) int {
 	}
 }
 
+// FiltroBacklog son los filtros opcionales del listado del backlog (spec US-007). El valor vacio de
+// cada campo significa "sin filtro", como en FiltroEsfuerzo (US-020) y FiltroDefectos (US-024).
+type FiltroBacklog struct {
+	Estado    backlog.Estado
+	Prioridad backlog.Prioridad
+}
+
+// validar comprueba los filtros informados. El valor vacio es "sin filtro" y no se valida (el dominio lo
+// rechazaria, como en el alta). Si los dos son invalidos se devuelven unidos, estado primero (RN-007-7 a
+// RN-007-9).
+func (f FiltroBacklog) validar() error {
+	var invalidos []error
+	if f.Estado != "" {
+		if err := backlog.ValidarEstado(f.Estado); err != nil {
+			invalidos = append(invalidos, err)
+		}
+	}
+	if f.Prioridad != "" {
+		if err := backlog.ValidarPrioridad(f.Prioridad); err != nil {
+			invalidos = append(invalidos, err)
+		}
+	}
+	return errors.Join(invalidos...)
+}
+
+// cumple dice si la historia pasa el filtro: por su estado actual y por su prioridad, combinados con Y
+// (RN-007-2 a RN-007-4). Un campo vacio no filtra.
+func (f FiltroBacklog) cumple(item backlog.ItemBacklog) bool {
+	return (f.Estado == "" || item.Estado == f.Estado) &&
+		(f.Prioridad == "" || item.Prioridad == f.Prioridad)
+}
+
 // Ejecutar devuelve el backlog por prioridad (must, should, could, wont) y, dentro de
-// cada una, por numero (RN-T011-4). Un backlog vacio no es un error; un proyecto que no
-// existe es ErrProyectoInexistente.
-func (c *ListarBacklog) Ejecutar(ctx context.Context, proyectoID string) ([]backlog.ItemBacklog, error) {
+// cada una, por numero (RN-T011-4), dejando solo las historias que cumplen el filtro
+// (RN-007-1 a RN-007-6). Un backlog vacio no es un error; un proyecto que no existe es
+// ErrProyectoInexistente.
+func (c *ListarBacklog) Ejecutar(ctx context.Context, proyectoID string, filtro FiltroBacklog) ([]backlog.ItemBacklog, error) {
 	existe, err := c.repo.ExisteProyecto(ctx, proyectoID)
 	if err != nil {
 		return nil, fmt.Errorf("consultar el proyecto %s: %w", proyectoID, err)
@@ -143,12 +177,26 @@ func (c *ListarBacklog) Ejecutar(ctx context.Context, proyectoID string) ([]back
 	if !existe {
 		return nil, fmt.Errorf("%w (id %s)", ErrProyectoInexistente, proyectoID)
 	}
+
+	// RN-007-9: los filtros se validan antes de leer la lista.
+	if err = filtro.validar(); err != nil {
+		return nil, err
+	}
+
 	items, err := c.repo.ListarItems(ctx, proyectoID)
 	if err != nil {
 		return nil, fmt.Errorf("listar el backlog del proyecto %s: %w", proyectoID, err)
 	}
-	ordenarPorPrioridad(items)
-	return items, nil
+
+	// RN-007-6: el filtro solo quita historias: las que quedan son las mismas y se ordenan igual.
+	filtradas := make([]backlog.ItemBacklog, 0, len(items))
+	for _, item := range items {
+		if filtro.cumple(item) {
+			filtradas = append(filtradas, item)
+		}
+	}
+	ordenarPorPrioridad(filtradas)
+	return filtradas, nil
 }
 
 // antesPorPrioridad dice si la historia a va antes que la b: primero por prioridad (must,

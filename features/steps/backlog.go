@@ -8,7 +8,7 @@ import (
 	"github.com/cucumber/godog"
 )
 
-// Steps del area Backlog (US-005, US-006 y US-013).
+// Steps del area Backlog (US-005, US-006, US-007 y US-013).
 
 func registrarBacklog(sc *godog.ScenarioContext, m *mundo) {
 	sc.Step(`^una historia "([^"]*)" con prioridad "([^"]*)"$`, m.dadoUnaHistoria)
@@ -30,6 +30,15 @@ func registrarBacklog(sc *godog.ScenarioContext, m *mundo) {
 	sc.Step(`^la historia "([^"]*)" tiene estado "([^"]*)"$`, m.entoncesEstadoDeHistoria)
 	sc.Step(`^la historia "([^"]*)" tiene los criterios:$`, m.entoncesCriteriosDeHistoria)
 	sc.Step(`^la historia "([^"]*)" está en el backlog$`, m.entoncesHistoriaEnBacklog)
+
+	sc.Step(`^se lista el backlog$`, m.cuandoSeListaElBacklog)
+	sc.Step(`^se lista el backlog con estado "([^"]*)"$`, m.cuandoSeListaElBacklogConEstado)
+	sc.Step(`^se lista el backlog con prioridad "([^"]*)"$`, m.cuandoSeListaElBacklogConPrioridad)
+	sc.Step(`^se lista el backlog con estado "([^"]*)" y prioridad "([^"]*)"$`, m.cuandoSeListaElBacklogConEstadoYPrioridad)
+	sc.Step(`^la lista del backlog tiene (\d+) historias?$`, m.entoncesCantidadEnLaListaDelBacklog)
+	sc.Step(`^la lista del backlog incluye la historia "([^"]*)"$`, m.entoncesLaListaDelBacklogIncluye)
+	sc.Step(`^la lista del backlog no incluye la historia "([^"]*)"$`, m.entoncesLaListaDelBacklogNoIncluye)
+	sc.Step(`^la lista del backlog muestra las historias en el orden:$`, m.entoncesLaListaDelBacklogEnOrden)
 }
 
 func (m *mundo) dadoUnaHistoria(titulo, prioridad string) error {
@@ -279,6 +288,92 @@ func (m *mundo) entoncesHistoriaEnBacklog(titulo string) error {
 	}
 	if !enBacklog {
 		return fmt.Errorf("se esperaba que la historia %q estuviera en el backlog, pero sigue asignada a un sprint", titulo)
+	}
+	return nil
+}
+
+// Steps de US-007. Las frases de "se lista" no nombran el proyecto: operan sobre el actual, como las de
+// crear. Un listado rechazado deja la lista sin datos, asi un Entonces de lista despues de un rechazo
+// falla en vez de leer la lista de un paso anterior.
+
+func (m *mundo) cuandoSeListaElBacklog() error { return m.listarBacklog("", "") }
+
+func (m *mundo) cuandoSeListaElBacklogConEstado(estado string) error {
+	return m.listarBacklog(estado, "")
+}
+
+func (m *mundo) cuandoSeListaElBacklogConPrioridad(prioridad string) error {
+	return m.listarBacklog("", prioridad)
+}
+
+func (m *mundo) cuandoSeListaElBacklogConEstadoYPrioridad(estado, prioridad string) error {
+	return m.listarBacklog(estado, prioridad)
+}
+
+func (m *mundo) listarBacklog(estado, prioridad string) error {
+	backlog, err := m.backlog()
+	if err != nil {
+		return err
+	}
+	return m.registrarAccion(backlog.ListarBacklog(m.proyectoActual, estado, prioridad))
+}
+
+func (m *mundo) historiasDeLaLista() ([]string, error) {
+	backlog, err := m.backlog()
+	if err != nil {
+		return nil, err
+	}
+	historias, err := backlog.HistoriasListadas()
+	if err != nil {
+		return nil, fmt.Errorf("leer la lista del backlog: %w", err)
+	}
+	return historias, nil
+}
+
+func (m *mundo) entoncesCantidadEnLaListaDelBacklog(esperada int) error {
+	historias, err := m.historiasDeLaLista()
+	if err != nil {
+		return err
+	}
+	if len(historias) != esperada {
+		return fmt.Errorf("la lista del backlog tiene %d historias (%q): se esperaban %d", len(historias), historias, esperada)
+	}
+	return nil
+}
+
+func (m *mundo) entoncesLaListaDelBacklogIncluye(titulo string) error {
+	historias, err := m.historiasDeLaLista()
+	if err != nil {
+		return err
+	}
+	if !slices.Contains(historias, titulo) {
+		return fmt.Errorf("la lista del backlog no incluye la historia %q: tiene %q", titulo, historias)
+	}
+	return nil
+}
+
+func (m *mundo) entoncesLaListaDelBacklogNoIncluye(titulo string) error {
+	historias, err := m.historiasDeLaLista()
+	if err != nil {
+		return err
+	}
+	if slices.Contains(historias, titulo) {
+		return fmt.Errorf("la lista del backlog incluye la historia %q y no tendria que incluirla", titulo)
+	}
+	return nil
+}
+
+func (m *mundo) entoncesLaListaDelBacklogEnOrden(tabla *godog.Table) error {
+	esperadas, err := columnaUnica(tabla)
+	if err != nil {
+		return err
+	}
+	historias, err := m.historiasDeLaLista()
+	if err != nil {
+		return err
+	}
+	if !slices.Equal(historias, esperadas) {
+		return fmt.Errorf("orden de la lista del backlog: se esperaba %q, se obtuvo %q", esperadas, historias)
 	}
 	return nil
 }

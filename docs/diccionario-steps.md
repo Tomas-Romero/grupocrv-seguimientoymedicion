@@ -86,7 +86,7 @@ definidas en `features/steps/mundo.go`. Cada área se conecta en
 | Área | Interfaz | Historias | Steps en |
 |---|---|---|---|
 | Proyectos | `Proyectos` | US-001, US-002, US-003, US-004 | `features/steps/proyectos.go` |
-| Backlog | `Backlog` | US-005, US-006, US-013 | `features/steps/backlog.go` |
+| Backlog | `Backlog` | US-005, US-006, US-007, US-013 | `features/steps/backlog.go` |
 | Sprints | `Sprints` | US-008, US-009, US-010, US-011, US-012 | `features/steps/sprints.go` |
 | Métricas | `Metricas` | US-025, US-026, US-027, US-028, US-029, US-030 | `features/steps/metricas.go` |
 | Planning Poker | `PlanningPoker` | US-014 a US-018 | `features/steps/planningpoker.go` |
@@ -201,6 +201,10 @@ inexistente (CA-005-8, CA-008-10); con esa frase el escenario no lleva
 | `Cuando se edita la historia "Crear proyecto" con el título "Alta de proyecto", la prioridad "must", la descripción "Alta" y los criterios:` + tabla de una columna | `^se edita la historia "([^"]*)" con el título "([^"]*)", la prioridad "([^"]*)", la descripción "([^"]*)" y los criterios:$` |
 | `Cuando se cambia la prioridad de la historia "Crear proyecto" a "should"` | `^se cambia la prioridad de la historia "([^"]*)" a "([^"]*)"$` |
 | `Cuando se estima la historia "Crear proyecto" en 5 story points` | `^se estima la historia "([^"]*)" en (\d+) story points$` |
+| `Cuando se lista el backlog` | `^se lista el backlog$` |
+| `Cuando se lista el backlog con estado "pendiente"` | `^se lista el backlog con estado "([^"]*)"$` |
+| `Cuando se lista el backlog con prioridad "must"` | `^se lista el backlog con prioridad "([^"]*)"$` |
+| `Cuando se lista el backlog con estado "pendiente" y prioridad "must"` | `^se lista el backlog con estado "([^"]*)" y prioridad "([^"]*)"$` |
 | `Cuando se crea el sprint "Sprint 1" con el objetivo "MVP navegable"` | `^se crea el sprint "([^"]*)" con el objetivo "([^"]*)"$` |
 | `Cuando se crea el sprint "Sprint 1" con el objetivo "MVP navegable" del "2026-10-06" al "2026-10-19"` | `^se crea el sprint "([^"]*)" con el objetivo "([^"]*)" del "([^"]*)" al "([^"]*)"$` |
 | `Cuando se asigna la historia "Crear proyecto" al sprint "Sprint 1"` | `^se asigna la historia "([^"]*)" al sprint "([^"]*)"$` |
@@ -309,6 +313,20 @@ así que `urgente`, `Alta` o `crítica` son la forma de escribir los escenarios 
 leen la última lista que devolvió el caso de uso, y cada defecto se nombra por su historia, así que los
 escenarios arman un defecto por historia; después de un listado rechazado no hay lista y fallan.
 
+**Listar el backlog con filtros (US-007):** `se lista el backlog` lista las historias del proyecto actual con el
+caso de uso real, y sus tres variantes suman el filtro por estado, por prioridad o por los dos (en ese orden:
+`con estado "E"` y después `y prioridad "P"`). El estado y la prioridad se mandan tal cual, así que `terminado`,
+`Pendiente`, `urgente` o `Must` son la forma de escribir los escenarios de error; sin la parte del filtro no se
+filtra por ella. Una historia `completada` se arma con las frases de US-009 y US-010 (historia lista, sprint,
+asignación y marcado); ninguna operación deja una historia `en_progreso` (US-004, Hueco 3), así que ese estado
+solo se escribe como filtro que no devuelve nada. Un proyecto inexistente se escribe con `Dado ningún proyecto`: el
+step manda un ID que no existe y lo rechaza la aplicación. Los rechazos se afirman con `la operación se rechaza` y
+`el mensaje de error indica "..."` (con los dos filtros inválidos, una frase por mensaje). Los Entonces de lista
+(`tiene N historias`, `incluye ...`, `no incluye ...` y `muestra las historias en el orden:`) leen la última lista
+que devolvió el caso de uso, y cada historia se nombra por su título; después de un listado rechazado no hay lista y
+fallan. Que se devuelva **solo** el error del proyecto, sin los de los filtros, no se puede afirmar con estas frases
+(el mensaje se compara por contenido): lo prueba el caso de uso con `errors.Is`.
+
 **Consultar el esfuerzo (US-020):** `se consulta el esfuerzo del proyecto "P"` acepta tres
 filtros opcionales que van en este orden: `de la historia "H"`, `del integrante "I"` y
 `del sprint "S"`. Los nombres se buscan dentro del proyecto consultado: uno que no esté ahí
@@ -377,6 +395,10 @@ cuenta caracteres y no bytes.
 | `Y la historia "Crear proyecto" tiene los criterios:` + tabla de una columna | `^la historia "([^"]*)" tiene los criterios:$` |
 | `Y la historia "Crear proyecto" está en el sprint "Sprint 1"` | `^la historia "([^"]*)" está en el sprint "([^"]*)"$` |
 | `Y la historia "Crear proyecto" está en el backlog` | `^la historia "([^"]*)" está en el backlog$` |
+| `Y la lista del backlog tiene 2 historias` | `^la lista del backlog tiene (\d+) historias?$` |
+| `Y la lista del backlog incluye la historia "Crear proyecto"` | `^la lista del backlog incluye la historia "([^"]*)"$` |
+| `Y la lista del backlog no incluye la historia "Crear proyecto"` | `^la lista del backlog no incluye la historia "([^"]*)"$` |
+| `Y la lista del backlog muestra las historias en el orden:` + tabla de una columna | `^la lista del backlog muestra las historias en el orden:$` |
 | `Y el sprint "Sprint 1" está cerrado` | `^el sprint "([^"]*)" está cerrado$` |
 | `Y el sprint "Sprint 1" está abierto` | `^el sprint "([^"]*)" está abierto$` |
 | `Y los sprints anteriores son:` + tabla `sprint \| planificados \| completados \| historias completadas \| historias no completadas` | `^los sprints anteriores son:$` |
