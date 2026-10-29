@@ -50,6 +50,10 @@ type CasosDeUso struct {
 	// Dashboard de metricas y graficos de un proyecto (US-030).
 	ConsultarDashboard *app.ConsultarDashboard
 
+	// Reportes en pantalla de un proyecto y de un sprint (US-033). Se arman con los demas casos de uso: ver ConReportes.
+	ReporteDelProyecto *app.ConsultarReporteDelProyecto
+	ReporteDelSprint   *app.ConsultarReporteDelSprint
+
 	// Pantallas de esfuerzo (T-019).
 	RegistrarEsfuerzo *app.RegistrarEsfuerzo
 	ConsultarEsfuerzo *app.ConsultarEsfuerzo
@@ -114,6 +118,8 @@ func (p *Pantallas) registrar(mux *http.ServeMux) {
 	// Esfuerzo (T-019).
 	mux.HandleFunc("GET /proyectos/{id}/esfuerzo", p.verEsfuerzo)
 	mux.HandleFunc("GET /proyectos/{id}/dashboard", p.verDashboard)
+	mux.HandleFunc("GET /proyectos/{id}/reporte", p.verReporte)
+	mux.HandleFunc("GET /proyectos/{id}/sprints/{sprint}/reporte", p.verReporteDelSprint)
 	mux.HandleFunc("POST /proyectos/{id}/esfuerzo", p.registrarEsfuerzo)
 	mux.HandleFunc("GET /proyectos/{id}/esfuerzo/comparacion", p.compararEsfuerzo)
 	// Defectos (T-021).

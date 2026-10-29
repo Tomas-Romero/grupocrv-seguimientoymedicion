@@ -155,7 +155,7 @@ type lecturaDeDashboard struct {
 var _ app.RepositorioDashboard = lecturaDeDashboard{}
 
 // casosDeUsoDePantallas arma los casos de uso de las pantallas sobre los repositorios de
-// Postgres (T-011, T-015, T-019, T-020, T-021, US-004 y US-030). Es el unico lugar donde se eligen los adaptadores.
+// Postgres (T-011, T-015, T-019, T-020, T-021, US-004, US-030 y US-033). Es el unico lugar donde se eligen los adaptadores.
 func casosDeUsoDePantallas(pool *pgxpool.Pool) httpadapter.CasosDeUso {
 	proyectos := postgres.NuevoRepositorioProyectos(pool)
 	integrantes := postgres.NuevoRepositorioIntegrantes(pool)
@@ -201,5 +201,5 @@ func casosDeUsoDePantallas(pool *pgxpool.Pool) httpadapter.CasosDeUso {
 		ListarDefectos:             app.NuevoListarDefectos(defectos),
 		RegistrarDefecto:           app.NuevoRegistrarDefecto(defectos),
 		CambiarEstadoDefecto:       app.NuevoCambiarEstadoDefecto(defectos),
-	}
+	}.ConReportes()
 }
