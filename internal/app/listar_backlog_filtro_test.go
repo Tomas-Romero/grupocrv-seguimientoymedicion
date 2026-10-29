@@ -2,7 +2,9 @@ package app_test
 
 import (
 	"context"
+	"errors"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -200,5 +202,120 @@ func TestListarBacklog_SinCoincidenciasEsListaVacia(t *testing.T) {
 				t.Errorf("Ejecutar() = %v, %v; quiero lista vacia y sin error", got, err)
 			}
 		})
+	}
+}
+
+// backlogContado cuenta cuantas veces se leyo la lista de historias, para comprobar que un rechazo ocurre
+// antes de leerla (RN-007-9, CL-007-19).
+type backlogContado struct {
+	*lecturasFalsas
+	lecturas int
+}
+
+func (b *backlogContado) ListarItems(ctx context.Context, proyectoID string) ([]backlog.ItemBacklog, error) {
+	b.lecturas++
+	return b.lecturasFalsas.ListarItems(ctx, proyectoID)
+}
+
+// US-007 / CA-007-5 / RN-007-7 / CL-007-14: un estado que no es uno de los tres se rechaza con
+// ErrEstadoInvalido, envuelto con el valor, sin pasarlo a minuscula ni recortarlo, y sin leer la lista.
+func TestListarBacklog_EstadoInvalido(t *testing.T) {
+	invalidos := []backlog.Estado{"Pendiente", "COMPLETADO", "en progreso", " pendiente ", " ", "terminado"}
+	for _, estado := range invalidos {
+		t.Run(string(estado), func(t *testing.T) {
+			repo := &backlogContado{lecturasFalsas: backlogDeEjemplo()}
+
+			got, err := app.NuevoListarBacklog(repo).Ejecutar(context.Background(), "p1", app.FiltroBacklog{Estado: estado})
+
+			if !errors.Is(err, backlog.ErrEstadoInvalido) {
+				t.Fatalf("Ejecutar() = %v, %v; quiero ErrEstadoInvalido", got, err)
+			}
+			if errors.Is(err, backlog.ErrPrioridadInvalida) {
+				t.Errorf("el error %q tambien es ErrPrioridadInvalida y la prioridad estaba vacia", err)
+			}
+			if esperado := `se recibio "` + string(estado) + `"`; !strings.Contains(err.Error(), esperado) {
+				t.Errorf("el error = %q, quiero que incluya %s", err.Error(), esperado)
+			}
+			if got != nil || repo.lecturas != 0 {
+				t.Errorf("resultado %v y %d lecturas; quiero ninguna lista y no leer la base", got, repo.lecturas)
+			}
+		})
+	}
+}
+
+// US-007 / CA-007-5 / RN-007-8 / CL-007-15: una prioridad que no es una de las cuatro se rechaza con
+// ErrPrioridadInvalida, envuelto con el valor, y sin leer la lista.
+func TestListarBacklog_PrioridadInvalida(t *testing.T) {
+	invalidas := []backlog.Prioridad{"Must", "MUST", " must ", " ", "urgente"}
+	for _, prioridad := range invalidas {
+		t.Run(string(prioridad), func(t *testing.T) {
+			repo := &backlogContado{lecturasFalsas: backlogDeEjemplo()}
+
+			got, err := app.NuevoListarBacklog(repo).Ejecutar(context.Background(), "p1", app.FiltroBacklog{Prioridad: prioridad})
+
+			if !errors.Is(err, backlog.ErrPrioridadInvalida) {
+				t.Fatalf("Ejecutar() = %v, %v; quiero ErrPrioridadInvalida", got, err)
+			}
+			if errors.Is(err, backlog.ErrEstadoInvalido) {
+				t.Errorf("el error %q tambien es ErrEstadoInvalido y el estado estaba vacio", err)
+			}
+			if esperado := `se recibio "` + string(prioridad) + `"`; !strings.Contains(err.Error(), esperado) {
+				t.Errorf("el error = %q, quiero que incluya %s", err.Error(), esperado)
+			}
+			if got != nil || repo.lecturas != 0 {
+				t.Errorf("resultado %v y %d lecturas; quiero ninguna lista y no leer la base", got, repo.lecturas)
+			}
+		})
+	}
+}
+
+// US-007 / CA-007-5 / RN-007-9 / CL-007-16, CL-007-17: con el estado y la prioridad invalidos a la vez se
+// devuelven los dos errores unidos, el del estado primero. Con uno solo invalido, solo ese.
+func TestListarBacklog_EstadoYPrioridadInvalidosSeUnen(t *testing.T) {
+	_, err := app.NuevoListarBacklog(backlogDeEjemplo()).Ejecutar(context.Background(), "p1",
+		app.FiltroBacklog{Estado: "terminado", Prioridad: "urgente"})
+
+	if !errors.Is(err, backlog.ErrEstadoInvalido) || !errors.Is(err, backlog.ErrPrioridadInvalida) {
+		t.Fatalf("Ejecutar() = %v; quiero ErrEstadoInvalido y ErrPrioridadInvalida unidos", err)
+	}
+	estado, prioridad := strings.Index(err.Error(), backlog.ErrEstadoInvalido.Error()), strings.Index(err.Error(), backlog.ErrPrioridadInvalida.Error())
+	if estado < 0 || prioridad < 0 || estado > prioridad {
+		t.Errorf("el mensaje %q tiene que nombrar primero el estado y despues la prioridad", err)
+	}
+}
+
+// US-007 / CA-007-6 / RN-007-9 / CL-007-18, CL-007-19: un proyecto inexistente (o con un ID mal formado) se
+// devuelve solo, antes de mirar los filtros, aunque los dos sean invalidos, y sin leer la lista.
+func TestListarBacklog_ProyectoInexistenteVaSolo(t *testing.T) {
+	for _, id := range []string{"no-esta", "abc", ""} {
+		t.Run("proyecto "+id, func(t *testing.T) {
+			repo := &backlogContado{lecturasFalsas: backlogDeEjemplo()}
+
+			_, err := app.NuevoListarBacklog(repo).Ejecutar(context.Background(), id,
+				app.FiltroBacklog{Estado: "terminado", Prioridad: "urgente"})
+
+			if !errors.Is(err, app.ErrProyectoInexistente) {
+				t.Fatalf("Ejecutar() = %v, quiero ErrProyectoInexistente", err)
+			}
+			if errors.Is(err, backlog.ErrEstadoInvalido) || errors.Is(err, backlog.ErrPrioridadInvalida) {
+				t.Errorf("el error %q tiene que ir solo, sin los de los filtros", err)
+			}
+			if repo.lecturas != 0 {
+				t.Errorf("se leyo la lista %d veces; quiero ninguna", repo.lecturas)
+			}
+		})
+	}
+}
+
+// US-007 / RN-007-9 / CL-007-20: una falla inesperada de la base, con filtros validos, se devuelve envuelta
+// con su contexto y sin ninguna lista parcial.
+func TestListarBacklog_ErrorDeLaBaseConFiltro(t *testing.T) {
+	errBase := errors.New("base caida")
+	filtro := app.FiltroBacklog{Estado: backlog.EstadoPendiente, Prioridad: backlog.PrioridadMust}
+
+	got, err := app.NuevoListarBacklog(&lecturasFalsas{err: errBase}).Ejecutar(context.Background(), "p1", filtro)
+
+	if !errors.Is(err, errBase) || got != nil {
+		t.Errorf("Ejecutar() = %v, %v; quiero un error que envuelva %v y ninguna lista", got, err, errBase)
 	}
 }
