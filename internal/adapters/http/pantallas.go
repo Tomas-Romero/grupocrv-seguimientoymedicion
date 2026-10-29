@@ -44,6 +44,9 @@ type CasosDeUso struct {
 	// Historial de sprints cerrados (US-012).
 	ConsultarSprintsAnteriores *app.ConsultarSprintsAnteriores
 
+	// Estado general de un proyecto (US-004).
+	ConsultarEstado *app.ConsultarEstadoDelProyecto
+
 	// Pantallas de esfuerzo (T-019).
 	RegistrarEsfuerzo *app.RegistrarEsfuerzo
 	ConsultarEsfuerzo *app.ConsultarEsfuerzo
@@ -162,11 +165,17 @@ func (p *Pantallas) verProyecto(w http.ResponseWriter, r *http.Request) {
 		p.fallaDeLectura(w, r, err)
 		return
 	}
+	tarjeta, err := p.tarjetaDeEstado(r, id)
+	if err != nil {
+		p.fallaDeLectura(w, r, err)
+		return
+	}
 	integrantes := make([]plantillas.FilaIntegrante, len(detalle.Integrantes))
 	for i, in := range detalle.Integrantes {
 		integrantes[i] = plantillas.FilaIntegrante{Nombre: in.Nombre, Email: in.Email, Rol: textoDeRol(in.Rol)}
 	}
 	vista := plantillas.VistaProyecto{
+		Estado:         tarjeta,
 		ID:             id,
 		Nombre:         detalle.Proyecto.Nombre,
 		Descripcion:    detalle.Proyecto.Descripcion,

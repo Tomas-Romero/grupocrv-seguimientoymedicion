@@ -132,9 +132,18 @@ type lecturaDeProyecto struct {
 
 var _ app.RepositorioConsultarProyecto = lecturaDeProyecto{}
 
+// lecturaDeEstado junta las tres lecturas de ConsultarEstadoDelProyecto (US-004): el proyecto, sus historias y sus sprints
+// con historias. Cada una es de un repositorio distinto y ya existe: no hay consultas nuevas.
+type lecturaDeEstado struct {
+	*postgres.RepositorioProyectos
+	*postgres.RepositorioBacklog
+	*postgres.RepositorioAsignaciones
+}
+
+var _ app.RepositorioEstadoGeneral = lecturaDeEstado{}
+
 // casosDeUsoDePantallas arma los casos de uso de las pantallas sobre los repositorios de
-// Postgres (T-011, T-015 y T-020). Es el unico lugar donde se eligen los adaptadores.
-// Postgres (T-011, T-015 y T-021). Es el unico lugar donde se eligen los adaptadores.
+// Postgres (T-011, T-015, T-019, T-020, T-021 y US-004). Es el unico lugar donde se eligen los adaptadores.
 func casosDeUsoDePantallas(pool *pgxpool.Pool) httpadapter.CasosDeUso {
 	proyectos := postgres.NuevoRepositorioProyectos(pool)
 	integrantes := postgres.NuevoRepositorioIntegrantes(pool)
@@ -147,6 +156,7 @@ func casosDeUsoDePantallas(pool *pgxpool.Pool) httpadapter.CasosDeUso {
 	return httpadapter.CasosDeUso{
 		ListarProyectos:     app.NuevoListarProyectos(proyectos),
 		ConsultarProyecto:   app.NuevoConsultarProyecto(lecturaDeProyecto{proyectos, integrantes}),
+		ConsultarEstado:     app.NuevoConsultarEstadoDelProyecto(lecturaDeEstado{proyectos, items, asignaciones}, time.Now),
 		CrearProyecto:       app.NuevoCrearProyecto(proyectos),
 		ModificarProyecto:   app.NuevoModificarProyecto(proyectos),
 		RegistrarIntegrante: app.NuevoRegistrarIntegrante(integrantes),

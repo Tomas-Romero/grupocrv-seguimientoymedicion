@@ -62,11 +62,37 @@ templ FormularioDeProyecto(f FormProyecto) {
 
 // ResumenDeProyecto es la pantalla /proyectos/{id}: los datos, los integrantes y el
 // formulario para registrar uno.
+// tarjetaDeEstado es el estado general del proyecto (spec US-004): el estado segun sus fechas, las historias por estado, los
+// Story Points, el porcentaje y el sprint abierto. Si falla el calculo, informa el error y el resto de la pagina se muestra.
+templ tarjetaDeEstado(e VistaEstadoProyecto) {
+	<section aria-labelledby="estado-general" class="mt-4 rounded border border-slate-200 bg-slate-50 p-4 text-sm">
+		<h2 id="estado-general" class="text-base font-semibold text-slate-900">Estado general</h2>
+		<p class="mt-1 text-lg font-semibold text-slate-900">{ e.Estado }</p>
+		if e.Error != "" {
+			<p role="alert" class="mt-2 text-red-700">{ e.Error }</p>
+		} else {
+			<ul class="mt-2 space-y-1 text-slate-800">
+				<li>{ e.Historias }</li>
+				<li>{ e.StoryPoints }</li>
+				<li>{ e.Porcentaje }</li>
+				<li>
+					if e.SprintEnlace != "" {
+						<a href={ templ.URL(e.SprintEnlace) } class={ claseEnlace }>{ e.Sprint }</a>
+					} else {
+						{ e.Sprint }
+					}
+				</li>
+			</ul>
+		}
+	</section>
+}
+
 templ ResumenDeProyecto(v VistaProyecto) {
 	<div class="flex flex-wrap items-center justify-between gap-3">
 		<h1 class={ claseTitulo }>{ v.Nombre }</h1>
 		<a href={ templ.URL(v.Editar) } class={ claseEnlace }>Editar proyecto</a>
 	</div>
+	@tarjetaDeEstado(v.Estado)
 	<dl class="mt-4 grid gap-x-8 gap-y-2 text-sm sm:grid-cols-[auto_1fr]">
 		<dt class="font-semibold text-slate-700">Descripción</dt>
 		<dd>{ v.Descripcion }</dd>
