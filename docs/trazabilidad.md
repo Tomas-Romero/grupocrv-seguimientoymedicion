@@ -4,7 +4,7 @@
 > No se edita a mano: se regenera. Enlaza Historia → Spec → Criterios de aceptación →
 > Escenarios BDD → Tests → Código (la guía de la cátedra la pide como evidencia).
 
-Total: 39 especificaciones, 267 criterios de aceptación, 203 con escenario BDD y 236 con test.
+Total: 40 especificaciones, 273 criterios de aceptación, 203 con escenario BDD y 236 con test.
 
 Un criterio sin escenario BDD o sin test se muestra con `—`: o falta la evidencia, o el criterio
 se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no llevan `.feature`).
@@ -19,6 +19,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | US-004 | [specs/US-004-estado-proyecto.md](../specs/US-004-estado-proyecto.md) | borrador | 6 | 6 | 6 | `internal/domain/proyecto/`, `internal/app/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
 | US-005 | [specs/US-005-crear-item-backlog.md](../specs/US-005-crear-item-backlog.md) | borrador | 8 | 8 | 8 | `internal/domain/backlog/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/` |
 | US-006 | [specs/US-006-editar-item-backlog.md](../specs/US-006-editar-item-backlog.md) | borrador | 7 | 5 | 6 | `internal/domain/backlog/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/` |
+| US-007 | [specs/US-007-listar-backlog.md](../specs/US-007-listar-backlog.md) | borrador | 6 | 0 | 0 | `internal/app/`, `internal/domain/backlog/`, `internal/adapters/http/catalogo.go` |
 | US-008 | [specs/US-008-crear-sprint.md](../specs/US-008-crear-sprint.md) | borrador | 11 | 11 | 11 | `internal/domain/sprint/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/` |
 | US-009 | [specs/US-009-asignar-historias-sprint.md](../specs/US-009-asignar-historias-sprint.md) | borrador | 8 | 8 | 8 | `internal/domain/sprint/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/` |
 | US-010 | [specs/US-010-marcar-historias-completadas.md](../specs/US-010-marcar-historias-completadas.md) | borrador | 6 | 6 | 6 | `internal/domain/sprint/`, `internal/domain/backlog/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`, `migraciones/00008_items_completado_en.sql` |
@@ -154,6 +155,22 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | CA-006-5 | error | Con datos inválidos se rechaza y la historia queda como estaba | TestEditarItem_Rechazos, TestEditar_DatosInvalidos |
 | CA-006-6 | error | — | TestGuardarEdicion_ItemCompletado, TestEditarItem_Rechazos, TestEditar_ItemCompletado |
 | CA-006-7 | error | Editar una historia que no existe se rechaza y no cambia nada | TestBase_GuardarEdicion_ItemInexistente, TestGuardarEdicion_ItemInexistente, TestEditarItem_ItemInexistente |
+
+### US-007 — Listar y filtrar el backlog de un proyecto por estado y prioridad
+
+- **Spec:** [specs/US-007-listar-backlog.md](../specs/US-007-listar-backlog.md) · **Issue:** #17 (historia) · issue de la spec: pendiente
+- **Escenarios BDD:** ninguno
+- **Código:** `internal/app/`, `internal/domain/backlog/`, `internal/adapters/http/catalogo.go`
+- **Tests que la citan:** 0
+
+| Criterio | Tipo | Escenarios BDD | Tests |
+|---|---|---|---|
+| CA-007-1 | normal | — | — |
+| CA-007-2 | alternativo | — | — |
+| CA-007-3 | alternativo | — | — |
+| CA-007-4 | límite | — | — |
+| CA-007-5 | error | — | — |
+| CA-007-6 | error | — | — |
 
 ### US-008 — Crear un Sprint con Sprint Goal y fechas
 
