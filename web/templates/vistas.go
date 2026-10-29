@@ -43,8 +43,23 @@ type FilaIntegrante struct {
 	Rol    string
 }
 
+// VistaEstadoProyecto es la tarjeta de estado general de la pagina de un proyecto (spec US-004). Son textos ya armados:
+// la plantilla solo los dibuja. Si Error no esta vacio, la tarjeta informa el error y no los demas datos.
+type VistaEstadoProyecto struct {
+	Estado      string
+	Historias   string
+	StoryPoints string
+	Porcentaje  string
+	// Sprint es «Sprint 2 en curso» (con su enlace en SprintEnlace) o «Sin sprint abierto» (sin enlace).
+	Sprint       string
+	SprintEnlace string
+	Error        string
+}
+
 // VistaProyecto es el resumen de un proyecto.
 type VistaProyecto struct {
+	// Estado es la tarjeta de estado general (US-004).
+	Estado      VistaEstadoProyecto
 	ID          string
 	Nombre      string
 	Descripcion string
