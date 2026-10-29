@@ -75,8 +75,18 @@ func (c *ConsultarEstadoDelProyecto) Ejecutar(ctx context.Context, proyectoID st
 		return EstadoGeneral{}, fmt.Errorf("listar los sprints del proyecto %s: %w", proyectoID, err)
 	}
 
+	e, err := armarEstadoGeneral(p, items, sprints, c.ahora())
+	if err != nil {
+		return EstadoGeneral{}, fmt.Errorf("calcular el avance del proyecto %s: %w", proyectoID, err)
+	}
+	return e, nil
+}
+
+// armarEstadoGeneral calcula el estado general con lo que ya se leyo, sin tocar la persistencia: lo usan el caso de uso de US-004
+// y el dashboard (US-030), que asi no vuelve a leer el proyecto, sus historias ni sus sprints.
+func armarEstadoGeneral(p proyecto.Proyecto, items []backlog.ItemBacklog, sprints []SprintConItems, hoy time.Time) (EstadoGeneral, error) {
 	e := EstadoGeneral{Proyecto: p}
-	e.Estado, e.Dias = p.EstadoEn(c.ahora())
+	e.Estado, e.Dias = p.EstadoEn(hoy)
 
 	// RN-004-5: se cuentan por su estado actual y los Story Points de las sin estimar suman 0.
 	datos := make([]metricas.ItemDelSprint, len(items))
@@ -98,10 +108,12 @@ func (c *ConsultarEstadoDelProyecto) Ejecutar(ctx context.Context, proyectoID st
 	}
 
 	// RN-004-6: el porcentaje es el de metricas (US-028) sobre todas las historias del proyecto.
-	e.Porcentaje, err = metricas.CalcularPorcentajeCompletadas(datos)
+	porcentaje, err := metricas.CalcularPorcentajeCompletadas(datos)
 	if err != nil {
-		return EstadoGeneral{}, fmt.Errorf("calcular el avance del proyecto %s: %w", proyectoID, err)
+		// El proyecto se conserva: quien muestra la pagina lo necesita aunque la tarjeta falle (RN-030-9).
+		return EstadoGeneral{Proyecto: p}, err
 	}
+	e.Porcentaje = porcentaje
 
 	// RN-004-7: el sprint abierto es el unico con estado abierto (US-008 garantiza que hay como mucho uno).
 	for _, s := range sprints {
