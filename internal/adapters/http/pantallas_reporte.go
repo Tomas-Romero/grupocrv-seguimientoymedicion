@@ -56,6 +56,8 @@ func (p *Pantallas) verReporte(w http.ResponseWriter, r *http.Request) {
 		Titulo:      "Reporte del proyecto",
 		Volver:      rutaDeProyecto(id),
 		TextoVolver: "Volver al proyecto",
+		Proyecto:    reporte.Proyecto.Proyecto.Nombre,
+		Generado:    p.generado(),
 		Secciones: []plantillas.SeccionDeReporte{
 			seccionDelProyecto(reporte.Proyecto, id),
 			seccionDeIntegrantes(reporte),
@@ -90,6 +92,8 @@ func (p *Pantallas) verReporteDelSprint(w http.ResponseWriter, r *http.Request) 
 		Titulo:      "Reporte del " + nombre,
 		Volver:      rutaDeSprint(id, sprintID),
 		TextoVolver: "Volver al " + nombre,
+		Proyecto:    detalle.Proyecto.Nombre,
+		Generado:    p.generado(),
 		Secciones: []plantillas.SeccionDeReporte{
 			seccionDelSprint(reporte),
 			seccionDeHistoriasDelSprint(reporte.Historias),
@@ -102,6 +106,9 @@ func (p *Pantallas) verReporteDelSprint(w http.ResponseWriter, r *http.Request) 
 	pagina.Titulo = "Reporte del " + nombre + " | " + detalle.Proyecto.Nombre
 	Responder(w, r, http.StatusOK, pagina, plantillas.ReporteDeSprint(vista))
 }
+
+// generado es la linea del encabezado de impresion con la fecha del dia de la visita, tomada del reloj del servidor (spec US-034, RN-034-9).
+func (p *Pantallas) generado() string { return "Generado el " + fechaVisible(p.ahora()) }
 
 // vacia es una seccion sin datos: el titulo y el texto «Sin datos», siempre presente para que el reporte no cambie de forma (RN-033-2).
 func vacia(id, titulo string) plantillas.SeccionDeReporte {

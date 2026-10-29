@@ -11,6 +11,10 @@ type VistaReporte struct {
 	// Volver es el enlace a la pantalla de origen y TextoVolver, lo que dice.
 	Volver      string
 	TextoVolver string
+	// Proyecto y Generado son el encabezado que se ve solo al imprimir (spec US-034, RN-034-9): el nombre del proyecto y
+	// «Generado el dd/mm/aaaa», con la fecha del reloj del servidor.
+	Proyecto string
+	Generado string
 }
 
 // SeccionDeReporte es una seccion con su identificador (#proyecto, #backlog...) para poder enlazarla. Si Error no esta vacio, la
