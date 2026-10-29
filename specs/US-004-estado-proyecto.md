@@ -7,7 +7,7 @@
 | **Issue** | #16 |
 | **Escenarios BDD** | `features/US-004-estado-proyecto.feature` |
 | **Código** | `internal/domain/proyecto/`, `internal/app/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
-| **Última actualización** | 2026-10-27 |
+| **Última actualización** | 2026-10-28 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
 > implementación. Si durante la implementación descubrís que algo de acá está
@@ -197,6 +197,14 @@ Ninguno impide implementar esta historia:
 1. **Qué entiende la guía por «estado».** Se propone el derivado de las fechas. Si la cátedra espera otros estados
    (planificado, en ejecución, cerrado…), cambian los nombres y la tabla de la sección 3, no el resto.
 2. **Días de calendario o hábiles.** Se usan de calendario, que es lo que se ve en un calendario.
+3. **`en_progreso` no se alcanza hoy** (se descubrió al implementar). La spec cuenta las historias `en_progreso`, pero ninguna
+   operación de la aplicación pasa una historia a ese estado (ni asignarla a un sprint, ni US-010): siempre vale 0 en
+   la práctica. Se deja la cantidad porque es parte del modelo del backlog y no cuesta nada. Los escenarios la verifican en 0
+   y el caso de uso la prueba con un repositorio simulado (`TestConsultarEstado_Avance`). El «una en progreso» de CA-004-3 se
+   cubre así y no con un escenario.
+4. **Un dato corrupto no se puede armar desde afuera.** RN-004-9 (la tarjeta informa el error de `metricas`) tiene su manejo en
+   la pantalla, pero `backlog.StoryPoints` no deja crear Story Points negativos, así que no hay forma de probarlo con datos reales:
+   queda como defensa y sin test de pantalla.
 
 ## Uso de IA en esta especificación
 
