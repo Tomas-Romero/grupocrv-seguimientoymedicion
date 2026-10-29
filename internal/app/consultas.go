@@ -132,10 +132,18 @@ func ordenDePrioridad(p backlog.Prioridad) int {
 	}
 }
 
+// FiltroBacklog son los filtros opcionales del listado del backlog (spec US-007). El valor vacio de
+// cada campo significa "sin filtro", como en FiltroEsfuerzo (US-020) y FiltroDefectos (US-024).
+type FiltroBacklog struct {
+	Estado    backlog.Estado
+	Prioridad backlog.Prioridad
+}
+
 // Ejecutar devuelve el backlog por prioridad (must, should, could, wont) y, dentro de
-// cada una, por numero (RN-T011-4). Un backlog vacio no es un error; un proyecto que no
-// existe es ErrProyectoInexistente.
-func (c *ListarBacklog) Ejecutar(ctx context.Context, proyectoID string) ([]backlog.ItemBacklog, error) {
+// cada una, por numero (RN-T011-4), dejando solo las historias que cumplen el filtro
+// (RN-007-1 a RN-007-6). Un backlog vacio no es un error; un proyecto que no existe es
+// ErrProyectoInexistente.
+func (c *ListarBacklog) Ejecutar(ctx context.Context, proyectoID string, filtro FiltroBacklog) ([]backlog.ItemBacklog, error) {
 	existe, err := c.repo.ExisteProyecto(ctx, proyectoID)
 	if err != nil {
 		return nil, fmt.Errorf("consultar el proyecto %s: %w", proyectoID, err)
@@ -147,8 +155,18 @@ func (c *ListarBacklog) Ejecutar(ctx context.Context, proyectoID string) ([]back
 	if err != nil {
 		return nil, fmt.Errorf("listar el backlog del proyecto %s: %w", proyectoID, err)
 	}
-	ordenarPorPrioridad(items)
-	return items, nil
+
+	// RN-007-2 y RN-007-6: se filtra por el estado actual de la historia y el filtro solo quita historias:
+	// las que quedan son las mismas y se ordenan igual.
+	filtradas := make([]backlog.ItemBacklog, 0, len(items))
+	for _, item := range items {
+		if filtro.Estado != "" && item.Estado != filtro.Estado {
+			continue
+		}
+		filtradas = append(filtradas, item)
+	}
+	ordenarPorPrioridad(filtradas)
+	return filtradas, nil
 }
 
 // antesPorPrioridad dice si la historia a va antes que la b: primero por prioridad (must,

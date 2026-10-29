@@ -41,7 +41,7 @@ func (p *Pantallas) verEsfuerzo(w http.ResponseWriter, r *http.Request) {
 		p.fallaDeLectura(w, r, err)
 		return
 	}
-	items, err := p.casos.ListarBacklog.Ejecutar(r.Context(), id)
+	items, err := p.casos.ListarBacklog.Ejecutar(r.Context(), id, app.FiltroBacklog{})
 	if err != nil {
 		p.fallaDeLectura(w, r, err)
 		return
