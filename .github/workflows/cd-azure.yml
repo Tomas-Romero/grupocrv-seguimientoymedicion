@@ -316,12 +316,33 @@ jobs:
 
       # ACI cobra mientras el contenedor esta encendido. Se apaga aunque la comprobacion haya fallado, salvo que se
       # haya pedido mantenerlo (MANTENER_ENCENDIDO=true). Para encenderlo de nuevo: workflow "ACI: encender o apagar".
+      # Si no se puede apagar, o sigue encendido despues, este paso FALLA (el workflow queda en rojo) y el resumen no dice
+      # "apagado": un contenedor encendido que nadie ve es justo lo que cuesta creditos.
       - name: Apagar el contenedor (no gastar creditos)
         if: always() && env.MANTENER_ENCENDIDO != 'true'
-        continue-on-error: true
         run: |
-          az container stop --name "$CONTENEDOR" --resource-group "$GRUPO_RECURSOS" --only-show-errors > /dev/null
+          set -euo pipefail
+          if ! az container show --name "$CONTENEDOR" --resource-group "$GRUPO_RECURSOS" --only-show-errors > /dev/null 2>&1; then
+            echo "No hay un contenedor $CONTENEDOR que apagar (el despliegue no llego a crearlo)."
+            exit 0
+          fi
+          if ! az container stop --name "$CONTENEDOR" --resource-group "$GRUPO_RECURSOS" --only-show-errors > /dev/null; then
+            echo "::error::No se pudo apagar el contenedor $CONTENEDOR: puede seguir cobrando."
+            echo "**NO SE PUDO APAGAR** el contenedor \`${CONTENEDOR}\`: puede seguir cobrando. Revisalo en el portal o con el workflow \"ACI: encender o apagar\"." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          estado=""
+          for _ in $(seq 1 6); do
+            estado=$(az container show --name "$CONTENEDOR" --resource-group "$GRUPO_RECURSOS" --query instanceView.state --output tsv --only-show-errors)
+            [ "$estado" != "Running" ] && break
+            sleep 5
+          done
+          if [ "$estado" = "Running" ]; then
+            echo "::error::El contenedor $CONTENEDOR sigue encendido despues de apagarlo."
+            echo "**SIGUE ENCENDIDO** el contenedor \`${CONTENEDOR}\` despues de pedir el apagado: puede seguir cobrando." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
           {
             echo ""
-            echo "Contenedor **apagado** para no gastar creditos (\`MANTENER_ENCENDIDO\` no vale true). Se enciende con el workflow \"ACI: encender o apagar\"."
+            echo "Contenedor **apagado** (estado: ${estado}) para no gastar creditos (\`MANTENER_ENCENDIDO\` no vale true). Se enciende con el workflow \"ACI: encender o apagar\"."
           } >> "$GITHUB_STEP_SUMMARY"

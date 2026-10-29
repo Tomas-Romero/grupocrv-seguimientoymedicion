@@ -84,6 +84,28 @@ jobs:
           estado() { az container show --name "$CONTENEDOR" --resource-group "$GRUPO_RECURSOS" --query instanceView.state --output tsv --only-show-errors; }
           actual=$(estado)
 
+          # Apagar es lo que protege los creditos: si falla, o si el contenedor sigue encendido despues, el workflow falla y
+          # el resumen NO dice "apagado". Se espera unos segundos a que el estado se actualice.
+          apagar_y_verificar() {
+            local ahora=""
+            if ! az container stop --name "$CONTENEDOR" --resource-group "$GRUPO_RECURSOS" --only-show-errors > /dev/null; then
+              resumen "- **NO SE PUDO APAGAR**: \`az container stop\` fallo. El contenedor puede seguir cobrando."
+              echo "::error::No se pudo apagar el contenedor $CONTENEDOR."
+              return 1
+            fi
+            for _ in $(seq 1 6); do
+              ahora=$(estado)
+              [ "$ahora" != "Running" ] && break
+              sleep 5
+            done
+            if [ "$ahora" = "Running" ]; then
+              resumen "- **SIGUE ENCENDIDO** despues de pedir el apagado. Puede seguir cobrando: revisalo en el portal."
+              echo "::error::El contenedor $CONTENEDOR sigue encendido despues de apagarlo."
+              return 1
+            fi
+            resumen "- estado ahora: **${ahora}**"
+          }
+
           case "$ACCION" in
             estado)
               fqdn=$(az container show --name "$CONTENEDOR" --resource-group "$GRUPO_RECURSOS" --query ipAddress.fqdn --output tsv --only-show-errors)
@@ -91,15 +113,19 @@ jobs:
               resumen "- URL: http://${fqdn}:8080"
               ;;
             apagar)
-              az container stop --name "$CONTENEDOR" --resource-group "$GRUPO_RECURSOS" --only-show-errors > /dev/null || true
               resumen "- estado antes: ${actual}"
-              resumen "- **apagado**: ya no cobra computo."
+              if [ "$actual" = "Running" ]; then
+                apagar_y_verificar
+                resumen "- **apagado**: ya no cobra computo."
+              else
+                resumen "- ya estaba apagado: no se hace nada."
+              fi
               ;;
             apagado-nocturno)
               if [ "$MANTENER_ENCENDIDO" = "true" ]; then
                 resumen "MANTENER_ENCENDIDO vale true: no se apaga."
               elif [ "$actual" = "Running" ]; then
-                az container stop --name "$CONTENEDOR" --resource-group "$GRUPO_RECURSOS" --only-show-errors > /dev/null
+                apagar_y_verificar
                 resumen "Estaba encendido: **apagado** por el control de la noche."
               else
                 resumen "Ya estaba apagado (${actual}): no se hace nada."
