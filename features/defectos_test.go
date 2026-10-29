@@ -2,6 +2,7 @@ package features_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/features/steps"
@@ -14,12 +15,18 @@ import (
 const idDeDefectoInexistente = "00000000-0000-0000-0000-000000000000"
 
 // defectosSobreApp conecta el area Defectos con los casos de uso de US-022 y US-023 sobre la base
-// en memoria del escenario (ADR 0002). Los Entonces leen la base directamente: listar defectos es
-// US-024.
+// en memoria del escenario (ADR 0002), y el de US-024 que los lista con filtros. Los Entonces de un
+// defecto leen la base directamente; los de la lista leen lo que devolvio el caso de uso.
 type defectosSobreApp struct {
 	escenario *escenario
 	registrar *app.RegistrarDefecto
 	cambiar   *app.CambiarEstadoDefecto
+	listar    *app.ListarDefectos
+
+	// listados es la ultima lista que devolvio el caso de uso, nula si todavia no se listo o si el
+	// ultimo listado se rechazo.
+	listados []app.DefectoListado
+	listado  bool
 }
 
 var _ steps.Defectos = (*defectosSobreApp)(nil)
@@ -29,6 +36,7 @@ func nuevoDefectosSobreApp(e *escenario) *defectosSobreApp {
 		escenario: e,
 		registrar: app.NuevoRegistrarDefecto(e.base),
 		cambiar:   app.NuevoCambiarEstadoDefecto(e.base),
+		listar:    app.NuevoListarDefectos(e.base),
 	}
 }
 
@@ -171,4 +179,43 @@ func (a *defectosSobreApp) buscarDefecto(historia string) (defecto.Defecto, stri
 		}
 	}
 	return defecto.Defecto{}, "", false
+}
+
+// ListarDefectos lista los defectos del proyecto con el caso de uso real (US-024). El sprint se busca por
+// nombre DENTRO del proyecto; si el escenario nombra uno que no esta ahi, llama con un ID que no existe, asi el
+// rechazo lo produce la aplicacion y no los steps. Un sprint "de otro proyecto" no se puede armar con estas
+// frases: lo prueban el caso de uso y la pantalla. La severidad va tal cual.
+func (a *defectosSobreApp) ListarDefectos(proyecto, nombreDelSprint, severidad string) error {
+	proyectoID, ok := a.escenario.proyectos[proyecto]
+	if !ok {
+		proyectoID = idDeProyectoInexistente
+	}
+	filtro := app.FiltroDefectos{Severidad: defecto.Severidad(severidad)}
+	if nombreDelSprint != "" {
+		filtro.SprintDeteccionID = idDeSprintInexistente
+		for _, s := range a.escenario.base.Sprints(proyectoID) {
+			if s.Nombre() == nombreDelSprint {
+				filtro.SprintDeteccionID = s.ID
+			}
+		}
+	}
+
+	a.listados, a.listado = nil, false
+	listados, err := a.listar.Ejecutar(context.Background(), proyectoID, filtro)
+	if err != nil {
+		return err
+	}
+	a.listados, a.listado = listados, true
+	return nil
+}
+
+func (a *defectosSobreApp) HistoriasDeLosDefectosListados() ([]string, error) {
+	if !a.listado {
+		return nil, errors.New("no hay una lista de defectos: ningun listado se hizo o el ultimo se rechazo")
+	}
+	historias := make([]string, len(a.listados))
+	for i, l := range a.listados {
+		historias[i] = l.HistoriaTitulo
+	}
+	return historias, nil
 }

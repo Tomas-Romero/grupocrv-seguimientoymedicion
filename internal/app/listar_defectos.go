@@ -24,10 +24,20 @@ type DefectoListado struct {
 	CreadoEn         time.Time
 }
 
+// FiltroDefectos son los filtros opcionales de la lista (spec US-024, seccion 3). El valor vacio de
+// cada campo significa "sin filtro". TODO(US-024): esqueleto para el RED, todavia no se aplica.
+type FiltroDefectos struct {
+	SprintDeteccionID string
+	Severidad         defecto.Severidad
+}
+
 // RepositorioListarDefectos es lo que ListarDefectos necesita de la persistencia.
 type RepositorioListarDefectos interface {
 	// ExisteProyecto dice si el proyecto existe (es la lectura de US-005).
 	ExisteProyecto(ctx context.Context, proyectoID string) (bool, error)
+	// ExisteSprintEnProyecto dice si el sprint existe y es de ese proyecto (RN-024-7): el mismo
+	// metodo, con el mismo significado, que ya cumplen los repositorios de US-022.
+	ExisteSprintEnProyecto(ctx context.Context, proyectoID, sprintID string) (bool, error)
 	// ListarDefectosDelProyecto devuelve los defectos del proyecto, de cualquier estado, en
 	// cualquier orden. Un proyecto sin defectos devuelve una lista vacia.
 	ListarDefectosDelProyecto(ctx context.Context, proyectoID string) ([]DefectoListado, error)
@@ -49,7 +59,7 @@ func NuevoListarDefectos(repo RepositorioListarDefectos) *ListarDefectos {
 //
 // Los repositorios devuelven los datos sin ordenar y el orden lo pone el caso de uso, como en
 // T-011 y T-015, para que la memoria y Postgres no puedan ordenar distinto.
-func (c *ListarDefectos) Ejecutar(ctx context.Context, proyectoID string) ([]DefectoListado, error) {
+func (c *ListarDefectos) Ejecutar(ctx context.Context, proyectoID string, _ FiltroDefectos) ([]DefectoListado, error) {
 	existe, err := c.repo.ExisteProyecto(ctx, proyectoID)
 	if err != nil {
 		return nil, fmt.Errorf("consultar el proyecto %s: %w", proyectoID, err)

@@ -233,7 +233,7 @@ type ConsultaDeEsfuerzo struct {
 	FueraDeSprint float64
 }
 
-// Defectos es el area de US-022 y US-023. Los defectos se nombran por su historia: las frases de
+// Defectos es el area de US-022, US-023 y US-024. Los defectos se nombran por su historia: las frases de
 // consulta y de cambio de estado operan sobre el ultimo defecto registrado de esa historia.
 type Defectos interface {
 	// RegistrarDefecto registra un defecto en el proyecto. La historia y el sprint de deteccion
@@ -255,6 +255,14 @@ type Defectos interface {
 	// SprintDeResolucionDeDefecto devuelve el nombre ("Sprint N") del sprint de resolucion del
 	// defecto, y false si no tiene (US-023).
 	SprintDeResolucionDeDefecto(historia string) (sprint string, resuelto bool, err error)
+	// ListarDefectos lista los defectos del proyecto con los filtros opcionales (US-024). sprint es el
+	// nombre ("Sprint N") del sprint de deteccion, buscado DENTRO del proyecto, o vacio si no se filtra;
+	// uno que no esta ahi se manda con un ID que no existe. La severidad se manda tal cual, vacia si no
+	// se filtra. Guarda la lista para HistoriasDeLosDefectosListados.
+	ListarDefectos(proyecto, sprint, severidad string) error
+	// HistoriasDeLosDefectosListados devuelve el titulo de la historia de cada defecto de la ultima
+	// lista, en el orden de la lista. Falla si todavia no se listo nada.
+	HistoriasDeLosDefectosListados() ([]string, error)
 }
 
 // PlanningPoker es el area de US-014 a US-018. La sesion se nombra por su historia,

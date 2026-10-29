@@ -12,18 +12,37 @@ import (
 
 // lecturaDeDefectosFalsa simula la lectura de defectos sin base de datos. Devuelve los defectos
 // tal como los tiene, sin ordenar: el orden lo pone el caso de uso (RN-T021-4).
+//
+// sprints dice a que proyecto pertenece cada sprint, por su ID (US-024, RN-024-7); lecturas y
+// consultasDeSprint cuentan las veces que el caso de uso leyo la lista y verifico un sprint, para
+// probar que un rechazo ocurre antes de leer (RN-024-9, CL-024-19).
 type lecturaDeDefectosFalsa struct {
 	proyectos map[string]bool
+	sprints   map[string]string
 	defectos  []app.DefectoListado
 	errExiste error
+	errSprint error
 	errListar error
+
+	lecturas          int
+	consultasDeSprint int
 }
 
 func (l *lecturaDeDefectosFalsa) ExisteProyecto(_ context.Context, id string) (bool, error) {
 	return l.proyectos[id], l.errExiste
 }
 
+func (l *lecturaDeDefectosFalsa) ExisteSprintEnProyecto(_ context.Context, proyectoID, sprintID string) (bool, error) {
+	l.consultasDeSprint++
+	if l.errSprint != nil {
+		return false, l.errSprint
+	}
+	proyecto, existe := l.sprints[sprintID]
+	return existe && proyecto == proyectoID, nil
+}
+
 func (l *lecturaDeDefectosFalsa) ListarDefectosDelProyecto(context.Context, string) ([]app.DefectoListado, error) {
+	l.lecturas++
 	return append([]app.DefectoListado(nil), l.defectos...), l.errListar
 }
 
@@ -55,7 +74,7 @@ func TestListarDefectos_MasRecientePrimero(t *testing.T) {
 		},
 	}
 
-	got, err := app.NuevoListarDefectos(repo).Ejecutar(context.Background(), "p1")
+	got, err := app.NuevoListarDefectos(repo).Ejecutar(context.Background(), "p1", app.FiltroDefectos{})
 	if err != nil {
 		t.Fatalf("Ejecutar: %v", err)
 	}
@@ -76,7 +95,7 @@ func TestListarDefectos_MismaFechaDeCargaPorIDDescendente(t *testing.T) {
 			repo.defectos = append(repo.defectos, defectoListado(id, defecto.EstadoAbierto, fecha))
 		}
 
-		got, err := app.NuevoListarDefectos(repo).Ejecutar(context.Background(), "p1")
+		got, err := app.NuevoListarDefectos(repo).Ejecutar(context.Background(), "p1", app.FiltroDefectos{})
 		if err != nil {
 			t.Fatalf("Ejecutar: %v", err)
 		}
@@ -102,7 +121,7 @@ func TestListarDefectos_TodosLosEstados(t *testing.T) {
 		},
 	}
 
-	got, err := app.NuevoListarDefectos(repo).Ejecutar(context.Background(), "p1")
+	got, err := app.NuevoListarDefectos(repo).Ejecutar(context.Background(), "p1", app.FiltroDefectos{})
 	if err != nil {
 		t.Fatalf("Ejecutar: %v", err)
 	}
@@ -121,7 +140,7 @@ func TestListarDefectos_TodosLosEstados(t *testing.T) {
 func TestListarDefectos_SinDefectos(t *testing.T) {
 	repo := &lecturaDeDefectosFalsa{proyectos: map[string]bool{"p1": true}}
 
-	got, err := app.NuevoListarDefectos(repo).Ejecutar(context.Background(), "p1")
+	got, err := app.NuevoListarDefectos(repo).Ejecutar(context.Background(), "p1", app.FiltroDefectos{})
 	if err != nil || got == nil || len(got) != 0 {
 		t.Errorf("Ejecutar = %v, %v; quiero una lista vacia y sin error", got, err)
 	}
@@ -131,7 +150,7 @@ func TestListarDefectos_SinDefectos(t *testing.T) {
 func TestListarDefectos_ProyectoInexistente(t *testing.T) {
 	repo := &lecturaDeDefectosFalsa{proyectos: map[string]bool{"p1": true}, errListar: errors.New("no se tendria que listar")}
 
-	_, err := app.NuevoListarDefectos(repo).Ejecutar(context.Background(), "otro")
+	_, err := app.NuevoListarDefectos(repo).Ejecutar(context.Background(), "otro", app.FiltroDefectos{})
 	if !errors.Is(err, app.ErrProyectoInexistente) {
 		t.Errorf("Ejecutar = %v, quiero ErrProyectoInexistente", err)
 	}
@@ -149,7 +168,7 @@ func TestListarDefectos_FallaDeLaBase(t *testing.T) {
 	}
 	for _, c := range casos {
 		t.Run(c.nombre, func(t *testing.T) {
-			_, err := app.NuevoListarDefectos(c.repo).Ejecutar(context.Background(), "p1")
+			_, err := app.NuevoListarDefectos(c.repo).Ejecutar(context.Background(), "p1", app.FiltroDefectos{})
 			if !errors.Is(err, caida) || errors.Is(err, app.ErrProyectoInexistente) {
 				t.Errorf("Ejecutar = %v, quiero la falla de la base envuelta", err)
 			}
