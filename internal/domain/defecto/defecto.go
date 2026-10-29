@@ -75,6 +75,21 @@ type Defecto struct {
 	SprintResolucionID string
 }
 
+// ValidarSeveridad devuelve nil si la severidad es una de las cuatro y ErrSeveridadInvalida, envuelto
+// con el valor recibido, en cualquier otro caso, incluida la vacia (RN-022-2).
+//
+// Es la regla del alta extraida para que el filtro de la lista (RN-024-8) y Nuevo usen la misma, escrita
+// una sola vez. Los valores son exactos: no se pasa a minuscula ni se recorta. Que en el filtro la
+// severidad vacia signifique "sin filtro" lo decide el caso de uso antes de llamarla; aca la vacia es
+// invalida, como en el alta.
+func ValidarSeveridad(severidad Severidad) error {
+	switch severidad {
+	case SeveridadCritica, SeveridadAlta, SeveridadMedia, SeveridadBaja:
+		return nil
+	}
+	return fmt.Errorf("%w (se recibio %q)", ErrSeveridadInvalida, string(severidad))
+}
+
 // Nuevo arma el defecto, sin ID, siempre abierto y sin sprint de resolucion (RN-022-3).
 //
 // RN-022-4: valida todo y devuelve todos los errores unidos con errors.Join, en orden
@@ -98,11 +113,9 @@ func Nuevo(proyectoID, itemID, sprintDeteccionID, descripcion string, severidad 
 		errs = append(errs, fmt.Errorf("%w (tiene %d)", ErrDescripcionMuyLarga, largo))
 	}
 
-	// RN-022-2: valores exactos; no se pasa a minuscula ni se recorta.
-	switch severidad {
-	case SeveridadCritica, SeveridadAlta, SeveridadMedia, SeveridadBaja:
-	default:
-		errs = append(errs, fmt.Errorf("%w (se recibio %q)", ErrSeveridadInvalida, string(severidad)))
+	// RN-022-2: la regla es ValidarSeveridad; el orden de los errores unidos no cambia (RN-022-4).
+	if err := ValidarSeveridad(severidad); err != nil {
+		errs = append(errs, err)
 	}
 
 	if err := errors.Join(errs...); err != nil {

@@ -2,13 +2,14 @@ package steps
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
 	"github.com/cucumber/godog"
 )
 
-// Steps del area Defectos (US-022 y US-023).
+// Steps del area Defectos (US-022, US-023 y US-024).
 
 func registrarDefectos(sc *godog.ScenarioContext, m *mundo) {
 	sc.Step(`^un defecto de severidad "([^"]*)" con la descripción "([^"]*)" en la historia "([^"]*)" detectado en el sprint "([^"]*)"$`, m.dadoDefectoRegistrado)
@@ -19,6 +20,15 @@ func registrarDefectos(sc *godog.ScenarioContext, m *mundo) {
 	sc.Step(`^se registra un defecto de severidad "([^"]*)" con una descripción de (\d+) caracteres en la historia "([^"]*)" detectado en el sprint "([^"]*)"$`, m.cuandoSeRegistraDefectoConDescripcionLarga)
 	sc.Step(`^se cambia el estado del defecto de la historia "([^"]*)" a "([^"]*)"$`, m.cuandoSeCambiaElEstado)
 	sc.Step(`^se cambia el estado del defecto de la historia "([^"]*)" a "([^"]*)" con el sprint de resolución "([^"]*)"$`, m.cuandoSeCambiaElEstadoConSprint)
+
+	sc.Step(`^se listan los defectos$`, m.cuandoSeListanLosDefectos)
+	sc.Step(`^se listan los defectos del sprint "([^"]*)"$`, m.cuandoSeListanLosDefectosDelSprint)
+	sc.Step(`^se listan los defectos de severidad "([^"]*)"$`, m.cuandoSeListanLosDefectosDeSeveridad)
+	sc.Step(`^se listan los defectos del sprint "([^"]*)" y de severidad "([^"]*)"$`, m.cuandoSeListanLosDefectosDelSprintYDeSeveridad)
+
+	sc.Step(`^la lista de defectos tiene (\d+) defectos?$`, m.entoncesCantidadEnLaLista)
+	sc.Step(`^la lista de defectos incluye el defecto de la historia "([^"]*)"$`, m.entoncesLaListaIncluye)
+	sc.Step(`^la lista de defectos no incluye el defecto de la historia "([^"]*)"$`, m.entoncesLaListaNoIncluye)
 
 	sc.Step(`^el proyecto "([^"]*)" tiene (\d+) defectos?$`, m.entoncesCantidadDeDefectos)
 	sc.Step(`^el defecto de la historia "([^"]*)" tiene severidad "([^"]*)"$`, m.entoncesSeveridadDelDefecto)
@@ -195,6 +205,77 @@ func (m *mundo) entoncesSprintDeResolucionDelDefecto(historia, esperado string) 
 	}
 	if sprint != esperado {
 		return fmt.Errorf("sprint de resolución del defecto de %q: se esperaba %q, es %q", historia, esperado, sprint)
+	}
+	return nil
+}
+
+// Steps de US-024. Las frases de "se listan" no nombran el proyecto: operan sobre el actual, como las de
+// registrar. Un listado rechazado deja la lista sin datos, asi un Entonces de lista despues de un rechazo
+// falla en vez de leer la lista de un paso anterior.
+
+func (m *mundo) cuandoSeListanLosDefectos() error { return m.listarDefectos("", "") }
+
+func (m *mundo) cuandoSeListanLosDefectosDelSprint(sprint string) error {
+	return m.listarDefectos(sprint, "")
+}
+
+func (m *mundo) cuandoSeListanLosDefectosDeSeveridad(severidad string) error {
+	return m.listarDefectos("", severidad)
+}
+
+func (m *mundo) cuandoSeListanLosDefectosDelSprintYDeSeveridad(sprint, severidad string) error {
+	return m.listarDefectos(sprint, severidad)
+}
+
+func (m *mundo) listarDefectos(sprint, severidad string) error {
+	defectos, err := m.areaDefectos()
+	if err != nil {
+		return err
+	}
+	return m.registrarAccion(defectos.ListarDefectos(m.proyectoActual, sprint, severidad))
+}
+
+func (m *mundo) historiasListadas() ([]string, error) {
+	defectos, err := m.areaDefectos()
+	if err != nil {
+		return nil, err
+	}
+	historias, err := defectos.HistoriasDeLosDefectosListados()
+	if err != nil {
+		return nil, fmt.Errorf("leer la lista de defectos: %w", err)
+	}
+	return historias, nil
+}
+
+func (m *mundo) entoncesCantidadEnLaLista(esperada int) error {
+	historias, err := m.historiasListadas()
+	if err != nil {
+		return err
+	}
+	if len(historias) != esperada {
+		return fmt.Errorf("la lista de defectos tiene %d defectos (historias %q): se esperaban %d", len(historias), historias, esperada)
+	}
+	return nil
+}
+
+func (m *mundo) entoncesLaListaIncluye(historia string) error {
+	historias, err := m.historiasListadas()
+	if err != nil {
+		return err
+	}
+	if !slices.Contains(historias, historia) {
+		return fmt.Errorf("la lista de defectos no incluye el defecto de la historia %q: tiene %q", historia, historias)
+	}
+	return nil
+}
+
+func (m *mundo) entoncesLaListaNoIncluye(historia string) error {
+	historias, err := m.historiasListadas()
+	if err != nil {
+		return err
+	}
+	if slices.Contains(historias, historia) {
+		return fmt.Errorf("la lista de defectos incluye el defecto de la historia %q y no tendria que incluirlo", historia)
 	}
 	return nil
 }

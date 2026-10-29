@@ -73,6 +73,28 @@ func opcionesDeSeveridad() []plantillas.Opcion {
 	return opciones
 }
 
+// opcionesDeFiltroDeSprint son todos los sprints del proyecto, por numero descendente como los devuelve
+// ListarSprints, tras la opcion para no filtrar (RN-024-11). Se ofrecen todos y no solo los que tienen
+// defectos: asi se llega desde la pantalla a un sprint sin coincidencias (RN-024-5). Queda elegido el
+// pedido, o «Todos» si no se pidio ninguno.
+func opcionesDeFiltroDeSprint(sprints []app.ResumenDeSprint, elegido string) []plantillas.Opcion {
+	opciones := []plantillas.Opcion{{Valor: "", Texto: "Todos", Elegida: elegido == ""}}
+	for _, s := range sprints {
+		opciones = append(opciones, plantillas.Opcion{Valor: s.Sprint.ID, Texto: s.Sprint.Nombre(), Elegida: s.Sprint.ID == elegido})
+	}
+	return opciones
+}
+
+// opcionesDeFiltroDeSeveridad son las cuatro severidades con su etiqueta, tras la opcion para no filtrar
+// (RN-024-11). Queda elegida la pedida, o «Todas» si no se pidio ninguna.
+func opcionesDeFiltroDeSeveridad(elegida defecto.Severidad) []plantillas.Opcion {
+	opciones := []plantillas.Opcion{{Valor: "", Texto: "Todas", Elegida: elegida == ""}}
+	for _, s := range []defecto.Severidad{defecto.SeveridadCritica, defecto.SeveridadAlta, defecto.SeveridadMedia, defecto.SeveridadBaja} {
+		opciones = append(opciones, plantillas.Opcion{Valor: string(s), Texto: textoDeSeveridad(s), Elegida: s == elegida})
+	}
+	return opciones
+}
+
 // opcionesDeHistoriasDeDefecto son las historias del backlog como "#N titulo", en el orden en que las
 // devuelve ListarBacklog (RN-T021-16), tras una opcion inicial sin valor.
 func opcionesDeHistoriasDeDefecto(items []backlog.ItemBacklog) []plantillas.Opcion {
@@ -126,8 +148,13 @@ func accionesDeDefecto(estado defecto.Estado) []plantillas.AccionDeDefecto {
 	return nil
 }
 
-// listaDeDefectos es la pantalla con la lista de defectos del proyecto y el formulario de alta
-// (RN-T021-2). Las listas del formulario salen de lecturas que ya existen.
+// listaDeDefectos es la pantalla con la lista de defectos del proyecto, sus filtros y el formulario de alta
+// (RN-T021-2, RN-024-11). Las listas del formulario salen de lecturas que ya existen.
+//
+// El filtro viaja en los parametros `sprint` y `severidad` de la URL (Hueco 1 de la spec US-024, como en
+// T-019): un valor vacio no filtra, y un parametro repetido se resuelve con el primero. Convertirlos en el
+// filtro es lo unico que hace esta pantalla; verificar el sprint y la severidad es del caso de uso, que
+// los rechaza con el error uniforme: el sprint como 404 y la severidad como 422 (RN-024-12).
 func (p *Pantallas) listaDeDefectos(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	detalle, err := p.casos.ConsultarProyecto.Ejecutar(r.Context(), id)
@@ -135,7 +162,9 @@ func (p *Pantallas) listaDeDefectos(w http.ResponseWriter, r *http.Request) {
 		p.fallaDeLectura(w, r, err)
 		return
 	}
-	defectos, err := p.casos.ListarDefectos.Ejecutar(r.Context(), id)
+	consulta := r.URL.Query()
+	filtro := app.FiltroDefectos{SprintDeteccionID: consulta.Get("sprint"), Severidad: defecto.Severidad(consulta.Get("severidad"))}
+	defectos, err := p.casos.ListarDefectos.Ejecutar(r.Context(), id, filtro)
 	if err != nil {
 		p.fallaDeLectura(w, r, err)
 		return
@@ -169,6 +198,12 @@ func (p *Pantallas) listaDeDefectos(w http.ResponseWriter, r *http.Request) {
 	}
 	vista := plantillas.VistaDefectos{
 		Defectos: filas,
+		Filtros: plantillas.FiltrosDefectos{
+			Accion:      rutaDeDefectos(id),
+			Sprints:     opcionesDeFiltroDeSprint(sprints, filtro.SprintDeteccionID),
+			Severidades: opcionesDeFiltroDeSeveridad(filtro.Severidad),
+			Activo:      filtro != (app.FiltroDefectos{}),
+		},
 		Alta: plantillas.FormDefecto{
 			Accion:       rutaDeDefectos(id),
 			Severidades:  opcionesDeSeveridad(),

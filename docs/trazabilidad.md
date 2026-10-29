@@ -4,7 +4,7 @@
 > No se edita a mano: se regenera. Enlaza Historia → Spec → Criterios de aceptación →
 > Escenarios BDD → Tests → Código (la guía de la cátedra la pide como evidencia).
 
-Total: 39 especificaciones, 267 criterios de aceptación, 190 con escenario BDD y 223 con test.
+Total: 39 especificaciones, 267 criterios de aceptación, 196 con escenario BDD y 229 con test.
 
 Un criterio sin escenario BDD o sin test se muestra con `—`: o falta la evidencia, o el criterio
 se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no llevan `.feature`).
@@ -35,7 +35,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | US-021 | [specs/US-021-comparar-esfuerzo.md](../specs/US-021-comparar-esfuerzo.md) | borrador | 9 | 8 | 9 | `internal/domain/metricas/`, `internal/app/comparar_esfuerzo.go` |
 | US-022 | [specs/US-022-registrar-defecto.md](../specs/US-022-registrar-defecto.md) | borrador | 12 | 12 | 12 | `internal/domain/defecto/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`, `migraciones/00012_defectos.sql` |
 | US-023 | [specs/US-023-cambiar-estado-defecto.md](../specs/US-023-cambiar-estado-defecto.md) | borrador | 14 | 13 | 14 | `internal/domain/defecto/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`, `migraciones/00013_defectos_estado.sql` |
-| US-024 | [specs/US-024-listar-defectos.md](../specs/US-024-listar-defectos.md) | borrador | 6 | 0 | 0 | `internal/app/`, `internal/domain/defecto/`, `internal/adapters/http/`, `web/templates/` |
+| US-024 | [specs/US-024-listar-defectos.md](../specs/US-024-listar-defectos.md) | borrador | 6 | 6 | 6 | `internal/app/`, `internal/domain/defecto/`, `internal/adapters/http/`, `web/templates/` |
 | US-025 | [specs/US-025-story-points-sprint.md](../specs/US-025-story-points-sprint.md) | borrador | 4 | 4 | 1 | `internal/domain/metricas/` |
 | US-026 | [specs/US-026-velocidad-equipo.md](../specs/US-026-velocidad-equipo.md) | borrador | 4 | 4 | 1 | `internal/domain/metricas/` |
 | US-027 | [specs/US-027-horas-estimadas-reales.md](../specs/US-027-horas-estimadas-reales.md) | borrador | 6 | 6 | 6 | `internal/domain/metricas/` |
@@ -407,7 +407,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 - **Spec:** [specs/US-022-registrar-defecto.md](../specs/US-022-registrar-defecto.md) · **Issue:** #30
 - **Escenarios BDD:** [features/US-022-registrar-defecto.feature](../features/US-022-registrar-defecto.feature)
 - **Código:** `internal/domain/defecto/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`, `migraciones/00012_defectos.sql`
-- **Tests que la citan:** 35
+- **Tests que la citan:** 36
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
@@ -451,18 +451,18 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 ### US-024 — Listar los defectos de un proyecto filtrando por sprint de detección y severidad
 
 - **Spec:** [specs/US-024-listar-defectos.md](../specs/US-024-listar-defectos.md) · **Issue:** #32 (historia) · issue de la spec: pendiente
-- **Escenarios BDD:** ninguno
+- **Escenarios BDD:** [features/US-024-listar-defectos.feature](../features/US-024-listar-defectos.feature)
 - **Código:** `internal/app/`, `internal/domain/defecto/`, `internal/adapters/http/`, `web/templates/`
-- **Tests que la citan:** 0
+- **Tests que la citan:** 31
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
-| CA-024-1 | normal | — | — |
-| CA-024-2 | alternativo | — | — |
-| CA-024-3 | límite | — | — |
-| CA-024-4 | error | — | — |
-| CA-024-5 | alternativo | — | — |
-| CA-024-6 | error | — | — |
+| CA-024-1 | normal | Filtrar por un sprint deja solo los defectos detectados en él, Filtrar por una severidad deja solo los defectos de esa severidad, de cualquier sprint, El sprint de resolución no cuenta: el defecto sale con el sprint en que se detectó | TestPantallasDefectosFiltros_PorSprint, TestPantallasDefectosFiltros_PorSeveridad, TestListarDefectos_MemoriaYPostgresDevuelvenLoMismo, TestListarDefectos_FiltroPorSprint, +1 más |
+| CA-024-2 | alternativo | Los dos filtros se combinan: salen solo los defectos que cumplen ambos | TestPantallasDefectosFiltros_Combinados, TestListarDefectos_MemoriaYPostgresDevuelvenLoMismo, TestListarDefectos_LosFiltrosSeCombinanConY |
+| CA-024-3 | límite | Un sprint del proyecto sin defectos da una lista vacía, no un error, Una severidad sin defectos da una lista vacía, no un error, Dos filtros que tienen defectos por separado pero no en común dan una lista vacía, +1 más | TestPantallasDefectosFiltros_SinCoincidencias, TestPantallasDefectosFiltros_Controles, TestListarDefectos_MemoriaYPostgresDevuelvenLoMismo, TestListarDefectos_SinCoincidenciasEsListaVacia |
+| CA-024-4 | error | Un sprint que no existe en el proyecto se rechaza, Una severidad que no es una de las cuatro se rechaza, sin normalizarla | TestPantallasDefectosFiltros_SprintInexistente, TestPantallasDefectosFiltros_SeveridadInvalida, TestListarDefectos_MemoriaYPostgresDevuelvenLoMismo, TestListarDefectos_SprintInexistente, +2 más |
+| CA-024-5 | alternativo | Sin filtros se devuelve la lista completa, en cualquier estado | TestPantallasDefectosFiltros_SinFiltros, TestListarDefectos_SinFiltrosEsLaListaCompleta |
+| CA-024-6 | error | Con el sprint inexistente y la severidad inválida a la vez, se rechaza por el sprint | TestPantallasDefectosFiltros_OrdenDeLosRechazos, TestListarDefectos_SprintInexistenteYSeveridadInvalida |
 
 ### US-025 — Calcular Story Points planificados y completados de un Sprint
 
@@ -605,7 +605,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 - **Spec:** [specs/T-005-validaciones-errores-uniformes.md](../specs/T-005-validaciones-errores-uniformes.md) · **Issue:** #15
 - **Escenarios BDD:** ninguno
 - **Código:** `internal/platform/errores/`, `internal/adapters/http/`
-- **Tests que la citan:** 40
+- **Tests que la citan:** 41
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
@@ -701,7 +701,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 - **Spec:** [specs/T-021-pantallas-defectos.md](../specs/T-021-pantallas-defectos.md) · **Issue:** #191 (tarea) · issue de la spec: pendiente
 - **Escenarios BDD:** ninguno
 - **Código:** `internal/app/`, `internal/adapters/memoria/`, `internal/adapters/postgres/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/`
-- **Tests que la citan:** 37
+- **Tests que la citan:** 41
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|

@@ -57,7 +57,7 @@ US-024 (objetivo estirado del Sprint 5): extiende la lectura de esta tarea, no l
 **Caso de uso de lectura nuevo** (`internal/app/`), con su puerto:
 
 ```
-ListarDefectos(proyectoID) -> []DefectoListado
+ListarDefectos(proyectoID, filtro FiltroDefectos) -> []DefectoListado
 ```
 
 ```
