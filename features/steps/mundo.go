@@ -73,7 +73,7 @@ type DatosHistoria struct {
 	Criterios   []string
 }
 
-// Backlog es el area de US-005, US-006 y US-013.
+// Backlog es el area de US-005, US-006, US-007 y US-013.
 type Backlog interface {
 	CrearHistoria(proyecto string, historia DatosHistoria) error
 	// EditarHistoria reemplaza los cuatro datos de la historia (US-006). Despues
@@ -90,6 +90,14 @@ type Backlog interface {
 	EstadoDeHistoria(titulo string) (string, error)
 	CriteriosDeHistoria(titulo string) ([]string, error)
 	HistoriaEstaEnBacklog(titulo string) (bool, error)
+	// ListarBacklog lista el backlog del proyecto con los filtros opcionales (US-007). El estado y la
+	// prioridad se mandan tal cual, vacios si no se filtra, asi "terminado" o "Must" son la forma de
+	// escribir los escenarios de error. Un proyecto que el escenario no creo se manda con un ID que no
+	// existe, asi el rechazo lo produce la aplicacion. Guarda la lista para HistoriasListadas.
+	ListarBacklog(proyecto, estado, prioridad string) error
+	// HistoriasListadas devuelve el titulo de cada historia de la ultima lista, en el orden de la lista.
+	// Falla si todavia no se listo nada o si el ultimo listado se rechazo.
+	HistoriasListadas() ([]string, error)
 }
 
 // Sprints es el area de US-008, US-009, US-010 y US-011.
