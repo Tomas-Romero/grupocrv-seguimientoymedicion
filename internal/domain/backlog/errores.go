@@ -16,6 +16,9 @@ var (
 	// ErrPrioridadInvalida: la prioridad no es must, should, could ni wont
 	// (RN-005-5). Se devuelve envuelto, indicando el valor recibido.
 	ErrPrioridadInvalida = errors.New("la prioridad tiene que ser must, should, could o wont")
+	// ErrEstadoInvalido: el estado del filtro del backlog no es pendiente, en_progreso ni
+	// completado (US-007, RN-007-7). Se devuelve envuelto, indicando el valor recibido.
+	ErrEstadoInvalido = errors.New("el estado tiene que ser pendiente, en_progreso o completado")
 	// ErrCriterioVacio: un criterio de aceptacion esta vacio o tiene solo
 	// espacios (RN-005-8). Se devuelve como CriterioVacioError, con su posicion.
 	ErrCriterioVacio = errors.New("el criterio de aceptacion esta vacio")
