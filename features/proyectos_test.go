@@ -19,6 +19,7 @@ type proyectosSobreApp struct {
 	crear     *app.CrearProyecto
 	modificar *app.ModificarProyecto
 	registrar *app.RegistrarIntegrante
+	estado    *app.ConsultarEstadoDelProyecto
 }
 
 var _ steps.Proyectos = (*proyectosSobreApp)(nil)
@@ -29,6 +30,7 @@ func nuevosProyectosSobreApp(e *escenario) *proyectosSobreApp {
 		crear:     app.NuevoCrearProyecto(e.base),
 		modificar: app.NuevoModificarProyecto(e.base),
 		registrar: app.NuevoRegistrarIntegrante(e.base),
+		estado:    app.NuevoConsultarEstadoDelProyecto(e.base, ahoraEnEscenarios),
 	}
 }
 
@@ -103,6 +105,29 @@ func (a *proyectosSobreApp) CantidadIntegrantes(proyecto string) (int, error) {
 		return 0, fmt.Errorf("el proyecto %q no se creo en este escenario", proyecto)
 	}
 	return len(a.escenario.base.Integrantes(id)), nil
+}
+
+// ConsultarEstadoProyecto es de US-004: el caso de uso real sobre la base en memoria, con el reloj fijo de los escenarios.
+// Si el escenario no creo el proyecto, se manda un ID que ningun proyecto tiene y el rechazo lo produce la aplicacion.
+func (a *proyectosSobreApp) ConsultarEstadoProyecto(nombre string) (steps.EstadoDelProyecto, error) {
+	e, err := a.estado.Ejecutar(context.Background(), a.idDe(nombre))
+	if err != nil {
+		return steps.EstadoDelProyecto{}, err
+	}
+	resultado := steps.EstadoDelProyecto{
+		Estado:      string(e.Estado),
+		Dias:        e.Dias,
+		Pendientes:  e.Historias.Pendientes,
+		EnProgreso:  e.Historias.EnProgreso,
+		Completadas: e.Historias.Completadas,
+		StoryPoints: e.StoryPoints,
+		Completados: e.Completados,
+		Porcentaje:  e.Porcentaje,
+	}
+	if e.SprintAbierto != nil {
+		resultado.SprintAbierto = e.SprintAbierto.Nombre()
+	}
+	return resultado, nil
 }
 
 // idDe devuelve el ID del proyecto que el escenario creo con ese nombre. Si no lo

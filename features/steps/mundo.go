@@ -36,7 +36,22 @@ func areaSinConectar(area string) error {
 // Si una historia necesita un metodo que no esta aca, se agrega en el mismo PR
 // que el escenario que lo usa.
 
-// Proyectos es el area de US-001, US-002 y US-003.
+// EstadoDelProyecto es el estado general de un proyecto tal como lo consulta US-004: el estado segun sus fechas y los
+// dias que importan en ese estado, las historias por estado, los Story Points, el porcentaje y el sprint abierto.
+type EstadoDelProyecto struct {
+	Estado      string
+	Dias        int
+	Pendientes  int
+	EnProgreso  int
+	Completadas int
+	StoryPoints int
+	Completados int
+	Porcentaje  float64
+	// SprintAbierto es el nombre ("Sprint 1") del sprint abierto, o vacio si no hay.
+	SprintAbierto string
+}
+
+// Proyectos es el area de US-001, US-002, US-003 y US-004.
 type Proyectos interface {
 	CrearProyecto(nombre string, inicio, fin time.Time) error
 	ModificarNombreProyecto(actual, nuevo string) error
@@ -44,6 +59,9 @@ type Proyectos interface {
 	RegistrarIntegrante(proyecto, nombre, email, rol string) error
 	ProyectoExiste(nombre string) (inicio, fin time.Time, err error)
 	CantidadIntegrantes(proyecto string) (int, error)
+	// ConsultarEstadoProyecto es de US-004. Un proyecto que el escenario no creo se manda con un ID que no existe, asi el
+	// rechazo lo produce la aplicacion.
+	ConsultarEstadoProyecto(nombre string) (EstadoDelProyecto, error)
 }
 
 // DatosHistoria son los datos con los que un escenario crea una historia. Las
@@ -340,6 +358,7 @@ type mundo struct {
 	horas               HorasDelSprint
 	comparacion         ComparacionDeEsfuerzo
 	porcentajeHistorias float64
+	estadoProyecto      EstadoDelProyecto
 	defectos            ResumenDeDefectos
 	anteriores          SprintsAnteriores
 	consultaEsfuerzo    ConsultaDeEsfuerzo

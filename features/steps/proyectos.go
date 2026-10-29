@@ -8,7 +8,7 @@ import (
 	"github.com/cucumber/godog"
 )
 
-// Steps del area Proyectos (US-001, US-002 y US-003).
+// Steps del area Proyectos (US-001, US-002, US-003 y US-004).
 //
 // Los steps de contexto (Dado) SI devuelven el error: si el armado del escenario
 // falla, el escenario no tiene sentido y tiene que cortarse ahi. Los de accion
@@ -31,6 +31,16 @@ func registrarProyectos(sc *godog.ScenarioContext, m *mundo) {
 
 	sc.Step(`^el proyecto "([^"]*)" existe con fechas del "([^"]*)" al "([^"]*)"$`, m.entoncesElProyectoExiste)
 	sc.Step(`^el proyecto "([^"]*)" tiene (\d+) integrantes?$`, m.entoncesCantidadIntegrantes)
+
+	// PROPUESTA US-004: se aprueban en el PR junto con docs/diccionario-steps.md.
+	sc.Step(`^se consulta el estado del proyecto "([^"]*)"$`, m.cuandoSeConsultaElEstadoDelProyecto)
+	sc.Step(`^el estado del proyecto es "([^"]*)"$`, m.entoncesElEstadoDelProyectoEs)
+	sc.Step(`^los días del estado son (\d+)$`, m.entoncesLosDiasDelEstadoSon)
+	sc.Step(`^el proyecto tiene (\d+) historias? pendientes?, (\d+) en progreso y (\d+) completadas?$`, m.entoncesLasHistoriasDelProyectoSon)
+	sc.Step(`^los story points del proyecto son (\d+) y los completados (\d+)$`, m.entoncesLosStoryPointsDelProyectoSon)
+	sc.Step(`^el porcentaje de historias completadas del proyecto es (\d+(?:[.,]\d+)?)$`, m.entoncesElPorcentajeDelProyectoEs)
+	sc.Step(`^el sprint abierto del proyecto es "([^"]*)"$`, m.entoncesElSprintAbiertoDelProyectoEs)
+	sc.Step(`^el proyecto no tiene sprint abierto$`, m.entoncesElProyectoNoTieneSprintAbierto)
 }
 
 func (m *mundo) dadoUnProyecto(nombre string) error {
@@ -219,6 +229,67 @@ func (m *mundo) entoncesCantidadIntegrantes(proyecto string, esperada int) error
 	}
 	if cantidad != esperada {
 		return fmt.Errorf("integrantes de %q: se esperaban %d, hay %d", proyecto, esperada, cantidad)
+	}
+	return nil
+}
+
+// cuandoSeConsultaElEstadoDelProyecto guarda el resultado aunque haya error: un escenario de error (CA-004-6) sigue
+// hasta el `Entonces la operacion se rechaza`.
+func (m *mundo) cuandoSeConsultaElEstadoDelProyecto(nombre string) error {
+	proyectos, err := m.proyectos()
+	if err != nil {
+		return err
+	}
+	estado, err := proyectos.ConsultarEstadoProyecto(nombre)
+	m.estadoProyecto = estado
+	return m.registrarAccion(err)
+}
+
+func (m *mundo) entoncesElEstadoDelProyectoEs(esperado string) error {
+	if m.estadoProyecto.Estado != esperado {
+		return fmt.Errorf("el estado del proyecto es %q y se esperaba %q", m.estadoProyecto.Estado, esperado)
+	}
+	return nil
+}
+
+func (m *mundo) entoncesLosDiasDelEstadoSon(esperados int) error {
+	if m.estadoProyecto.Dias != esperados {
+		return fmt.Errorf("los días del estado son %d y se esperaban %d", m.estadoProyecto.Dias, esperados)
+	}
+	return nil
+}
+
+func (m *mundo) entoncesLasHistoriasDelProyectoSon(pendientes, enProgreso, completadas int) error {
+	e := m.estadoProyecto
+	if e.Pendientes != pendientes || e.EnProgreso != enProgreso || e.Completadas != completadas {
+		return fmt.Errorf("el proyecto tiene %d pendientes, %d en progreso y %d completadas; se esperaban %d, %d y %d",
+			e.Pendientes, e.EnProgreso, e.Completadas, pendientes, enProgreso, completadas)
+	}
+	return nil
+}
+
+func (m *mundo) entoncesLosStoryPointsDelProyectoSon(puntos, completados int) error {
+	e := m.estadoProyecto
+	if e.StoryPoints != puntos || e.Completados != completados {
+		return fmt.Errorf("los story points del proyecto son %d y los completados %d; se esperaban %d y %d", e.StoryPoints, e.Completados, puntos, completados)
+	}
+	return nil
+}
+
+func (m *mundo) entoncesElPorcentajeDelProyectoEs(esperado string) error {
+	return compararCifra("porcentaje de historias completadas del proyecto", esperado, m.estadoProyecto.Porcentaje)
+}
+
+func (m *mundo) entoncesElSprintAbiertoDelProyectoEs(esperado string) error {
+	if m.estadoProyecto.SprintAbierto != esperado {
+		return fmt.Errorf("el sprint abierto del proyecto es %q y se esperaba %q", m.estadoProyecto.SprintAbierto, esperado)
+	}
+	return nil
+}
+
+func (m *mundo) entoncesElProyectoNoTieneSprintAbierto() error {
+	if m.estadoProyecto.SprintAbierto != "" {
+		return fmt.Errorf("el proyecto tiene el sprint abierto %q y se esperaba ninguno", m.estadoProyecto.SprintAbierto)
 	}
 	return nil
 }
