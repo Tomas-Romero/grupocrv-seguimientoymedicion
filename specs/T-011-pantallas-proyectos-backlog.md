@@ -65,7 +65,7 @@ errores de T-005 caigan en el campo correcto.
 ```
 ListarProyectos()                          -> []Proyecto
 ConsultarProyecto(proyectoID)              -> Proyecto + []Integrante
-ListarBacklog(proyectoID)                  -> []ItemBacklog
+ListarBacklog(proyectoID, filtro FiltroBacklog) -> []ItemBacklog
 ConsultarItem(proyectoID, itemID)          -> ItemBacklog
 ```
 
