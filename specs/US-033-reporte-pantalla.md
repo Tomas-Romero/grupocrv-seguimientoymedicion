@@ -74,21 +74,28 @@ formato de T-019.
 
 ## 4. Reglas de negocio
 
-- **RN-033-1** — Los reportes son **de solo lectura** y componen casos de uso existentes (`ConsultarDashboard`,
-  `ConsultarProyecto`, `ListarBacklog`, `ListarSprints`, `ConsultarSprint`, `CompararEsfuerzo`,
-  `ConsultarEsfuerzo` y `ListarDefectos`). El caso de uso del reporte **no accede a repositorios** y **no
-  recalcula** nada: usa las cifras que devuelve cada uno.
+- **RN-033-1** — Los reportes son **de solo lectura** y componen casos de uso existentes: el del proyecto, `ConsultarProyecto`,
+  `ListarBacklog`, `ListarSprints`, `ConsultarSprintsAnteriores`, `ConsultarEsfuerzo`, `CompararEsfuerzo`, `ListarDefectos` y
+  `ConsultarDashboard`; el de un sprint, `ConsultarProyecto`, `ConsultarSprint`, `ConsultarEsfuerzo` (filtrado por sprint) y
+  `ListarDefectos`. El caso de uso del reporte **no accede a repositorios** y **no calcula nada propio**: usa las cifras que devuelve
+  cada uno. La única excepción es el reporte de un sprint, que arma el porcentaje de historias completadas y las horas con las funciones
+  de `metricas` (`CalcularPorcentajeCompletadas` y `CalcularHoras`) porque el dashboard solo las calcula para el sprint de referencia;
+  son las mismas funciones, con los mismos datos.
 - **RN-033-2** — El orden de las secciones es fijo (sección 3). Dentro de cada sección rige el orden de la
   pantalla de origen: integrantes por nombre (RN-T011-5), backlog por prioridad y número (RN-T011-4), sprints
   por número descendente (RN-T015-3), defectos del más reciente al más antiguo.
 - **RN-033-3** — Cada sección falla por separado (como las tarjetas del dashboard, RN-030-9): un error al armar una
-  sección se informa en ella y el resto del reporte se muestra.
+  sección se informa en ella y el resto del reporte se muestra. Vale para cualquier error de la lectura de esa sección, también uno de
+  la persistencia; solo la lectura del proyecto (y la del sprint) se informa como error de la página: sin ella no hay con qué armarla.
+  En el reporte de un sprint, si fallan las horas, las métricas muestran los Story Points y el porcentaje, y dicen que no pudieron
+  calcular las horas.
 - **RN-033-4** — El reporte de un sprint muestra el resultado de cada historia según **su fila** en ese sprint, no
   su estado actual (RN-T015-13, DEF-007); y las horas son las de los registros con fecha dentro del sprint
   (RN-019-12).
 - **RN-033-5** — Los defectos del reporte de un sprint son los que tienen ese sprint como **sprint de detección**
   (los detectados) y los que tienen ese sprint como **sprint de resolución** (los resueltos). Los `descartado`
-  no se cuentan en los totales de detectados y resueltos (RN-030-6), pero aparecen en la lista del proyecto.
+  **no están en ninguna de las dos listas del reporte de un sprint ni en sus totales** (RN-030-6: un defecto que no se va a corregir
+  no es un defecto detectado), pero aparecen en la lista de defectos del reporte del proyecto, con su estado.
 - **RN-033-6** — Un proyecto o un sprint que no existe, o un sprint de otro proyecto, se rechaza con su error de
   inexistencia **antes** de armar nada: 404 con layout.
 - **RN-033-7** — Los reportes no modifican nada y no hay una operación «generar» que guarde un documento: se
@@ -103,7 +110,9 @@ formato de T-019.
 
 - **Sin cálculos ni lecturas nuevas.** No se toca el dominio ni los repositorios.
 - **Casos de uso nuevos:** `ConsultarReporteDelProyecto` y `ConsultarReporteDelSprint`, en `internal/app`, que
-  reciben los casos de uso existentes por el constructor. `cmd/server` los arma con los que ya tiene.
+  reciben las lecturas que componen como **funciones** por el constructor (cada caso de uso existente se pasa con su método
+  `Ejecutar`), así se prueban con lecturas simuladas. `CasosDeUso.ConReportes()`, en el adaptador HTTP, los arma con los que
+  la aplicación ya tiene, y lo usan `cmd/server` y los tests de las pantallas.
 - **Sin migración ni errores nuevos.** Reutiliza los de inexistencia del catálogo.
 - **Una página con todas las secciones,** no una página por sección ni paginación: es lo que se imprime.
 - **Escenarios BDD.** Van en el área Métricas de los steps y comprueban lo que cada sección contiene y el orden;
@@ -175,8 +184,11 @@ Que no haya datos **no es un error** (RN-033-2 y CL-033-2).
 - **Frases nuevas del diccionario** (se aprueban en el PR de implementación), área Métricas:
   `se consulta el reporte del proyecto "P"`, `se consulta el reporte del sprint "Sprint N" del proyecto "P"`,
   `el reporte tiene las secciones: ...` (con las secciones en una tabla, en orden), `la sección "S" del reporte está
-  vacía`, `la sección "S" del reporte indica "texto"` y `el reporte del sprint muestra la historia "H" como
-  "Completada"` (o `"No completada"`).
+  vacía`, `la sección "S" del reporte tiene N elementos`, `ninguna sección del reporte informa un error`, `el reporte del
+  sprint muestra la historia "H" como "Completada"` (o `"No completada"`) y `el reporte del sprint lista N defectos
+  detectados y M resueltos`. La primera versión de esta spec tenía `la sección "S" del reporte indica "texto"`; se descartó porque el
+  texto («Sin datos») es de la pantalla, no del caso de uso, y lo prueban los tests HTTP. Un escenario comprueba qué contiene cada
+  sección y en qué orden; los textos, las tablas y el escapado del HTML, la página.
 
 ## Uso de IA en esta especificación
 
