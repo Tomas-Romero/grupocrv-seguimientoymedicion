@@ -18,6 +18,8 @@ name: CD (Azure)
 #   RESOURCE_GROUP        frsrutn          (AZURE_RESOURCE_GROUP)
 #   CONTAINER_APP_NAME    grupo03-grupocrv-seguimientoymedicion   (nombre del grupo de contenedores; 63 caracteres como maximo)
 #   ACI_DNS_LABEL         igual al nombre  (da la URL http://<etiqueta>.<region>.azurecontainer.io:8080)
+#   ACI_REGION            vacia: la region del grupo de recursos. Si la politica de la suscripcion no permite ACI ahi
+#                         (error RequestDisallowedByAzure), la region donde si, por ejemplo brazilsouth
 #   ACI_CPU / ACI_MEMORIA 1 / 1            (ACI cobra el vCPU redondeado hacia arriba: menos de 1 no ahorra)
 #   CARGAR_DATOS_EJEMPLO  true: carga el proyecto de ejemplo al arrancar (para la demo)
 #   MANTENER_ENCENDIDO    false: despues de desplegar y comprobar /health, el contenedor SE APAGA (ACI cobra mientras
@@ -234,6 +236,7 @@ jobs:
       CARGAR_DATOS_EJEMPLO: ${{ vars.CARGAR_DATOS_EJEMPLO || 'true' }}
       CPU: ${{ vars.ACI_CPU || '1' }}
       MEMORIA: ${{ vars.ACI_MEMORIA || '1' }}
+      ACI_REGION: ${{ vars.ACI_REGION || '' }}
       MANTENER_ENCENDIDO: ${{ vars.MANTENER_ENCENDIDO || 'false' }}
     steps:
       # azure/login v3.1.0
@@ -270,6 +273,11 @@ jobs:
             echo "::error::ACI_CPU (1 a 4) o ACI_MEMORIA (en GB, por ejemplo 1 o 1.5) no son validos: $CPU / $MEMORIA."
             exit 1
           fi
+          # La region es opcional: sin ella ACI usa la del grupo de recursos. El nombre es el de Azure, sin espacios (brazilsouth).
+          if [ -n "$ACI_REGION" ] && ! [[ "$ACI_REGION" =~ ^[a-z0-9]+$ ]]; then
+            echo "::error::ACI_REGION ($ACI_REGION) no es valida: va el nombre de Azure en minusculas y sin espacios, por ejemplo brazilsouth."
+            exit 1
+          fi
 
           imagen_completa="${REGISTRO}/${IMAGEN}:sha-${GITHUB_SHA}"
 
@@ -279,13 +287,22 @@ jobs:
             echo "El contenedor $CONTENEDOR ya existe: lo reemplazo"
             az container delete --name "$CONTENEDOR" --resource-group "$GRUPO_RECURSOS" --yes --only-show-errors > /dev/null
           fi
-          echo "Creo el contenedor $CONTENEDOR con $imagen_completa (${CPU} vCPU, ${MEMORIA} GB)"
-          az container create --name "$CONTENEDOR" --resource-group "$GRUPO_RECURSOS" \
+          ubicacion=()
+          [ -z "$ACI_REGION" ] || ubicacion=(--location "$ACI_REGION")
+          echo "Creo el contenedor $CONTENEDOR con $imagen_completa (${CPU} vCPU, ${MEMORIA} GB, region: ${ACI_REGION:-la del grupo de recursos})"
+          if ! salida=$(az container create --name "$CONTENEDOR" --resource-group "$GRUPO_RECURSOS" \
             --image "$imagen_completa" --os-type Linux --cpu "$CPU" --memory "$MEMORIA" \
             --registry-login-server "$REGISTRO" --registry-username "$ACR_USUARIO" --registry-password "$ACR_PASSWORD" \
             --ports 8080 --ip-address Public --dns-name-label "$ETIQUETA_DNS" --restart-policy Always \
             --environment-variables HTTP_ADDR=:8080 "CARGAR_DATOS_EJEMPLO=${CARGAR_DATOS_EJEMPLO}" \
-            --secure-environment-variables "DATABASE_URL=${DATABASE_URL}" --only-show-errors > /dev/null
+            --secure-environment-variables "DATABASE_URL=${DATABASE_URL}" \
+            ${ubicacion[@]+"${ubicacion[@]}"} --only-show-errors 2>&1); then
+            echo "$salida"
+            if [[ "$salida" == *RequestDisallowedByAzure* ]]; then
+              echo "::error::La politica de la suscripcion no permite crear ACI en la region ${ACI_REGION:-del grupo de recursos}. Defini la variable ACI_REGION del Environment azure con una region permitida (por ejemplo brazilsouth); Verificar Azure lista las regiones de ACI y las que permite la politica."
+            fi
+            exit 1
+          fi
 
       # ACI no hace TLS: la app se ve por http en el puerto 8080. Bajar la imagen y arrancar tarda un par de minutos.
       - name: Comprobar que responde (/health)

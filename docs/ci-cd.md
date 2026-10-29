@@ -94,6 +94,19 @@ El script pide los nombres con los que los entregó la cátedra y deja el despli
 mismo que *Settings → Environments → azure* o `gh secret set <NOMBRE> --env azure` y
 `gh variable set <NOMBRE> --env azure --body <valor>`.
 
+Cada campo de las credenciales lleva **solo su valor**: `clientId`, `subscriptionId` y `tenantId` son GUID, y `clientSecret`
+es la clave sola, sin llaves ni comillas. El script lo valida antes de guardar nada (sin mostrar el valor) y, en el primer
+campo, también acepta el JSON completo de la cátedra en una sola línea. Para volver a cargar **solo** las credenciales:
+
+```bash
+bash scripts/configurar-azure.sh --solo-credenciales
+```
+
+*Verificar Azure* revisa ese formato antes de loguearse. Hay una razón: si el `tenantId` está mal cargado, Azure lo
+devuelve completo en su mensaje de error, y ese log lo puede leer cualquiera con acceso al repositorio. Si alguna vez una
+credencial queda impresa en un log, hay que borrar esa ejecución (*Actions → la ejecución → ⋯ → Delete all logs*) y pedir
+a la cátedra que genere una clave nueva.
+
 | Secreto | Valor |
 |---|---|
 | `AZURE_CREDENTIALS` | El JSON del *service principal* con `clientId`, `clientSecret`, `subscriptionId` y `tenantId` (el script lo arma con los cuatro datos) |
@@ -110,6 +123,7 @@ Variables (si no existen se usan los datos del grupo 03; entre paréntesis, el n
 | `RESOURCE_GROUP` (`AZURE_RESOURCE_GROUP`) | `frsrutn` | Grupo de recursos |
 | `CONTAINER_APP_NAME` | `grupo03-grupocrv-seguimientoymedicion` | Nombre del contenedor (`container_app_name`). Tiene que empezar con `grupo03-`; en ACI el límite es de **63 caracteres**, así que sirve el nombre completo que asignó la cátedra |
 | `ACI_DNS_LABEL` | igual al nombre | Etiqueta DNS de la URL (5 a 63 caracteres; única dentro de la región) |
+| `ACI_REGION` | la región del grupo de recursos | Región donde se crea el contenedor (el nombre de Azure en minúsculas y sin espacios, por ejemplo `brazilsouth`). Hace falta si la política de la suscripción no permite ACI en la región del grupo de recursos: el despliegue falla con `RequestDisallowedByAzure`. *Verificar Azure* lista las regiones donde ACI funciona y las que permite la política |
 | `ACI_CPU` / `ACI_MEMORIA` | `1` / `1` | vCPU y GB del contenedor |
 | `CARGAR_DATOS_EJEMPLO` | `true` | Carga el proyecto de ejemplo al arrancar, para la demo (es idempotente) |
 | `MANTENER_ENCENDIDO` | `false` | Con `false`, el contenedor se apaga después de desplegar y cada noche. `true` solo mientras se necesite la app encendida |
