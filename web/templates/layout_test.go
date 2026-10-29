@@ -169,7 +169,7 @@ func TestLayout_ItemActivo(t *testing.T) {
 
 // T-004: el menu del proyecto solo aparece dentro de un proyecto.
 func TestLayout_MenuDeProyecto(t *testing.T) {
-	t.Run("caso normal: con proyecto aparecen su nombre y sus seis destinos", func(t *testing.T) {
+	t.Run("caso normal: con proyecto aparecen su nombre y sus siete destinos", func(t *testing.T) {
 		html := renderizar(t, plantillas.Pagina{Proyecto: proyectoDeEjemplo()}, "")
 
 		etiqueta(t, html, `<nav[^>]*aria-label="Proyecto"`)
@@ -177,7 +177,7 @@ func TestLayout_MenuDeProyecto(t *testing.T) {
 			t.Errorf("no aparece el nombre del proyecto en:\n%s", html)
 		}
 		for _, href := range []string{
-			"/proyectos/p1", "/proyectos/p1/backlog", "/proyectos/p1/sprints", "/proyectos/p1/esfuerzo",
+			"/proyectos/p1", "/proyectos/p1/backlog", "/proyectos/p1/sprints", "/proyectos/p1/esfuerzo", "/proyectos/p1/dashboard",
 			"/proyectos/p1/metricas", "/proyectos/p1/defectos",
 		} {
 			etiquetaEnlace(t, html, href)
