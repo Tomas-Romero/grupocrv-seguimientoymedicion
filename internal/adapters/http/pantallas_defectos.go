@@ -135,7 +135,7 @@ func (p *Pantallas) listaDeDefectos(w http.ResponseWriter, r *http.Request) {
 		p.fallaDeLectura(w, r, err)
 		return
 	}
-	defectos, err := p.casos.ListarDefectos.Ejecutar(r.Context(), id)
+	defectos, err := p.casos.ListarDefectos.Ejecutar(r.Context(), id, app.FiltroDefectos{})
 	if err != nil {
 		p.fallaDeLectura(w, r, err)
 		return

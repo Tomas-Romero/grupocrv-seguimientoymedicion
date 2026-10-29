@@ -75,6 +75,10 @@ type Defecto struct {
 	SprintResolucionID string
 }
 
+// ValidarSeveridad devuelve nil si la severidad es una de las cuatro (RN-022-2, RN-024-8).
+// TODO(US-024): esqueleto para el RED, todavia no valida nada.
+func ValidarSeveridad(severidad Severidad) error { return nil }
+
 // Nuevo arma el defecto, sin ID, siempre abierto y sin sprint de resolucion (RN-022-3).
 //
 // RN-022-4: valida todo y devuelve todos los errores unidos con errors.Join, en orden
