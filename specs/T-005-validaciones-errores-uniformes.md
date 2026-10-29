@@ -237,6 +237,7 @@ propio catálogo.
 |---|---|---|
 | `backlog` | `ErrTituloVacio`, `ErrTituloMuyLargo` | `titulo` |
 | `backlog` | `ErrPrioridadInvalida` | `prioridad` |
+| `backlog` | `ErrEstadoInvalido` | `estado` |
 | `backlog` | `ErrCriterioVacio` | `criterios` |
 | `backlog` | `ErrEstimacionFueraDeEscala` | `estimacion` |
 | `esfuerzo` | `ErrFechaVacia`, `ErrFechaFutura` | `fecha` |
