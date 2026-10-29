@@ -4,7 +4,7 @@
 > No se edita a mano: se regenera. Enlaza Historia → Spec → Criterios de aceptación →
 > Escenarios BDD → Tests → Código (la guía de la cátedra la pide como evidencia).
 
-Total: 40 especificaciones, 273 criterios de aceptación, 203 con escenario BDD y 236 con test.
+Total: 40 especificaciones, 273 criterios de aceptación, 209 con escenario BDD y 242 con test.
 
 Un criterio sin escenario BDD o sin test se muestra con `—`: o falta la evidencia, o el criterio
 se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no llevan `.feature`).
@@ -19,7 +19,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | US-004 | [specs/US-004-estado-proyecto.md](../specs/US-004-estado-proyecto.md) | borrador | 6 | 6 | 6 | `internal/domain/proyecto/`, `internal/app/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
 | US-005 | [specs/US-005-crear-item-backlog.md](../specs/US-005-crear-item-backlog.md) | borrador | 8 | 8 | 8 | `internal/domain/backlog/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/` |
 | US-006 | [specs/US-006-editar-item-backlog.md](../specs/US-006-editar-item-backlog.md) | borrador | 7 | 5 | 6 | `internal/domain/backlog/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/` |
-| US-007 | [specs/US-007-listar-backlog.md](../specs/US-007-listar-backlog.md) | borrador | 6 | 0 | 0 | `internal/app/`, `internal/domain/backlog/`, `internal/adapters/http/catalogo.go` |
+| US-007 | [specs/US-007-listar-backlog.md](../specs/US-007-listar-backlog.md) | borrador | 6 | 6 | 6 | `internal/app/`, `internal/domain/backlog/`, `internal/adapters/http/catalogo.go` |
 | US-008 | [specs/US-008-crear-sprint.md](../specs/US-008-crear-sprint.md) | borrador | 11 | 11 | 11 | `internal/domain/sprint/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/` |
 | US-009 | [specs/US-009-asignar-historias-sprint.md](../specs/US-009-asignar-historias-sprint.md) | borrador | 8 | 8 | 8 | `internal/domain/sprint/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/` |
 | US-010 | [specs/US-010-marcar-historias-completadas.md](../specs/US-010-marcar-historias-completadas.md) | borrador | 6 | 6 | 6 | `internal/domain/sprint/`, `internal/domain/backlog/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`, `migraciones/00008_items_completado_en.sql` |
@@ -126,7 +126,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 - **Spec:** [specs/US-005-crear-item-backlog.md](../specs/US-005-crear-item-backlog.md) · **Issue:** #7
 - **Escenarios BDD:** [features/US-005-crear-item-backlog.feature](../features/US-005-crear-item-backlog.feature)
 - **Código:** `internal/domain/backlog/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/`
-- **Tests que la citan:** 30
+- **Tests que la citan:** 31
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
@@ -159,18 +159,18 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 ### US-007 — Listar y filtrar el backlog de un proyecto por estado y prioridad
 
 - **Spec:** [specs/US-007-listar-backlog.md](../specs/US-007-listar-backlog.md) · **Issue:** #17 (historia) · issue de la spec: pendiente
-- **Escenarios BDD:** ninguno
+- **Escenarios BDD:** [features/US-007-listar-backlog.feature](../features/US-007-listar-backlog.feature)
 - **Código:** `internal/app/`, `internal/domain/backlog/`, `internal/adapters/http/catalogo.go`
-- **Tests que la citan:** 0
+- **Tests que la citan:** 15
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
-| CA-007-1 | normal | — | — |
-| CA-007-2 | alternativo | — | — |
-| CA-007-3 | alternativo | — | — |
-| CA-007-4 | límite | — | — |
-| CA-007-5 | error | — | — |
-| CA-007-6 | error | — | — |
+| CA-007-1 | normal | Filtrar por un estado deja solo las historias en ese estado, Filtrar por completado deja solo las historias completadas, Filtrar por una prioridad deja solo las historias de esa prioridad, en cualquier estado, +1 más | TestListarBacklog_FiltroPorEstado, TestListarBacklog_FiltroNoCambiaLosDatos, TestListarBacklog_FiltroPorPrioridad |
+| CA-007-2 | alternativo | Los dos filtros se combinan: salen solo las historias que cumplen ambos | TestListarBacklog_FiltrosCombinadosConY |
+| CA-007-3 | alternativo | Sin filtros se devuelve el backlog completo, en cualquier estado y ordenado | TestListarBacklog_SinFiltrosEsElBacklogCompleto |
+| CA-007-4 | límite | Un estado sin historias da una lista vacía, no un error, Una prioridad sin historias da una lista vacía, no un error, Dos filtros que tienen historias por separado pero no en común dan una lista vacía, +2 más | TestListarBacklog_UnValorVacioNoFiltraEsaDimension, TestListarBacklog_SinCoincidenciasEsListaVacia |
+| CA-007-5 | error | Un estado que no es uno de los tres se rechaza, sin normalizarlo, Una prioridad que no es una de las cuatro se rechaza, sin normalizarla, Con el estado y la prioridad inválidos a la vez se informan los dos | TestListarBacklog_EstadoInvalido, TestListarBacklog_PrioridadInvalida, TestListarBacklog_EstadoYPrioridadInvalidosSeUnen, TestValidarPrioridad, +2 más |
+| CA-007-6 | error | Un proyecto inexistente se rechaza, aunque los filtros también sean inválidos | TestListarBacklog_ProyectoInexistenteVaSolo |
 
 ### US-008 — Crear un Sprint con Sprint Goal y fechas
 
@@ -640,7 +640,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 - **Spec:** [specs/T-011-pantallas-proyectos-backlog.md](../specs/T-011-pantallas-proyectos-backlog.md) · **Issue:** #79 (tarea) · #140 (spec)
 - **Escenarios BDD:** ninguno
 - **Código:** `internal/app/`, `internal/adapters/memoria/`, `internal/adapters/postgres/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/`
-- **Tests que la citan:** 27
+- **Tests que la citan:** 28
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
