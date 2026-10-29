@@ -2,6 +2,7 @@ package features_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/features/steps"
@@ -20,18 +21,24 @@ const idDeProyectoInexistente = "00000000-0000-0000-0000-000000000000"
 // rechazo (ErrItemInexistente) lo produce la aplicacion y no este adaptador.
 const idDeItemInexistente = "00000000-0000-0000-0000-000000000000"
 
-// backlogSobreApp conecta el area Backlog con los casos de uso de US-005, US-006 y US-013
-// sobre la base en memoria del escenario (ADR 0002). Las consultas de los Entonces leen
-// la base directamente, porque todavia no hay casos de uso de lectura (US-007).
+// backlogSobreApp conecta el area Backlog con los casos de uso de US-005, US-006, US-007 y US-013
+// sobre la base en memoria del escenario (ADR 0002). Las consultas de los Entonces sobre una
+// historia leen la base directamente; la lista de US-007 sale del caso de uso real.
 type backlogSobreApp struct {
 	escenario *escenario
 	crear     *app.CrearItemBacklog
 	estimar   *app.EstimarItem
 	editar    *app.EditarItem
+	listar    *app.ListarBacklog
 
 	// proyectoDe guarda en que proyecto quedo cada historia, por titulo. Los
 	// escenarios no repiten titulos (docs/diccionario-steps.md).
 	proyectoDe map[string]string
+
+	// listadas son los titulos de la ultima lista, y listado dice si hay una: un listado rechazado la
+	// deja sin datos, asi un Entonces de lista no lee la de un paso anterior.
+	listadas []string
+	listado  bool
 }
 
 var _ steps.Backlog = (*backlogSobreApp)(nil)
@@ -42,6 +49,7 @@ func nuevoBacklogSobreApp(e *escenario) *backlogSobreApp {
 		crear:      app.NuevoCrearItemBacklog(e.base, ahoraEnEscenarios),
 		estimar:    app.NuevoEstimarItem(e.base),
 		editar:     app.NuevoEditarItem(e.base),
+		listar:     app.NuevoListarBacklog(e.base),
 		proyectoDe: map[string]string{},
 	}
 }
@@ -178,4 +186,33 @@ func (b *backlogSobreApp) historia(titulo string) (backlog.ItemBacklog, error) {
 		}
 	}
 	return backlog.ItemBacklog{}, fmt.Errorf("la historia %q no esta en la base", titulo)
+}
+
+// ListarBacklog lista el backlog del proyecto con el caso de uso real (US-007). Un proyecto que el
+// escenario no creo (por ejemplo, despues de `Dado ningún proyecto`) se manda con un ID que no existe, asi
+// el rechazo lo produce la aplicacion y no este adaptador. El estado y la prioridad van tal cual.
+func (b *backlogSobreApp) ListarBacklog(proyecto, estado, prioridad string) error {
+	proyectoID, ok := b.escenario.proyectos[proyecto]
+	if !ok {
+		proyectoID = idDeProyectoInexistente
+	}
+	filtro := app.FiltroBacklog{Estado: backlog.Estado(estado), Prioridad: backlog.Prioridad(prioridad)}
+
+	b.listadas, b.listado = nil, false
+	items, err := b.listar.Ejecutar(context.Background(), proyectoID, filtro)
+	if err != nil {
+		return err
+	}
+	for _, item := range items {
+		b.listadas = append(b.listadas, item.Titulo)
+	}
+	b.listado = true
+	return nil
+}
+
+func (b *backlogSobreApp) HistoriasListadas() ([]string, error) {
+	if !b.listado {
+		return nil, errors.New("no hay una lista del backlog: ningun listado se hizo o el ultimo se rechazo")
+	}
+	return b.listadas, nil
 }
