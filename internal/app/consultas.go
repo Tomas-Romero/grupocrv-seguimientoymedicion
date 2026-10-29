@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -151,6 +152,25 @@ func (c *ListarBacklog) Ejecutar(ctx context.Context, proyectoID string, filtro 
 	if !existe {
 		return nil, fmt.Errorf("%w (id %s)", ErrProyectoInexistente, proyectoID)
 	}
+
+	// RN-007-7 a RN-007-9: el valor vacio es "sin filtro" y no se valida (el dominio lo rechazaria, como en
+	// el alta). Los dos filtros se validan y, si ambos son invalidos, se devuelven unidos, estado primero,
+	// antes de leer la lista. El proyecto inexistente ya se devolvio solo, arriba.
+	var invalidos []error
+	if filtro.Estado != "" {
+		if err = backlog.ValidarEstado(filtro.Estado); err != nil {
+			invalidos = append(invalidos, err)
+		}
+	}
+	if filtro.Prioridad != "" {
+		if err = backlog.ValidarPrioridad(filtro.Prioridad); err != nil {
+			invalidos = append(invalidos, err)
+		}
+	}
+	if err = errors.Join(invalidos...); err != nil {
+		return nil, err
+	}
+
 	items, err := c.repo.ListarItems(ctx, proyectoID)
 	if err != nil {
 		return nil, fmt.Errorf("listar el backlog del proyecto %s: %w", proyectoID, err)
