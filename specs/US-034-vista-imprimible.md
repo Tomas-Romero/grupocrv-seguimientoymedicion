@@ -7,7 +7,7 @@
 | **Issue** | #40 |
 | **Escenarios BDD** | ninguno (ver "Decisiones") |
 | **Código** | `web/static/css/input.css`, `web/static/js/`, `web/templates/`, `internal/adapters/http/` |
-| **Última actualización** | 2026-10-27 |
+| **Última actualización** | 2026-10-29 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
 > implementación. Si durante la implementación descubrís que algo de acá está
@@ -49,7 +49,7 @@ guardar como PDF"** arriba, junto al título.
 |---|---|
 | Encabezado de la impresión | El nombre del proyecto (y del sprint, en su reporte), el título del reporte y "Generado el dd/mm/aaaa" |
 | Navegación del sitio, enlace "Saltar al contenido", botones y enlaces de acciones | No se imprimen |
-| Cada sección de US-033 | Empieza en una página nueva, con su título |
+| Cada sección de US-033 | No se corta a la mitad si entra en una página; si no entra, sigue en la siguiente. Su título no queda solo al pie de una página |
 | Tablas | Sin filas partidas; si una tabla no entra en una página, sigue en la siguiente repitiendo el encabezado |
 | Colores | Texto oscuro sobre fondo blanco; nada depende de un fondo de color |
 
@@ -77,9 +77,11 @@ No hay reglas de dominio. Son reglas de la vista.
   navegación), el enlace "Saltar al contenido", el área `#mensajes`, el botón de
   imprimir y los enlaces de navegación que tenga el reporte. Lo que se oculta se marca con una clase que dice qué es
   ("no se imprime"), no con selectores de la estructura del layout.
-- **RN-034-6** — Cada `<section>` de US-033 empieza en una página nueva
-  (`break-before: page`), salvo la primera. El título de una sección no queda
-  solo al pie de una página (`break-after: avoid` en los títulos).
+- **RN-034-6** — Una `<section>` de US-033 que entra en una página no se corta a la
+  mitad (`break-inside: avoid`); una que no entra se reparte entre páginas. El
+  título de una sección no queda solo al pie de una página (`break-after: avoid`
+  en los títulos). No se fuerza una página nueva por sección: un reporte con
+  secciones «Sin datos» imprimiría páginas casi vacías.
 - **RN-034-7** — Una fila de tabla no se parte entre dos páginas
   (`break-inside: avoid` en `tr`). Una tabla que entra en una página no se parte;
   una que no entra se reparte entre filas y repite su encabezado en cada página
@@ -103,7 +105,8 @@ No hay reglas de dominio. Son reglas de la vista.
   "Decisiones").
 - La página de US-033 tiene que estar en `main` antes de abrir la rama de
   implementación; el botón y el encabezado se agregan a sus plantillas.
-- `app.css` se regenera con `make css` y se commitea, como en el resto del sitio.
+- `app.css` se regenera con `make css`. Es un archivo generado: no se versiona
+  (`.gitignore`) y la imagen de Docker lo compila al construirse.
 - **Evidencia (CA-034-4):** una captura del PDF de cada reporte, guardada en
   `docs/evidencias/US-034/`, generada desde Chrome o Edge con "Guardar como PDF".
 - **Fuera de alcance:** generar el PDF en el servidor, numerar las páginas desde
@@ -112,8 +115,9 @@ No hay reglas de dominio. Son reglas de la vista.
 
 ## 6. Casos límite
 
-- **CL-034-1** — Un reporte corto (proyecto recién creado, todo «Sin datos»): se
-  imprime con una sección por página y sin páginas en blanco.
+- **CL-034-1** — Un reporte corto (proyecto recién creado, todo «Sin datos»): las
+  secciones se imprimen una debajo de otra, en las páginas que hagan falta y sin
+  páginas en blanco.
 - **CL-034-2** — Un backlog o una lista de defectos de más de una página: la tabla
   sigue en la página siguiente con su encabezado y sin filas cortadas.
 - **CL-034-3** — Una fila con un texto largo (descripción de un defecto): la fila
@@ -142,8 +146,8 @@ No hay errores nuevos. Los del reporte son los de US-033 (sección 7).
 - **CA-034-1** (normal) — El reporte tiene un botón "Imprimir o guardar como PDF"
   que abre el diálogo de impresión del navegador.
 - **CA-034-2** (alternativo) — La vista de impresión oculta la navegación y los
-  botones, usa saltos de página entre secciones y no parte las tablas por la
-  mitad, en A4.
+  botones, no corta una sección que entra en una página y no parte las tablas
+  por la mitad, en A4.
 - **CA-034-3** (límite) — Un reporte largo se reparte en varias páginas
   repitiendo los encabezados de las tablas.
 - **CA-034-4** (plataforma) — Queda como evidencia en la documentación una
@@ -166,9 +170,13 @@ No hay errores nuevos. Los del reporte son los de US-033 (sección 7).
   larga que una hoja tiene que partirse: se lee como "no cortar filas y no
   partir una tabla que entra en una página" (RN-034-7), y la que no entra repite
   el encabezado, que es lo que pide CA-034-3.
-- **Una sección por página.** Es lo que pide CA-034-2 ("saltos de página entre
-  secciones"). Se descartó dejar que el navegador corte donde caiga: una tabla
-  quedaría con el título en una hoja y las filas en otra.
+- **No cortar una sección que entra en una página, en lugar de una sección por
+  página.** La primera versión de esta spec forzaba una página nueva por sección
+  (`break-before: page`). Se cambió al implementarla: con secciones que dicen
+  «Sin datos», el PDF tenía páginas casi vacías. Con `break-inside: avoid`, una
+  sección que entra en una página no se parte, y el título nunca queda separado
+  de su contenido (`break-after: avoid`), que era lo que se buscaba. Se descartó
+  también dejar que el navegador corte donde caiga.
 - **El botón solo con JavaScript.** RN-033-8 pide que la página funcione sin
   JavaScript; un botón oculto hasta que el script lo muestra cumple eso y evita
   un botón muerto. Se descartó un enlace a una página aparte para imprimir.
