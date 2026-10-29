@@ -50,6 +50,7 @@ func nuevoEntorno(t *testing.T) entorno {
 		CerrarSprint:               app.NuevoCerrarSprint(base),
 		ConsultarSprintsAnteriores: app.NuevoConsultarSprintsAnteriores(base),
 		ConsultarEstado:            app.NuevoConsultarEstadoDelProyecto(base, ahora),
+		ConsultarDashboard:         app.NuevoConsultarDashboard(base, ahora),
 		RegistrarEsfuerzo:          app.NuevoRegistrarEsfuerzo(base, ahora),
 		ConsultarEsfuerzo:          app.NuevoConsultarEsfuerzo(base),
 		CompararEsfuerzo:           app.NuevoCompararEsfuerzo(base),
