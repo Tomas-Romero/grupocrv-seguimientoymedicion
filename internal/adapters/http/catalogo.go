@@ -34,6 +34,7 @@ var entradasDelCatalogo = []entradaDelCatalogo{
 	{"backlog.ErrTituloVacio", backlog.ErrTituloVacio, errores.Validacion, "titulo"},
 	{"backlog.ErrTituloMuyLargo", backlog.ErrTituloMuyLargo, errores.Validacion, "titulo"},
 	{"backlog.ErrPrioridadInvalida", backlog.ErrPrioridadInvalida, errores.Validacion, "prioridad"},
+	{"backlog.ErrEstadoInvalido", backlog.ErrEstadoInvalido, errores.Validacion, "estado"},
 	{"backlog.ErrCriterioVacio", backlog.ErrCriterioVacio, errores.Validacion, "criterios"},
 	{"backlog.ErrEstimacionFueraDeEscala", backlog.ErrEstimacionFueraDeEscala, errores.Validacion, "estimacion"},
 	{"backlog.ErrItemCompletado", backlog.ErrItemCompletado, errores.Conflicto, ""},
