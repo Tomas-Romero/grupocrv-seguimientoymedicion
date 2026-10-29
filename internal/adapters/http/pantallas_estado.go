@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/app"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/metricas"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/proyecto"
 	plantillas "github.com/Tomas-Romero/grupocrv-seguimientoymedicion/web/templates"
@@ -19,10 +20,20 @@ func (p *Pantallas) tarjetaDeEstado(r *http.Request, proyectoID string) (plantil
 	estado, err := p.casos.ConsultarEstado.Ejecutar(r.Context(), proyectoID)
 	if err != nil {
 		if errors.Is(err, metricas.ErrStoryPointsNegativos) {
-			return plantillas.VistaEstadoProyecto{Estado: "No se pudo calcular el avance del proyecto", Error: err.Error()}, nil
+			return vistaDelEstadoConError(err), nil
 		}
 		return plantillas.VistaEstadoProyecto{}, err
 	}
+	return vistaDelEstado(estado, proyectoID), nil
+}
+
+// vistaDelEstadoConError es la tarjeta cuando metricas rechaza un dato corrupto: informa el error en lugar de los numeros.
+func vistaDelEstadoConError(err error) plantillas.VistaEstadoProyecto {
+	return plantillas.VistaEstadoProyecto{Estado: "No se pudo calcular el avance del proyecto", Error: err.Error()}
+}
+
+// vistaDelEstado escribe el estado general como lo lee una persona. Lo usan la pagina del proyecto y el dashboard.
+func vistaDelEstado(estado app.EstadoGeneral, proyectoID string) plantillas.VistaEstadoProyecto {
 	tarjeta := plantillas.VistaEstadoProyecto{
 		Estado: textoDelEstadoDelProyecto(estado.Estado, estado.Dias),
 		Historias: "Pendientes: " + strconv.Itoa(estado.Historias.Pendientes) + " · En progreso: " + strconv.Itoa(estado.Historias.EnProgreso) +
@@ -35,7 +46,7 @@ func (p *Pantallas) tarjetaDeEstado(r *http.Request, proyectoID string) (plantil
 		tarjeta.Sprint = estado.SprintAbierto.Nombre() + " en curso"
 		tarjeta.SprintEnlace = rutaDeSprint(proyectoID, estado.SprintAbierto.ID)
 	}
-	return tarjeta, nil
+	return tarjeta
 }
 
 // textoDelEstadoDelProyecto es el estado como se lee: «En curso: faltan 40 días», «No iniciado: empieza en 12 días»,

@@ -142,8 +142,20 @@ type lecturaDeEstado struct {
 
 var _ app.RepositorioEstadoGeneral = lecturaDeEstado{}
 
+// lecturaDeDashboard junta las cinco lecturas de ConsultarDashboard (US-030): las tres del estado general, los registros de
+// esfuerzo y los defectos con su sprint. Cada una es de un repositorio distinto y ya existe: no hay consultas nuevas.
+type lecturaDeDashboard struct {
+	*postgres.RepositorioProyectos
+	*postgres.RepositorioBacklog
+	*postgres.RepositorioAsignaciones
+	*postgres.RepositorioEsfuerzo
+	*postgres.RepositorioDefectos
+}
+
+var _ app.RepositorioDashboard = lecturaDeDashboard{}
+
 // casosDeUsoDePantallas arma los casos de uso de las pantallas sobre los repositorios de
-// Postgres (T-011, T-015, T-019, T-020, T-021 y US-004). Es el unico lugar donde se eligen los adaptadores.
+// Postgres (T-011, T-015, T-019, T-020, T-021, US-004 y US-030). Es el unico lugar donde se eligen los adaptadores.
 func casosDeUsoDePantallas(pool *pgxpool.Pool) httpadapter.CasosDeUso {
 	proyectos := postgres.NuevoRepositorioProyectos(pool)
 	integrantes := postgres.NuevoRepositorioIntegrantes(pool)
@@ -157,6 +169,7 @@ func casosDeUsoDePantallas(pool *pgxpool.Pool) httpadapter.CasosDeUso {
 		ListarProyectos:     app.NuevoListarProyectos(proyectos),
 		ConsultarProyecto:   app.NuevoConsultarProyecto(lecturaDeProyecto{proyectos, integrantes}),
 		ConsultarEstado:     app.NuevoConsultarEstadoDelProyecto(lecturaDeEstado{proyectos, items, asignaciones}, time.Now),
+		ConsultarDashboard:  app.NuevoConsultarDashboard(lecturaDeDashboard{proyectos, items, asignaciones, esfuerzo, defectos}, time.Now),
 		CrearProyecto:       app.NuevoCrearProyecto(proyectos),
 		ModificarProyecto:   app.NuevoModificarProyecto(proyectos),
 		RegistrarIntegrante: app.NuevoRegistrarIntegrante(integrantes),
