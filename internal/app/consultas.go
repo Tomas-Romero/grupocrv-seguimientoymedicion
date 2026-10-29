@@ -156,11 +156,14 @@ func (c *ListarBacklog) Ejecutar(ctx context.Context, proyectoID string, filtro 
 		return nil, fmt.Errorf("listar el backlog del proyecto %s: %w", proyectoID, err)
 	}
 
-	// RN-007-2 y RN-007-6: se filtra por el estado actual de la historia y el filtro solo quita historias:
-	// las que quedan son las mismas y se ordenan igual.
+	// RN-007-2 a RN-007-4 y RN-007-6: se filtra por el estado actual de la historia y por su prioridad,
+	// combinados con Y, y el filtro solo quita historias: las que quedan son las mismas y se ordenan igual.
 	filtradas := make([]backlog.ItemBacklog, 0, len(items))
 	for _, item := range items {
 		if filtro.Estado != "" && item.Estado != filtro.Estado {
+			continue
+		}
+		if filtro.Prioridad != "" && item.Prioridad != filtro.Prioridad {
 			continue
 		}
 		filtradas = append(filtradas, item)
