@@ -1,6 +1,7 @@
 package postgres_test
 
 import (
+	"errors"
 	"slices"
 	"testing"
 	"time"
@@ -98,6 +99,10 @@ func proyectar(listados []app.DefectoListado) []proyeccionDeListado {
 // T-021 / RN-T021-2, RN-T021-4 / CA-T021-6: con los mismos datos, ListarDefectos devuelve lo mismo
 // sobre la base en memoria y sobre Postgres: los datos del defecto, los numeros de la historia y de
 // los sprints, y el orden del mas reciente al mas antiguo.
+//
+// US-024 / CA-024-1, CA-024-2, CA-024-3, CA-024-4: tambien filtrando. El filtro se aplica en la aplicacion
+// sobre lo que entrega cada repositorio (spec US-024, seccion 5), asi que la memoria y Postgres no pueden
+// filtrar distinto; y el sprint de otro proyecto o mal formado se rechaza igual en las dos.
 func TestListarDefectos_MemoriaYPostgresDevuelvenLoMismo(t *testing.T) {
 	ctx := contexto(t)
 
@@ -174,11 +179,11 @@ func TestListarDefectos_MemoriaYPostgresDevuelvenLoMismo(t *testing.T) {
 		t.Fatalf("ActualizarEstadoDefecto: %v", err)
 	}
 
-	enPostgres, err := app.NuevoListarDefectos(e.repo).Ejecutar(ctx, e.proyecto)
+	enPostgres, err := app.NuevoListarDefectos(e.repo).Ejecutar(ctx, e.proyecto, app.FiltroDefectos{})
 	if err != nil {
 		t.Fatalf("ListarDefectos sobre Postgres: %v", err)
 	}
-	enMemoria, err := app.NuevoListarDefectos(base).Ejecutar(ctx, p.ID)
+	enMemoria, err := app.NuevoListarDefectos(base).Ejecutar(ctx, p.ID, app.FiltroDefectos{})
 	if err != nil {
 		t.Fatalf("ListarDefectos sobre la memoria: %v", err)
 	}
@@ -193,5 +198,55 @@ func TestListarDefectos_MemoriaYPostgresDevuelvenLoMismo(t *testing.T) {
 	}
 	if got := proyectar(enMemoria); !slices.Equal(got, quiero) {
 		t.Errorf("memoria = %+v, quiero %+v", got, quiero)
+	}
+
+	// US-024: Primero es del Sprint 1 y alta, Segundo del Sprint 3 y critica, Tercero del Sprint 2 y baja.
+	descripciones := func(listados []app.DefectoListado) []string {
+		salida := []string{}
+		for _, l := range listados {
+			salida = append(salida, l.Defecto.Descripcion)
+		}
+		return salida
+	}
+	filtros := []struct {
+		nombre    string
+		sprint    int // 0: sin filtro de sprint
+		severidad defecto.Severidad
+		quiero    []string
+	}{
+		{"por sprint", 1, "", []string{"Primero"}},
+		{"por sprint en el que se resolvio pero no se detecto", 3, "alta", []string{}},
+		{"por severidad", 0, defecto.SeveridadCritica, []string{"Segundo"}},
+		{"por sprint y severidad", 3, defecto.SeveridadCritica, []string{"Segundo"}},
+		{"sin coincidencias", 2, defecto.SeveridadAlta, []string{}},
+	}
+	for _, c := range filtros {
+		t.Run(c.nombre, func(t *testing.T) {
+			filtroPostgres, filtroMemoria := app.FiltroDefectos{Severidad: c.severidad}, app.FiltroDefectos{Severidad: c.severidad}
+			if c.sprint != 0 {
+				filtroPostgres.SprintDeteccionID, filtroMemoria.SprintDeteccionID = e.sprints[c.sprint-1], sprints[c.sprint-1]
+			}
+			enPostgres, err := app.NuevoListarDefectos(e.repo).Ejecutar(ctx, e.proyecto, filtroPostgres)
+			if err != nil {
+				t.Fatalf("ListarDefectos filtrado sobre Postgres: %v", err)
+			}
+			enMemoria, err := app.NuevoListarDefectos(base).Ejecutar(ctx, p.ID, filtroMemoria)
+			if err != nil {
+				t.Fatalf("ListarDefectos filtrado sobre la memoria: %v", err)
+			}
+			if got := descripciones(enPostgres); !slices.Equal(got, c.quiero) {
+				t.Errorf("Postgres = %v, quiero %v", got, c.quiero)
+			}
+			if got := descripciones(enMemoria); !slices.Equal(got, c.quiero) {
+				t.Errorf("memoria = %v, quiero %v", got, c.quiero)
+			}
+		})
+	}
+
+	// US-024 / RN-024-7: un sprint de otro proyecto o mal formado es ErrSprintInexistente, no una lista vacia.
+	for _, sprintID := range []string{e.sprintOtro, "no-es-un-uuid"} {
+		if _, err := app.NuevoListarDefectos(e.repo).Ejecutar(ctx, e.proyecto, app.FiltroDefectos{SprintDeteccionID: sprintID}); !errors.Is(err, app.ErrSprintInexistente) {
+			t.Errorf("Postgres con el sprint %q: error = %v, quiero ErrSprintInexistente", sprintID, err)
+		}
 	}
 }
