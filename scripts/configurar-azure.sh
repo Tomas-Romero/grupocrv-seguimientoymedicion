@@ -8,7 +8,20 @@
 # se mandan directo a `gh secret set` por la entrada estandar. El script solo imprime los NOMBRES de lo que carga.
 # Hace falta permiso de administrador del repositorio y `gh` iniciado. Se puede correr mas de una vez: lo que se
 # vuelve a cargar reemplaza al valor anterior. Con ENTER se acepta el valor que sale entre corchetes.
+#
+#   bash scripts/configurar-azure.sh --solo-credenciales   # vuelve a pedir SOLO AZURE_CREDENTIALS
+#
+# Las cuatro credenciales de Azure se validan antes de guardar nada (los tres identificadores tienen que ser GUID y la clave no
+# puede ser un JSON): un valor pegado en el campo equivocado se rechaza ahi, sin guardarlo ni mostrarlo. En el primer campo
+# tambien se puede pegar el JSON completo de la catedra, en una sola linea.
 set -euo pipefail
+
+SOLO_CREDENCIALES=no
+case "${1:-}" in
+  "") ;;
+  --solo-credenciales) SOLO_CREDENCIALES=si ;;
+  *) echo "Uso: bash scripts/configurar-azure.sh [--solo-credenciales]"; exit 1 ;;
+esac
 
 ENTORNO="azure"
 CARPETA="$(cd "$(dirname "$0")" && pwd)"
@@ -28,9 +41,11 @@ preguntar_oculto() { # $1 texto; deja la respuesta en $RESPUESTA sin mostrarla
   echo
   [ -n "$RESPUESTA" ] || { echo "No puede estar vacio."; exit 1; }
 }
+es_guid() { [[ "$1" =~ ^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$ ]]; }
 variable() { gh variable set "$1" --env "$ENTORNO" --body "$2" > /dev/null && echo "  variable  $1"; }
 secreto() { printf '%s' "$2" | gh secret set "$1" --env "$ENTORNO" > /dev/null && echo "  secreto   $1"; }
 
+if [ "$SOLO_CREDENCIALES" = no ]; then
 echo "1/4 Environment ${ENTORNO} (limitado a la rama main)..."
 bash "$CARPETA/crear-entorno-azure.sh" > /dev/null
 echo "  listo"
@@ -69,13 +84,34 @@ case "${APAGADO:-S}" in
   [nN]*) variable CD_ACTIVO "true" ;;
   *) variable CD_ACTIVO "false" ;;
 esac
+fi
 
 echo
 echo "3/4 Secretos (se piden sin mostrarlos)"
-preguntar_oculto "clientId"; CLIENT_ID=$RESPUESTA
-preguntar_oculto "clientSecret"; CLIENT_SECRET=$RESPUESTA
-preguntar_oculto "subscriptionId"; SUSCRIPCION=$RESPUESTA
-preguntar_oculto "tenantId"; TENANT=$RESPUESTA
+preguntar_oculto "clientId (o el JSON completo de la catedra, en una sola linea)"; CLIENT_ID=$RESPUESTA
+if [[ "$CLIENT_ID" == "{"* ]]; then
+  PEGADO=$(JSON_PEGADO="$CLIENT_ID" "$PYTHON" -c '
+import json, os, sys
+try:
+    d = {k.lower(): v for k, v in json.loads(os.environ["JSON_PEGADO"]).items()}
+    sys.stdout.buffer.write("\n".join(str(d[k]) for k in ("clientid", "clientsecret", "subscriptionid", "tenantid")).encode())
+except Exception:
+    sys.exit(1)') || { echo "No pude leer ese JSON: tiene que traer clientId, clientSecret, subscriptionId y tenantId. No se guardo nada."; exit 1; }
+  { read -r CLIENT_ID; read -r CLIENT_SECRET; read -r SUSCRIPCION; read -r TENANT; } <<< "$PEGADO"
+  unset PEGADO
+else
+  preguntar_oculto "clientSecret"; CLIENT_SECRET=$RESPUESTA
+  preguntar_oculto "subscriptionId"; SUSCRIPCION=$RESPUESTA
+  preguntar_oculto "tenantId"; TENANT=$RESPUESTA
+fi
+# Nunca se muestra el valor: solo el nombre del campo que esta mal.
+for par in "clientId:$CLIENT_ID" "subscriptionId:$SUSCRIPCION" "tenantId:$TENANT"; do
+  es_guid "${par#*:}" || { echo "${par%%:*} no tiene formato de GUID (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx). Pegaste solo ese valor en su campo? No se guardo nada."; exit 1; }
+done
+if [[ "$CLIENT_SECRET" == *[[:space:]{}\"]* ]]; then
+  echo "clientSecret no parece una clave (tiene espacios, llaves o comillas). Pegaste solo ese valor en su campo? No se guardo nada."
+  exit 1
+fi
 JSON=$(CLIENT_ID="$CLIENT_ID" CLIENT_SECRET="$CLIENT_SECRET" SUSCRIPCION="$SUSCRIPCION" TENANT="$TENANT" "$PYTHON" -c '
 import json, os
 print(json.dumps({"clientId": os.environ["CLIENT_ID"], "clientSecret": os.environ["CLIENT_SECRET"],
@@ -83,6 +119,7 @@ print(json.dumps({"clientId": os.environ["CLIENT_ID"], "clientSecret": os.enviro
 secreto AZURE_CREDENTIALS "$JSON"
 unset CLIENT_ID CLIENT_SECRET SUSCRIPCION TENANT JSON
 
+if [ "$SOLO_CREDENCIALES" = no ]; then
 preguntar_oculto "ACR_PASSWORD (la clave del registro)"; secreto ACR_PASSWORD "$RESPUESTA"
 
 preguntar_oculto "DATABASE_URL (la cadena de conexion de la base de Neon)"
@@ -97,6 +134,7 @@ fi
 [[ "$URL" != *-pooler* ]] || echo "  AVISO: la cadena usa el host con pooler; conviene la conexion directa (sin -pooler)."
 secreto DATABASE_URL "$URL"
 unset URL RESPUESTA
+fi
 
 echo
 echo "4/4 Lo que quedo cargado en el Environment ${ENTORNO} (solo nombres):"

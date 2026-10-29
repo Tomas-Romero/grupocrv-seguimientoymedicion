@@ -34,6 +34,7 @@ jobs:
       IMAGEN: ${{ vars.IMAGE_NAME || 'grupo03-grupocrv' }}
       GRUPO_RECURSOS: ${{ vars.RESOURCE_GROUP || vars.AZURE_RESOURCE_GROUP || 'frsrutn' }}
       CONTENEDOR: ${{ vars.CONTAINER_APP_NAME || vars.ACI_NAME || 'grupo03-grupocrv-seguimientoymedicion' }}
+      ACI_REGION: ${{ vars.ACI_REGION || '' }}
       ETIQUETA_DNS: ${{ vars.ACI_DNS_LABEL || vars.CONTAINER_APP_NAME || vars.ACI_NAME || 'grupo03-grupocrv-seguimientoymedicion' }}
       # Solo se pasa si el secreto existe, nunca su valor.
       TIENE_CREDENCIALES: ${{ secrets.AZURE_CREDENTIALS != '' }}
@@ -93,7 +94,7 @@ jobs:
             fila "Etiqueta DNS" "**\`$ETIQUETA_DNS\` no es valida: de 5 a 63 caracteres, minusculas, numeros y guiones**"
             falta=1
           else
-            fila "Etiqueta DNS" "\`$ETIQUETA_DNS\` (la URL sera http://$ETIQUETA_DNS.<region>.azurecontainer.io:8080)"
+            fila "Etiqueta DNS" "\`$ETIQUETA_DNS\` (la URL sera http://$ETIQUETA_DNS.REGION.azurecontainer.io:8080)"
           fi
           echo "falta=$falta" >> "$GITHUB_OUTPUT"
 
@@ -128,10 +129,45 @@ jobs:
             exit 1
           fi
 
+      # El formato se revisa ANTES de loguearse: con un tenantId mal cargado, Azure devuelve el valor completo en su mensaje de error
+      # y el log (que lo ve cualquiera con acceso al repositorio) mostraria la clave. Aca solo se escribe el nombre del campo.
+      - name: Revisar el formato de AZURE_CREDENTIALS
+        id: credenciales
+        if: env.TIENE_CREDENCIALES == 'true'
+        continue-on-error: true
+        env:
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+        run: |
+          set -uo pipefail
+          fila() { echo "| $1 | $2 |" >> "$GITHUB_STEP_SUMMARY"; }
+          campo() { jq -r --arg campo "$1" '.[$campo] | if type == "string" then . else "" end' 2> /dev/null <<< "$AZURE_CREDENTIALS"; }
+          if ! jq -e 'type == "object"' > /dev/null 2>&1 <<< "$AZURE_CREDENTIALS"; then
+            fila "Credenciales de Azure: formato" "**el secreto no es un JSON**: volve a cargarlo con \`bash scripts/configurar-azure.sh --solo-credenciales\`"
+            exit 1
+          fi
+          mal=""
+          for nombre in clientId subscriptionId tenantId; do
+            [[ "$(campo "$nombre")" =~ ^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$ ]] || mal="$mal \`$nombre\`"
+          done
+          secreto=$(campo clientSecret)
+          # La clave no puede estar vacia ni tener espacios, llaves o comillas (es señal de que se pego el JSON entero).
+          if [ -z "$secreto" ]; then
+            mal="$mal \`clientSecret\`"
+          else
+            case "$secreto" in
+              *[[:space:]]* | *"{"* | *"}"* | *'"'*) mal="$mal \`clientSecret\`" ;;
+            esac
+          fi
+          if [ -n "$mal" ]; then
+            fila "Credenciales de Azure: formato" "**estos campos no tienen el formato correcto:**$mal (cada uno lleva solo su valor; volve a cargarlas con \`bash scripts/configurar-azure.sh --solo-credenciales\`). No se intento el login."
+            exit 1
+          fi
+          fila "Credenciales de Azure: formato" "los tres identificadores son GUID y hay clave"
+
       # azure/login v3.1.0
       - name: Login en Azure
         id: login
-        if: env.TIENE_CREDENCIALES == 'true'
+        if: env.TIENE_CREDENCIALES == 'true' && steps.credenciales.outcome == 'success'
         continue-on-error: true
         uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906
         with:
@@ -162,6 +198,18 @@ jobs:
           comprobar "Grupo de recursos \`$GRUPO_RECURSOS\`" jsonc group show --name "$GRUPO_RECURSOS" --query "{region:location, estado:properties.provisioningState}" || fallas=$((fallas + 1))
           comprobar "Proveedor Microsoft.ContainerInstance (ACI)" az provider show --namespace Microsoft.ContainerInstance --query registrationState --output tsv --only-show-errors \
             || fila "Proveedor Microsoft.ContainerInstance (ACI)" "no se pudo leer (el service principal puede no tener permiso; si no esta Registered, ACI no funciona)"
+
+          # La region donde se crea el contenedor: la de ACI_REGION o, si no esta, la del grupo de recursos. La politica de la
+          # suscripcion puede no permitirla (RequestDisallowedByAzure); estas filas dicen donde ACI funciona y que permite la politica.
+          fila "Region de ACI (\`ACI_REGION\`)" "${ACI_REGION:-sin definir: se usa la region del grupo de recursos}"
+          comprobar "Regiones donde ACI crea contenedores" az provider show --namespace Microsoft.ContainerInstance \
+            --query "resourceTypes[?resourceType=='containerGroups'].locations | [0]" --output tsv --only-show-errors \
+            || fila "Regiones donde ACI crea contenedores" "no se pudo leer"
+          if permitidas=$(az policy assignment list --query "[?parameters.listOfAllowedLocations].parameters.listOfAllowedLocations.value | [0]" --output tsv --only-show-errors 2>&1) && [ -n "$permitidas" ]; then
+            fila "Regiones que permite la politica de la suscripcion" "${permitidas//$'\n'/ ; }"
+          else
+            fila "Regiones que permite la politica de la suscripcion" "no se pudieron leer (sin permiso, o la politica no usa esa lista)"
+          fi
 
           if az container show --name "$CONTENEDOR" --resource-group "$GRUPO_RECURSOS" --only-show-errors > /dev/null 2>&1; then
             comprobar "Contenedor \`$CONTENEDOR\`" jsonc container show --name "$CONTENEDOR" --resource-group "$GRUPO_RECURSOS" \
@@ -214,13 +262,14 @@ jobs:
         env:
           FALTA: ${{ steps.datos.outputs.falta }}
           BASE: ${{ steps.base.outcome }}
+          CREDENCIALES: ${{ steps.credenciales.outcome }}
           LOGIN: ${{ steps.login.outcome }}
           AZURE: ${{ steps.azure.outcome }}
           REGISTRO_CLAVE: ${{ steps.registro.outcome }}
         run: |
           bien=1
           [ "$FALTA" = "0" ] || bien=0
-          for resultado in "$BASE" "$LOGIN" "$AZURE" "$REGISTRO_CLAVE"; do
+          for resultado in "$BASE" "$CREDENCIALES" "$LOGIN" "$AZURE" "$REGISTRO_CLAVE"; do
             [ "$resultado" != "failure" ] || bien=0
           done
           {
