@@ -65,6 +65,7 @@ func nuevoEntorno(t *testing.T) entorno {
 		RegistrarDefecto:           app.NuevoRegistrarDefecto(base),
 		CambiarEstadoDefecto:       app.NuevoCambiarEstadoDefecto(base),
 	}
+	casos = casos.ConReportes()
 	manejador := httpadapter.NuevoManejadorDeErrores(httpadapter.CatalogoDeErrores(), slog.New(slog.NewTextHandler(io.Discard, nil)))
 	router := httpadapter.NuevoRouter(verificadorFalso{}, time.Second, http.FS(fstest.MapFS{}),
 		httpadapter.ConPantallas(httpadapter.NuevasPantallas(casos, manejador)))
