@@ -212,3 +212,36 @@ func (m *metricasEnMemoria) DefectosDelSprint(sprint int) (steps.ResumenDeDefect
 	}
 	return steps.ResumenDeDefectos{Detectados: resumen.Detectados, Resueltos: resumen.Resueltos}, nil
 }
+
+// ConsultarDashboard usa el caso de uso real de US-030 sobre la base del escenario, con el reloj fijo. El proyecto que el escenario no
+// creo se manda con un ID que no existe, asi el rechazo lo produce la aplicacion.
+func (m *metricasEnMemoria) ConsultarDashboard(proyecto string) (steps.DashboardDelProyecto, error) {
+	proyectoID, ok := m.escenario.proyectos[proyecto]
+	if !ok {
+		proyectoID = idDeProyectoInexistente
+	}
+	d, err := app.NuevoConsultarDashboard(m.escenario.base, ahoraEnEscenarios).Ejecutar(context.Background(), proyectoID)
+	if err != nil {
+		return steps.DashboardDelProyecto{}, err
+	}
+
+	resultado := steps.DashboardDelProyecto{Velocidad: d.Velocidad.Velocidad, Defectos: d.Defectos.Total}
+	if r := d.Referencia; r != nil {
+		porcentaje, calculable := r.Horas.DesviacionPorcentual()
+		resultado.Referencia = r.Sprint.Nombre()
+		resultado.PuntosPlanificados, resultado.PuntosCompletados = r.Planificados, r.Completados
+		resultado.PorcentajeHistorias = r.PorcentajeHistorias
+		resultado.Horas = horasDelResumen(r.Horas, porcentaje, calculable)
+	}
+	for _, c := range d.Velocidad.Cerrados {
+		resultado.Cerrados = append(resultado.Cerrados, steps.SprintCerradoDelDashboard{
+			Nombre: c.Sprint.Nombre(), Detectados: c.Defectos.Detectados, Resueltos: c.Defectos.Resueltos,
+		})
+	}
+	for _, b := range d.Graficos.StoryPoints {
+		resultado.Grupos = append(resultado.Grupos, steps.GrupoDeBarras{
+			Sprint: fmt.Sprintf("Sprint %d", b.Sprint), AlturaPlanificados: b.AlturaPlanificados, AlturaCompletados: b.AlturaCompletados,
+		})
+	}
+	return resultado, nil
+}

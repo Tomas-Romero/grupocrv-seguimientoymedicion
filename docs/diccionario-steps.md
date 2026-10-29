@@ -88,7 +88,7 @@ definidas en `features/steps/mundo.go`. Cada área se conecta en
 | Proyectos | `Proyectos` | US-001, US-002, US-003, US-004 | `features/steps/proyectos.go` |
 | Backlog | `Backlog` | US-005, US-006, US-013 | `features/steps/backlog.go` |
 | Sprints | `Sprints` | US-008, US-009, US-010, US-011, US-012 | `features/steps/sprints.go` |
-| Métricas | `Metricas` | US-025, US-026, US-027, US-028, US-029 | `features/steps/metricas.go` |
+| Métricas | `Metricas` | US-025, US-026, US-027, US-028, US-029, US-030 | `features/steps/metricas.go` |
 | Planning Poker | `PlanningPoker` | US-014 a US-018 | `features/steps/planningpoker.go` |
 | Defectos | `Defectos` | US-022, US-023, US-024 | `features/steps/defectos.go` |
 
@@ -215,6 +215,7 @@ inexistente (CA-005-8, CA-008-10); con esa frase el escenario no lleva
 | `Cuando se consulta el estado del proyecto "Demo"` | `^se consulta el estado del proyecto "([^"]*)"$` |
 | `Cuando se compara el esfuerzo del proyecto "Demo"` | `^se compara el esfuerzo del proyecto "([^"]*)"$` |
 | `Cuando se consultan los defectos del sprint 3` | `^se consultan los defectos del sprint (-?\d+)$` |
+| `Cuando se consulta el dashboard del proyecto "Demo"` | `^se consulta el dashboard del proyecto "([^"]*)"$` |
 | `Cuando se inicia una sesión de Planning Poker sobre la historia "Crear proyecto"` | `^se inicia una sesión de Planning Poker sobre la historia "([^"]*)"$` |
 | `Cuando el integrante "Ana" vota 5 en la sesión de la historia "Crear proyecto"` | `^el integrante "([^"]*)" vota (-?\d+) en la sesión de la historia "([^"]*)"$` |
 | `Cuando se consultan las horas del sprint "Sprint 1"` | `^se consultan las horas del sprint "([^"]*)"$` |
@@ -402,6 +403,14 @@ cuenta caracteres y no bytes.
 | `Y las horas sin comparar son 4` | `^las horas sin comparar son (\d+(?:[.,]\d+)?)$` |
 | `Y los defectos detectados son 3` | `^los defectos detectados son (\d+)$` |
 | `Y los defectos resueltos son 2` | `^los defectos resueltos son (\d+)$` |
+| `Y la tarjeta del sprint es el "Sprint 1"` | `^la tarjeta del sprint es el "([^"]*)"$` |
+| `Y la velocidad del dashboard es 6,5` | `^la velocidad del dashboard es (\d+(?:[.,]\d+)?)$` |
+| `Y el dashboard no tiene sprint de referencia` | `^el dashboard no tiene sprint de referencia$` |
+| `Y el gráfico de Story Points tiene 2 grupos de barras` | `^el gráfico de Story Points tiene (\d+) grupos? de barras$` |
+| `Y la barra de "completados" del "Sprint 1" mide 80` | `^la barra de "(planificados\|completados)" del "([^"]*)" mide (\d+(?:[.,]\d+)?)$` |
+| `Y el dashboard lista 2 sprints cerrados` | `^el dashboard lista (\d+) sprints? cerrados?$` |
+| `Y el sprint cerrado "Sprint 1" figura con 1 defecto detectado y 0 resueltos` | `^el sprint cerrado "([^"]*)" figura con (\d+) defectos? detectados? y (\d+) resueltos?$` |
+| `Y el dashboard cuenta 3 defectos` | `^el dashboard cuenta (\d+) defectos?$` |
 | `Y las horas estimadas son 7,5` | `^las horas estimadas son (-?\d+(?:[.,]\d+)?)$` |
 | `Y las horas reales son 8` | `^las horas reales son (-?\d+(?:[.,]\d+)?)$` |
 | `Y la desviación de horas es -3` | `^la desviación de horas es (-?\d+(?:[.,]\d+)?)$` |
@@ -501,6 +510,18 @@ que terminó. El avance cuenta **todas** las historias del proyecto, estén o no
 en la frase porque es una de las tres cantidades de la tarjeta, pero ninguna operación de la aplicación
 pasa una historia a `en_progreso` todavía: los escenarios siempre lo verifican en 0 y el caso de uso lo prueba
 con un repositorio simulado.
+
+**Dashboard del proyecto (US-030):** `se consulta el dashboard del proyecto "P"` usa el caso de uso real
+sobre la base en memoria, con el reloj fijo de los escenarios. El contexto se arma con las frases de sprints,
+historias, esfuerzo y defectos que ya existen (US-008 a US-011, US-019 y US-022): no hay frases de contexto
+nuevas. Después de consultar, `los story points planificados son N`, `los story points completados son N`,
+`el porcentaje de historias completadas es N`, `las horas estimadas son N`, `las horas reales son N` y
+`la desviación de horas es N` se refieren a la **tarjeta del sprint de referencia**: el abierto o, si no hay,
+el cerrado de número más alto (`la tarjeta del sprint es el "Sprint N"` dice cuál es). Las horas de la tarjeta
+son las de los registros con fecha dentro del sprint. `el dashboard lista N sprints cerrados` cuenta las filas
+de la tabla (cero sin sprints cerrados). `la barra de "planificados"` o `"completados"` `del "Sprint N"` mide la
+altura de 0 a 100 sobre la barra más alta del gráfico, no píxeles. `el dashboard cuenta N defectos` incluye los
+descartados; `el sprint cerrado "S" figura con N defectos detectados y M resueltos` no los cuenta.
 
 ## Un escenario completo, de ejemplo
 
