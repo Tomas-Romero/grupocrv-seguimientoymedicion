@@ -90,7 +90,7 @@ definidas en `features/steps/mundo.go`. Cada área se conecta en
 | Sprints | `Sprints` | US-008, US-009, US-010, US-011, US-012 | `features/steps/sprints.go` |
 | Métricas | `Metricas` | US-025, US-026, US-027, US-028, US-029 | `features/steps/metricas.go` |
 | Planning Poker | `PlanningPoker` | US-014 a US-018 | `features/steps/planningpoker.go` |
-| Defectos | `Defectos` | US-022, US-023 | `features/steps/defectos.go` |
+| Defectos | `Defectos` | US-022, US-023, US-024 | `features/steps/defectos.go` |
 
 Un escenario solo necesita las áreas que usa. Un `.feature` de proyectos no
 exige que existan backlog, sprints ni métricas, así que el CI no se pone rojo por
@@ -222,6 +222,10 @@ inexistente (CA-005-8, CA-008-10); con esa frase el escenario no lleva
 | `Cuando se registra un defecto de severidad "alta" con una descripción de 2001 caracteres en la historia "Crear proyecto" detectado en el sprint "Sprint 1"` | `^se registra un defecto de severidad "([^"]*)" con una descripción de (\d+) caracteres en la historia "([^"]*)" detectado en el sprint "([^"]*)"$` |
 | `Cuando se cambia el estado del defecto de la historia "Crear proyecto" a "en_correccion"` | `^se cambia el estado del defecto de la historia "([^"]*)" a "([^"]*)"$` |
 | `Cuando se cambia el estado del defecto de la historia "Crear proyecto" a "resuelto" con el sprint de resolución "Sprint 2"` | `^se cambia el estado del defecto de la historia "([^"]*)" a "([^"]*)" con el sprint de resolución "([^"]*)"$` |
+| `Cuando se listan los defectos` | `^se listan los defectos$` |
+| `Cuando se listan los defectos del sprint "Sprint 1"` | `^se listan los defectos del sprint "([^"]*)"$` |
+| `Cuando se listan los defectos de severidad "alta"` | `^se listan los defectos de severidad "([^"]*)"$` |
+| `Cuando se listan los defectos del sprint "Sprint 1" y de severidad "alta"` | `^se listan los defectos del sprint "([^"]*)" y de severidad "([^"]*)"$` |
 | `Cuando el integrante "Ana" revela los votos de la sesión de la historia "Crear proyecto"` | `^el integrante "([^"]*)" revela los votos de la sesión de la historia "([^"]*)"$` |
 | `Cuando el integrante "Ana" abre una nueva ronda en la sesión de la historia "Crear proyecto"` | `^el integrante "([^"]*)" abre una nueva ronda en la sesión de la historia "([^"]*)"$` |
 | `Cuando el integrante "Ana" registra la estimación acordada de 5 en la sesión de la historia "Crear proyecto"` | `^el integrante "([^"]*)" registra la estimación acordada de (-?\d+) en la sesión de la historia "([^"]*)"$` |
@@ -291,6 +295,18 @@ frases: lo prueban el caso de uso y el repositorio, igual que el cambio simultá
 "Sprint N"` dejan el defecto en ese estado con el mismo caso de uso (un escenario tiene un solo `Cuando`);
 `en estado` no pasa a `resuelto` (no lleva sprint) y pedir el estado actual se rechaza, como en el
 dominio. `fue resuelto en el sprint "Sprint N"` lee el sprint de resolución del último defecto.
+
+**Listar los defectos con filtros (US-024):** `se listan los defectos` lista los del proyecto actual con el
+caso de uso real, y sus tres variantes suman el filtro por sprint de detección, por severidad o por los dos
+(en ese orden: `del sprint "S"` y después `de severidad "V"`). El sprint se nombra como lo conoce el
+escenario (`Sprint N`) y se busca dentro del proyecto actual: uno que no esté ahí se manda con un ID que no
+existe y lo rechaza la aplicación, no los steps. Un sprint "de otro proyecto" y un proyecto inexistente no se
+pueden escribir con estas frases: los prueban el caso de uso y la pantalla. La severidad se manda tal cual,
+así que `urgente`, `Alta` o `crítica` son la forma de escribir los escenarios de error; sin la variante
+`de severidad` no se filtra por ella. Los rechazos se afirman con `la operación se rechaza` y
+`el mensaje de error indica "..."`. Los Entonces de lista (`tiene N defectos`, `incluye ...` y `no incluye ...`)
+leen la última lista que devolvió el caso de uso, y cada defecto se nombra por su historia, así que los
+escenarios arman un defecto por historia; después de un listado rechazado no hay lista y fallan.
 
 **Consultar el esfuerzo (US-020):** `se consulta el esfuerzo del proyecto "P"` acepta tres
 filtros opcionales que van en este orden: `de la historia "H"`, `del integrante "I"` y
@@ -406,6 +422,9 @@ cuenta caracteres y no bytes.
 | `Y el defecto de la historia "Crear proyecto" fue detectado en el sprint "Sprint 1"` | `^el defecto de la historia "([^"]*)" fue detectado en el sprint "([^"]*)"$` |
 | `Y el defecto de la historia "Crear proyecto" está sin resolver` | `^el defecto de la historia "([^"]*)" está sin resolver$` |
 | `Y el defecto de la historia "Crear proyecto" fue resuelto en el sprint "Sprint 2"` | `^el defecto de la historia "([^"]*)" fue resuelto en el sprint "([^"]*)"$` |
+| `Y la lista de defectos tiene 2 defectos` | `^la lista de defectos tiene (\d+) defectos?$` |
+| `Y la lista de defectos incluye el defecto de la historia "Crear proyecto"` | `^la lista de defectos incluye el defecto de la historia "([^"]*)"$` |
+| `Y la lista de defectos no incluye el defecto de la historia "Crear proyecto"` | `^la lista de defectos no incluye el defecto de la historia "([^"]*)"$` |
 | `Y la sesión de la historia "Crear proyecto" está "votando" en la ronda 1` | `^la sesión de la historia "([^"]*)" está "([^"]*)" en la ronda (\d+)$` |
 | `Y los participantes de la sesión de la historia "Crear proyecto" son:` + tabla de nombres | `^los participantes de la sesión de la historia "([^"]*)" son:$` |
 | `Y en la sesión de la historia "Crear proyecto" votaron:` + tabla de nombres | `^en la sesión de la historia "([^"]*)" votaron:$` |
