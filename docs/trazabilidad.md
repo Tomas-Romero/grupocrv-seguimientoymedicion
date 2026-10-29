@@ -4,7 +4,7 @@
 > No se edita a mano: se regenera. Enlaza Historia → Spec → Criterios de aceptación →
 > Escenarios BDD → Tests → Código (la guía de la cátedra la pide como evidencia).
 
-Total: 39 especificaciones, 267 criterios de aceptación, 184 con escenario BDD y 217 con test.
+Total: 39 especificaciones, 267 criterios de aceptación, 190 con escenario BDD y 223 con test.
 
 Un criterio sin escenario BDD o sin test se muestra con `—`: o falta la evidencia, o el criterio
 se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no llevan `.feature`).
@@ -16,7 +16,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | US-001 | [specs/US-001-crear-proyecto.md](../specs/US-001-crear-proyecto.md) | borrador | 5 | 5 | 5 | `internal/domain/proyecto/`, `internal/app/`, `migraciones/` |
 | US-002 | [specs/US-002-modificar-proyecto.md](../specs/US-002-modificar-proyecto.md) | borrador | 5 | 5 | 5 | `internal/domain/proyecto/`, `internal/app/` |
 | US-003 | [specs/US-003-registrar-integrantes.md](../specs/US-003-registrar-integrantes.md) | borrador | 9 | 9 | 9 | `internal/domain/integrante/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`, `migraciones/00005_integrantes_id_por_defecto.sql` |
-| US-004 | [specs/US-004-estado-proyecto.md](../specs/US-004-estado-proyecto.md) | borrador | 6 | 0 | 0 | `internal/domain/proyecto/`, `internal/app/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
+| US-004 | [specs/US-004-estado-proyecto.md](../specs/US-004-estado-proyecto.md) | borrador | 6 | 6 | 6 | `internal/domain/proyecto/`, `internal/app/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
 | US-005 | [specs/US-005-crear-item-backlog.md](../specs/US-005-crear-item-backlog.md) | borrador | 8 | 8 | 8 | `internal/domain/backlog/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/` |
 | US-006 | [specs/US-006-editar-item-backlog.md](../specs/US-006-editar-item-backlog.md) | borrador | 7 | 5 | 6 | `internal/domain/backlog/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/` |
 | US-008 | [specs/US-008-crear-sprint.md](../specs/US-008-crear-sprint.md) | borrador | 11 | 11 | 11 | `internal/domain/sprint/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/` |
@@ -107,18 +107,18 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 ### US-004 — Consultar el estado general de un proyecto
 
 - **Spec:** [specs/US-004-estado-proyecto.md](../specs/US-004-estado-proyecto.md) · **Issue:** #16
-- **Escenarios BDD:** ninguno
+- **Escenarios BDD:** [features/US-004-estado-proyecto.feature](../features/US-004-estado-proyecto.feature)
 - **Código:** `internal/domain/proyecto/`, `internal/app/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/`
-- **Tests que la citan:** 0
+- **Tests que la citan:** 18
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
-| CA-004-1 | normal | — | — |
-| CA-004-2 | alternativo | — | — |
-| CA-004-3 | alternativo | — | — |
-| CA-004-4 | límite | — | — |
-| CA-004-5 | límite | — | — |
-| CA-004-6 | error | — | — |
+| CA-004-1 | normal | Un proyecto en marcha está en curso y dice cuántos días faltan para el fin | TestPantallasEstado_Tarjeta, TestConsultarEstado_EstadoDeLasFechas, TestEstadoEn |
+| CA-004-2 | alternativo | Un proyecto que todavía no empezó está no iniciado y dice en cuántos días empieza, Un proyecto que ya terminó está finalizado y dice hace cuántos días | TestPantallasEstado_Textos, TestConsultarEstado_EstadoDeLasFechas, TestEstadoEn |
+| CA-004-3 | alternativo | El avance cuenta las historias por estado, los story points y el porcentaje, y muestra el sprint abierto | TestPantallasEstado_Tarjeta, TestConsultarEstado_Avance, TestConsultarEstado_PorcentajeConUnDecimal |
+| CA-004-4 | límite | El día de inicio ya está en curso, El día de fin está en curso y no quedan días, Un proyecto de un solo día está en curso ese día, +1 más | TestPantallasEstado_Textos, TestEstadoEn |
+| CA-004-5 | límite | Un proyecto sin historias ni sprints muestra todo en cero y no es un error, Con todos los sprints cerrados no hay sprint abierto | TestPantallasEstado_ProyectoVacio, TestConsultarEstado_ProyectoVacio |
+| CA-004-6 | error | Un proyecto que no existe se rechaza | TestPantallasEstado_ProyectoInexistente, TestConsultarEstado_ProyectoInexistente |
 
 ### US-005 — Crear un ítem de Product Backlog
 
@@ -513,7 +513,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 - **Spec:** [specs/US-028-porcentaje-historias-completadas.md](../specs/US-028-porcentaje-historias-completadas.md) · **Issue:** #34
 - **Escenarios BDD:** [features/US-028-porcentaje-historias-completadas.feature](../features/US-028-porcentaje-historias-completadas.feature)
 - **Código:** `internal/domain/metricas/`
-- **Tests que la citan:** 3
+- **Tests que la citan:** 4
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
@@ -623,7 +623,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 - **Spec:** [specs/T-011-pantallas-proyectos-backlog.md](../specs/T-011-pantallas-proyectos-backlog.md) · **Issue:** #79 (tarea) · #140 (spec)
 - **Escenarios BDD:** ninguno
 - **Código:** `internal/app/`, `internal/adapters/memoria/`, `internal/adapters/postgres/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/`
-- **Tests que la citan:** 26
+- **Tests que la citan:** 27
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
