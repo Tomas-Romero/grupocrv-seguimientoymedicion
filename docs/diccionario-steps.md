@@ -85,7 +85,7 @@ definidas en `features/steps/mundo.go`. Cada área se conecta en
 
 | Área | Interfaz | Historias | Steps en |
 |---|---|---|---|
-| Proyectos | `Proyectos` | US-001, US-002, US-003 | `features/steps/proyectos.go` |
+| Proyectos | `Proyectos` | US-001, US-002, US-003, US-004 | `features/steps/proyectos.go` |
 | Backlog | `Backlog` | US-005, US-006, US-013 | `features/steps/backlog.go` |
 | Sprints | `Sprints` | US-008, US-009, US-010, US-011, US-012 | `features/steps/sprints.go` |
 | Métricas | `Metricas` | US-025, US-026, US-027, US-028, US-029 | `features/steps/metricas.go` |
@@ -212,6 +212,7 @@ inexistente (CA-005-8, CA-008-10); con esa frase el escenario no lleva
 | `Cuando se consultan los story points completados del sprint "Sprint 1"` | `^se consultan los story points completados del sprint "([^"]*)"$` |
 | `Cuando se consulta la velocidad del equipo` | `^se consulta la velocidad del equipo$` |
 | `Cuando se consulta el porcentaje de historias completadas del sprint "Sprint 1"` | `^se consulta el porcentaje de historias completadas del sprint "([^"]*)"$` |
+| `Cuando se consulta el estado del proyecto "Demo"` | `^se consulta el estado del proyecto "([^"]*)"$` |
 | `Cuando se compara el esfuerzo del proyecto "Demo"` | `^se compara el esfuerzo del proyecto "([^"]*)"$` |
 | `Cuando se consultan los defectos del sprint 3` | `^se consultan los defectos del sprint (-?\d+)$` |
 | `Cuando se inicia una sesión de Planning Poker sobre la historia "Crear proyecto"` | `^se inicia una sesión de Planning Poker sobre la historia "([^"]*)"$` |
@@ -368,6 +369,13 @@ cuenta caracteres y no bytes.
 | `Y los story points completados son 8` | `^los story points completados son (\d+)$` |
 | `Y la velocidad del equipo es 25` | `^la velocidad del equipo es (\d+(?:[.,]\d+)?)$` |
 | `Y el porcentaje de historias completadas es 66,7` | `^el porcentaje de historias completadas es (\d+(?:[.,]\d+)?)$` |
+| `Y el estado del proyecto es "en_curso"` | `^el estado del proyecto es "([^"]*)"$` |
+| `Y los días del estado son 86` | `^los días del estado son (\d+)$` |
+| `Y el proyecto tiene 2 historias pendientes, 0 en progreso y 1 completadas` | `^el proyecto tiene (\d+) historias? pendientes?, (\d+) en progreso y (\d+) completadas?$` |
+| `Y los story points del proyecto son 10 y los completados 5` | `^los story points del proyecto son (\d+) y los completados (\d+)$` |
+| `Y el porcentaje de historias completadas del proyecto es 33,3` | `^el porcentaje de historias completadas del proyecto es (\d+(?:[.,]\d+)?)$` |
+| `Y el sprint abierto del proyecto es "Sprint 1"` | `^el sprint abierto del proyecto es "([^"]*)"$` |
+| `Y el proyecto no tiene sprint abierto` | `^el proyecto no tiene sprint abierto$` |
 | `Y la comparación tiene 2 historias` | `^la comparación tiene (\d+) historias?$` |
 | `Y la primera historia de la comparación es "Crear proyecto"` | `^la primera historia de la comparación es "([^"]*)"$` |
 | `Y la historia "Crear proyecto" tiene 7,5 horas estimadas y 8 reales en la comparación` | `^la historia "([^"]*)" tiene (-?\d+(?:[.,]\d+)?) horas estimadas y (-?\d+(?:[.,]\d+)?) reales en la comparación$` |
@@ -465,6 +473,15 @@ escriben como los define el dominio, en minúscula: `pendiente`, `en_progreso`,
 `completado`.
 
 ---
+
+**Estado general del proyecto (US-004):** `se consulta el estado del proyecto "P"` usa el caso de uso
+real sobre la base en memoria, con el reloj fijo de los escenarios (**hoy es el 2026-10-06**). Los estados se
+escriben como los define el dominio: `no_iniciado`, `en_curso` y `finalizado`. `los días del estado son N` es,
+según el estado, lo que falta para empezar, lo que falta para terminar (0 el último día) o lo que pasó desde
+que terminó. El avance cuenta **todas** las historias del proyecto, estén o no en un sprint. `en progreso` está
+en la frase porque es una de las tres cantidades de la tarjeta, pero ninguna operación de la aplicación
+pasa una historia a `en_progreso` todavía: los escenarios siempre lo verifican en 0 y el caso de uso lo prueba
+con un repositorio simulado.
 
 ## Un escenario completo, de ejemplo
 
