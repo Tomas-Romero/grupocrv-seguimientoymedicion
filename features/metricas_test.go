@@ -7,6 +7,7 @@ import (
 
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/features/steps"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/app"
+	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/backlog"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/metricas"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/sprint"
 )
@@ -250,8 +251,10 @@ func (m *metricasEnMemoria) ConsultarDashboard(proyecto string) (steps.Dashboard
 func (m *metricasEnMemoria) fuentesDelReporteDelProyecto() app.FuentesDelReporteDelProyecto {
 	b := m.escenario.base
 	return app.FuentesDelReporteDelProyecto{
-		Proyecto:    app.NuevoConsultarProyecto(b).Ejecutar,
-		Backlog:     app.NuevoListarBacklog(b).Ejecutar,
+		Proyecto: app.NuevoConsultarProyecto(b).Ejecutar,
+		Backlog: func(ctx context.Context, proyectoID string) ([]backlog.ItemBacklog, error) {
+			return app.NuevoListarBacklog(b).Ejecutar(ctx, proyectoID, app.FiltroBacklog{})
+		},
 		Sprints:     app.NuevoListarSprints(b).Ejecutar,
 		Anteriores:  app.NuevoConsultarSprintsAnteriores(b).Ejecutar,
 		Esfuerzo:    app.NuevoConsultarEsfuerzo(b).Ejecutar,

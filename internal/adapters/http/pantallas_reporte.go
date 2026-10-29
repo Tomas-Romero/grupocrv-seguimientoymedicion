@@ -1,10 +1,12 @@
 package httpadapter
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/app"
+	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/backlog"
 	"github.com/Tomas-Romero/grupocrv-seguimientoymedicion/internal/domain/sprint"
 	plantillas "github.com/Tomas-Romero/grupocrv-seguimientoymedicion/web/templates"
 )
@@ -21,8 +23,10 @@ func rutaDelReporteDelSprint(proyectoID, sprintID string) string {
 // ConReportes arma los casos de uso de los dos reportes con los que la aplicacion ya tiene: no leen nada por su cuenta (RN-033-1).
 func (c CasosDeUso) ConReportes() CasosDeUso {
 	c.ReporteDelProyecto = app.NuevoConsultarReporteDelProyecto(app.FuentesDelReporteDelProyecto{
-		Proyecto:    c.ConsultarProyecto.Ejecutar,
-		Backlog:     c.ListarBacklog.Ejecutar,
+		Proyecto: c.ConsultarProyecto.Ejecutar,
+		Backlog: func(ctx context.Context, proyectoID string) ([]backlog.ItemBacklog, error) {
+			return c.ListarBacklog.Ejecutar(ctx, proyectoID, app.FiltroBacklog{}) // el reporte lista el backlog completo (US-007)
+		},
 		Sprints:     c.ListarSprints.Ejecutar,
 		Anteriores:  c.ConsultarSprintsAnteriores.Ejecutar,
 		Esfuerzo:    c.ConsultarEsfuerzo.Ejecutar,
