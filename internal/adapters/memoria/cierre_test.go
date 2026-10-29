@@ -107,6 +107,33 @@ func TestBase_GuardarCierre(t *testing.T) {
 	}
 }
 
+// US-011 / CA-011-3: el sprint cerrado conserva lo planificado y lo completado. Despues del
+// cierre, los Story Points planificados incluyen la historia no completada (5 + 5), los
+// completados son solo los de la completada (5) y la velocidad sale de lo completado.
+func TestBase_GuardarCierre_ConservaLoPlanificado(t *testing.T) {
+	ctx := context.Background()
+	b, _ := sprintConDosHistorias(t)
+	if _, err := b.base.GuardarCierre(ctx, b.sprint); err != nil {
+		t.Fatalf("GuardarCierre: %v", err)
+	}
+
+	anteriores, err := app.NuevoConsultarSprintsAnteriores(b.base).Ejecutar(ctx, b.proyecto)
+	if err != nil {
+		t.Fatalf("ConsultarSprintsAnteriores: %v", err)
+	}
+
+	if len(anteriores.Sprints) != 1 {
+		t.Fatalf("sprints anteriores = %+v, se esperaba solo el cerrado", anteriores.Sprints)
+	}
+	s := anteriores.Sprints[0]
+	if s.Planificados != 10 || s.Completados != 5 || s.HistoriasCompletadas != 1 || s.HistoriasNoCompletadas != 1 {
+		t.Errorf("sprint cerrado = %+v, se esperaban 10 planificados, 5 completados y una historia de cada", s)
+	}
+	if anteriores.Velocidad != 5 {
+		t.Errorf("velocidad = %v, se esperaba 5", anteriores.Velocidad)
+	}
+}
+
 // US-011 / CA-011-4, RN-011-4: un sprint sin historias se cierra.
 func TestBase_GuardarCierre_SinHistorias(t *testing.T) {
 	ctx := context.Background()
