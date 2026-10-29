@@ -47,8 +47,20 @@ type FormDefecto struct {
 	SinSprints   bool
 }
 
-// VistaDefectos es la lista de defectos de un proyecto con el formulario para registrar uno.
+// FiltrosDefectos es el formulario GET con el que se filtra la lista (US-024, RN-024-11): cada lista
+// empieza con la opcion para no filtrar («Todos» o «Todas») y deja elegido lo que se pidio. Activo dice
+// que se pidio algun filtro, para que una lista vacia diga que ningun defecto lo cumple y no que el
+// proyecto no tiene defectos.
+type FiltrosDefectos struct {
+	Accion      string
+	Sprints     []Opcion
+	Severidades []Opcion
+	Activo      bool
+}
+
+// VistaDefectos es la lista de defectos de un proyecto con los filtros y el formulario para registrar uno.
 type VistaDefectos struct {
 	Defectos []FilaDefecto
+	Filtros  FiltrosDefectos
 	Alta     FormDefecto
 }

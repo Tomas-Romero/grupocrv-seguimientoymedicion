@@ -1,11 +1,34 @@
 package plantillas
 
-// ListaDeDefectos es la pantalla /proyectos/{id}/defectos: la tabla de defectos del mas reciente
-// al mas antiguo y el formulario para registrar uno.
+// ListaDeDefectos es la pantalla /proyectos/{id}/defectos: los filtros, la tabla de defectos del mas
+// reciente al mas antiguo y el formulario para registrar uno.
 templ ListaDeDefectos(v VistaDefectos) {
 	<h1 class={ claseTitulo }>Defectos</h1>
+	<form method="get" action={ templ.URL(v.Filtros.Accion) } class="mt-4 flex flex-wrap items-end gap-4">
+		<div>
+			<label for="filtro-sprint" class={ claseEtiqueta }>Sprint de detección</label>
+			<select id="filtro-sprint" name="sprint" class={ claseCampo }>
+				for _, o := range v.Filtros.Sprints {
+					<option value={ o.Valor } selected?={ o.Elegida }>{ o.Texto }</option>
+				}
+			</select>
+		</div>
+		<div>
+			<label for="filtro-severidad" class={ claseEtiqueta }>Severidad</label>
+			<select id="filtro-severidad" name="severidad" class={ claseCampo }>
+				for _, o := range v.Filtros.Severidades {
+					<option value={ o.Valor } selected?={ o.Elegida }>{ o.Texto }</option>
+				}
+			</select>
+		</div>
+		<button type="submit" class={ claseBoton }>Filtrar</button>
+	</form>
 	if len(v.Defectos) == 0 {
-		<p class="mt-4 text-slate-700">Todavía no hay defectos</p>
+		if v.Filtros.Activo {
+			<p class="mt-4 text-slate-700">Ningún defecto cumple los filtros</p>
+		} else {
+			<p class="mt-4 text-slate-700">Todavía no hay defectos</p>
+		}
 	} else {
 		<table class="mt-4 w-full border-collapse text-left text-sm">
 			<caption class="sr-only">Defectos del proyecto, del más reciente al más antiguo</caption>
