@@ -1,7 +1,7 @@
 # language: es
 # Usa SOLO frases de docs/diccionario-steps.md. Despues de "Dado" no va "que".
-# Las frases `se lista el backlog ...` y `la lista del backlog ...` son nuevas (spec US-007, seccion 5): se
-# aprueban y se suman al diccionario en el PR de implementacion.
+# Las frases `se lista el backlog ...` y `la lista del backlog ...` son nuevas (spec US-007, seccion 5): estan en
+# el diccionario y se aprueban en este PR.
 # Una historia `completada` se arma con las frases de US-009 y US-010 (historia estimada y con criterios,
 # sprint, asignacion y marcado). Ninguna operacion deja una historia en `en_progreso` (US-004, hueco 3), asi que
 # ese estado solo se prueba como filtro que no devuelve nada; con historias lo cubren los tests del caso de uso.
