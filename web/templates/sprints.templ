@@ -112,7 +112,10 @@ templ SprintsAnteriores(v VistaSprintsAnteriores) {
 templ DetalleDeSprint(v VistaSprint) {
 	<div class="flex flex-wrap items-center justify-between gap-3">
 		<h1 class={ claseTitulo }>{ v.Nombre }</h1>
-		<a href={ templ.URL(v.Volver) } class={ claseEnlace }>Ver todos los sprints</a>
+		<span class="flex gap-4">
+			<a href={ templ.URL(v.Reporte) } class={ claseEnlace }>Reporte</a>
+			<a href={ templ.URL(v.Volver) } class={ claseEnlace }>Ver todos los sprints</a>
+		</span>
 	</div>
 	<dl class="mt-4 grid gap-x-8 gap-y-2 text-sm sm:grid-cols-[auto_1fr]">
 		<dt class="font-semibold text-slate-700">Sprint Goal</dt>

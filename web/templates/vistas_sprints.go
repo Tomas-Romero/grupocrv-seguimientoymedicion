@@ -92,4 +92,6 @@ type VistaSprint struct {
 	AccionAsignar string
 	Disponibles   []Opcion
 	Volver        string
+	// Reporte es el enlace al reporte del sprint (US-033).
+	Reporte string
 }
