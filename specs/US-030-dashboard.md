@@ -44,8 +44,8 @@ El caso de uso `ConsultarDashboard` hace **una lectura de cada tipo** y calcula 
 1. el proyecto (y, con US-004, su estado y su avance);
 2. los sprints del proyecto con sus historias (la lectura de US-012: `ListarSprintsConItems`);
 3. los registros de esfuerzo (la lectura de US-020: `LeerEsfuerzo`);
-4. los defectos del proyecto (`ListarDefectos`, de T-021). Si al implementar esta historia T-021 todavía no
-   está en `main`, la tarjeta de defectos se entrega cuando lo esté y el resto no espera (CA-030-3).
+4. los defectos del proyecto (`ListarDefectosDelProyecto`, de T-021), con el número de sprint de detección y de
+   resolución de cada uno.
 
 ## 3. Salidas esperadas
 
@@ -138,8 +138,8 @@ desviación con signo y porcentaje con un decimal.
 
 - **Sin cálculos nuevos.** No se toca `internal/domain/metricas`: todas las cifras salen de sus funciones.
 - **Casos de uso y puertos.** `ConsultarDashboard` recibe un puerto con las lecturas del punto 2. Postgres y
-  memoria ya implementan las tres primeras; `ListarDefectos` es de T-021 (si no está, se agrega con la misma
-  firma, `ListarDefectos(ctx, proyectoID) ([]defecto.Defecto, error)`, y T-021 la reutiliza). `cmd/server` junta los
+  memoria ya implementan las tres primeras, y también `ListarDefectosDelProyecto(ctx, proyectoID)
+  ([]DefectoListado, error)` de T-021 y `LeerEsfuerzo` de US-020. `cmd/server` junta los
   repositorios como hizo con `lecturaDeProyecto`.
 - **Reloj.** El estado general usa el de US-004 (`time.Now` en `cmd/server`; uno fijo en los tests y escenarios).
 - **Sin migración ni errores nuevos.**
@@ -168,7 +168,10 @@ desviación con signo y porcentaje con un decimal.
   pero sí aparece en la tarjeta de defectos, en su estado.
 - **CL-030-9** (RN-030-7) — Sin defectos: «Sin defectos» y los sprints cerrados con 0 y 0.
 - **CL-030-10** (RN-030-9) — Un sprint con Story Points inconsistentes (completados mayores que planificados):
-  la tarjeta de velocidad informa el error y las demás se muestran.
+  la tarjeta de velocidad informa el error y las demás se muestran. *Ninguna operación de la aplicación lo
+  produce:* los completados salen de las mismas historias que los planificados, y los Story Points no pueden ser
+  negativos. La regla queda en el código (cada tarjeta guarda su error) y la prueba el dominio de `metricas`
+  (US-025 y US-026); no tiene escenario ni test de pantalla.
 - **CL-030-11** (RN-030-10) — Proyecto inexistente o con ID mal formado: `ErrProyectoInexistente`, y la página
   responde 404.
 - **CL-030-12** (RN-030-2) — Una historia no completada en el Sprint 1 y completada después en el Sprint 2: el
@@ -181,9 +184,9 @@ desviación con signo y porcentaje con un decimal.
   de 10 mide 100, la de 8 mide 80 y las de 5 miden 50. La escala es una para todo el gráfico, no una por sprint.
 - **CL-030-16** (RN-030-15) — Un sprint de referencia con 0 % de historias completadas, o con 100 %: la barra
   mide 0 o 100 y el valor está escrito. Un sprint sin historias da 0 % (CL-028-1): la barra mide 0.
-- **CL-030-17** (RN-030-17) — Story Points inconsistentes en un sprint cerrado (CL-030-10): ni la tarjeta de
-  velocidad ni el gráfico de Story Points se dibujan, ambos informan el error; el gráfico de historias
-  completadas y el resto de las tarjetas se muestran.
+- **CL-030-17** (RN-030-17) — Story Points inconsistentes en un sprint cerrado (CL-030-10, que la aplicación no
+  puede producir): ni la tarjeta de velocidad ni el gráfico de Story Points se dibujan, ambos informan el error;
+  el gráfico de historias completadas y el resto de las tarjetas se muestran.
 
 ## 7. Condiciones de error
 
