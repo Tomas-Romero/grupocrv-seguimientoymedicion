@@ -25,7 +25,7 @@ type DefectoListado struct {
 }
 
 // FiltroDefectos son los filtros opcionales de la lista (spec US-024, seccion 3). El valor vacio de
-// cada campo significa "sin filtro". TODO(US-024): esqueleto para el RED, todavia no se aplica.
+// cada campo significa "sin filtro", como en FiltroEsfuerzo (US-020).
 type FiltroDefectos struct {
 	SprintDeteccionID string
 	Severidad         defecto.Severidad
@@ -54,12 +54,17 @@ func NuevoListarDefectos(repo RepositorioListarDefectos) *ListarDefectos {
 }
 
 // Ejecutar devuelve los defectos del proyecto del mas reciente al mas antiguo (RN-T021-4), sin
-// ocultar ninguno por su estado (RN-T021-3). Un proyecto que no existe es ErrProyectoInexistente;
-// uno sin defectos, una lista vacia. No modifica nada.
+// ocultar ninguno por su estado (RN-T021-3), y solo los que cumplen el filtro (US-024). Un proyecto que
+// no existe es ErrProyectoInexistente; uno sin defectos, o un filtro sin coincidencias, una lista vacia
+// (RN-024-5). No modifica nada.
 //
-// Los repositorios devuelven los datos sin ordenar y el orden lo pone el caso de uso, como en
-// T-011 y T-015, para que la memoria y Postgres no puedan ordenar distinto.
-func (c *ListarDefectos) Ejecutar(ctx context.Context, proyectoID string, _ FiltroDefectos) ([]DefectoListado, error) {
+// RN-024-9: los rechazos se hacen en este orden (proyecto, sprint y severidad), se devuelve el primero
+// solo, sin unirlo con los demas, y antes de leer la lista. Es el criterio de RN-022-5: la existencia se
+// verifica antes que los datos.
+//
+// Los repositorios devuelven los datos sin ordenar y el orden y el filtro los pone el caso de uso, como
+// en T-011 y T-015, para que la memoria y Postgres no puedan ordenar ni filtrar distinto.
+func (c *ListarDefectos) Ejecutar(ctx context.Context, proyectoID string, filtro FiltroDefectos) ([]DefectoListado, error) {
 	existe, err := c.repo.ExisteProyecto(ctx, proyectoID)
 	if err != nil {
 		return nil, fmt.Errorf("consultar el proyecto %s: %w", proyectoID, err)
@@ -67,14 +72,46 @@ func (c *ListarDefectos) Ejecutar(ctx context.Context, proyectoID string, _ Filt
 	if !existe {
 		return nil, fmt.Errorf("%w (id %s)", ErrProyectoInexistente, proyectoID)
 	}
+
+	// RN-024-7: el sprint vacio es "sin filtro" y no se verifica. Uno informado tiene que ser del proyecto;
+	// el repositorio responde que no existe (no que fallo) si es de otro, inexistente o esta mal formado.
+	if filtro.SprintDeteccionID != "" {
+		existe, err = c.repo.ExisteSprintEnProyecto(ctx, proyectoID, filtro.SprintDeteccionID)
+		if err != nil {
+			return nil, fmt.Errorf("consultar el sprint %s del proyecto %s: %w", filtro.SprintDeteccionID, proyectoID, err)
+		}
+		if !existe {
+			return nil, fmt.Errorf("%w (id %s)", ErrSprintInexistente, filtro.SprintDeteccionID)
+		}
+	}
+	// RN-024-8: la severidad vacia tambien es "sin filtro" (el dominio la rechazaria, como en el alta), asi
+	// que el caso de uso decide eso antes de llamar a la regla compartida con el alta.
+	if filtro.Severidad != "" {
+		if err = defecto.ValidarSeveridad(filtro.Severidad); err != nil {
+			return nil, err
+		}
+	}
+
 	defectos, err := c.repo.ListarDefectosDelProyecto(ctx, proyectoID)
 	if err != nil {
 		return nil, fmt.Errorf("listar los defectos del proyecto %s: %w", proyectoID, err)
 	}
 
-	// CL-T021-8: dos defectos con la misma fecha de carga salen siempre en el mismo orden, por
-	// ID descendente.
-	listados := append([]DefectoListado{}, defectos...)
+	// RN-024-2 a RN-024-4: se filtra por el sprint de DETECCION (el de resolucion no cuenta) y por la
+	// severidad, combinados con Y. El filtro solo quita defectos: no cambia los que quedan (RN-024-6).
+	listados := make([]DefectoListado, 0, len(defectos))
+	for _, d := range defectos {
+		if filtro.SprintDeteccionID != "" && d.Defecto.SprintDeteccionID != filtro.SprintDeteccionID {
+			continue
+		}
+		if filtro.Severidad != "" && d.Defecto.Severidad != filtro.Severidad {
+			continue
+		}
+		listados = append(listados, d)
+	}
+
+	// CL-T021-8: dos defectos con la misma fecha de carga salen siempre en el mismo orden, por ID
+	// descendente.
 	sort.SliceStable(listados, func(i, j int) bool {
 		if !listados[i].CreadoEn.Equal(listados[j].CreadoEn) {
 			return listados[i].CreadoEn.After(listados[j].CreadoEn)
