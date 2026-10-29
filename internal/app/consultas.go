@@ -140,6 +140,31 @@ type FiltroBacklog struct {
 	Prioridad backlog.Prioridad
 }
 
+// validar comprueba los filtros informados. El valor vacio es "sin filtro" y no se valida (el dominio lo
+// rechazaria, como en el alta). Si los dos son invalidos se devuelven unidos, estado primero (RN-007-7 a
+// RN-007-9).
+func (f FiltroBacklog) validar() error {
+	var invalidos []error
+	if f.Estado != "" {
+		if err := backlog.ValidarEstado(f.Estado); err != nil {
+			invalidos = append(invalidos, err)
+		}
+	}
+	if f.Prioridad != "" {
+		if err := backlog.ValidarPrioridad(f.Prioridad); err != nil {
+			invalidos = append(invalidos, err)
+		}
+	}
+	return errors.Join(invalidos...)
+}
+
+// cumple dice si la historia pasa el filtro: por su estado actual y por su prioridad, combinados con Y
+// (RN-007-2 a RN-007-4). Un campo vacio no filtra.
+func (f FiltroBacklog) cumple(item backlog.ItemBacklog) bool {
+	return (f.Estado == "" || item.Estado == f.Estado) &&
+		(f.Prioridad == "" || item.Prioridad == f.Prioridad)
+}
+
 // Ejecutar devuelve el backlog por prioridad (must, should, could, wont) y, dentro de
 // cada una, por numero (RN-T011-4), dejando solo las historias que cumplen el filtro
 // (RN-007-1 a RN-007-6). Un backlog vacio no es un error; un proyecto que no existe es
@@ -153,21 +178,8 @@ func (c *ListarBacklog) Ejecutar(ctx context.Context, proyectoID string, filtro 
 		return nil, fmt.Errorf("%w (id %s)", ErrProyectoInexistente, proyectoID)
 	}
 
-	// RN-007-7 a RN-007-9: el valor vacio es "sin filtro" y no se valida (el dominio lo rechazaria, como en
-	// el alta). Los dos filtros se validan y, si ambos son invalidos, se devuelven unidos, estado primero,
-	// antes de leer la lista. El proyecto inexistente ya se devolvio solo, arriba.
-	var invalidos []error
-	if filtro.Estado != "" {
-		if err = backlog.ValidarEstado(filtro.Estado); err != nil {
-			invalidos = append(invalidos, err)
-		}
-	}
-	if filtro.Prioridad != "" {
-		if err = backlog.ValidarPrioridad(filtro.Prioridad); err != nil {
-			invalidos = append(invalidos, err)
-		}
-	}
-	if err = errors.Join(invalidos...); err != nil {
+	// RN-007-9: los filtros se validan antes de leer la lista.
+	if err = filtro.validar(); err != nil {
 		return nil, err
 	}
 
@@ -176,17 +188,12 @@ func (c *ListarBacklog) Ejecutar(ctx context.Context, proyectoID string, filtro 
 		return nil, fmt.Errorf("listar el backlog del proyecto %s: %w", proyectoID, err)
 	}
 
-	// RN-007-2 a RN-007-4 y RN-007-6: se filtra por el estado actual de la historia y por su prioridad,
-	// combinados con Y, y el filtro solo quita historias: las que quedan son las mismas y se ordenan igual.
+	// RN-007-6: el filtro solo quita historias: las que quedan son las mismas y se ordenan igual.
 	filtradas := make([]backlog.ItemBacklog, 0, len(items))
 	for _, item := range items {
-		if filtro.Estado != "" && item.Estado != filtro.Estado {
-			continue
+		if filtro.cumple(item) {
+			filtradas = append(filtradas, item)
 		}
-		if filtro.Prioridad != "" && item.Prioridad != filtro.Prioridad {
-			continue
-		}
-		filtradas = append(filtradas, item)
 	}
 	ordenarPorPrioridad(filtradas)
 	return filtradas, nil
