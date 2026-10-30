@@ -20,14 +20,17 @@ templ Layout(p Pagina) {
 			>
 				Saltar al contenido
 			</a>
-			<header class="no-imprimir border-b border-slate-200 bg-white">
-				<div class="mx-auto flex max-w-5xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
-					<span class="text-lg font-semibold text-indigo-700">Software Metrics</span>
+			<header class="no-imprimir border-b border-slate-200 bg-white shadow-sm">
+				<div class="mx-auto flex max-w-5xl flex-wrap items-center gap-x-8 gap-y-2 px-4 py-3">
+					<span class="flex items-center gap-2 text-lg font-semibold tracking-tight text-indigo-700">
+						@marcaDelSitio()
+						Software Metrics
+					</span>
 					@Navegacion(p)
 				</div>
 				@NavegacionProyecto(p)
 			</header>
-			<main id="contenido" tabindex="-1" class="mx-auto max-w-5xl px-4 py-6 focus:outline-none">
+			<main id="contenido" tabindex="-1" class="mx-auto max-w-5xl px-4 py-8 focus:outline-none">
 				<div id="mensajes" class="no-imprimir" role="status" aria-live="polite"></div>
 				{ children... }
 			</main>

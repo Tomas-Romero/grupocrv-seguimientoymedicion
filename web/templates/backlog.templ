@@ -7,52 +7,54 @@ import "strconv"
 templ BacklogDeProyecto(v VistaBacklog) {
 	<h1 class={ claseTitulo }>Backlog</h1>
 	if len(v.Items) == 0 {
-		<p class="mt-4 text-slate-700">El backlog está vacío. Creá la primera historia más abajo.</p>
+		<p class={ "mt-4 " + claseDato }>El backlog está vacío. Creá la primera historia más abajo.</p>
 	} else {
-		<table class="mt-4 w-full border-collapse text-left text-sm">
-			<caption class="sr-only">Historias del Product Backlog, ordenadas por prioridad</caption>
-			<thead>
-				<tr class="border-b border-slate-300">
-					<th scope="col" class="py-2 pr-3 font-semibold">#</th>
-					<th scope="col" class="py-2 pr-3 font-semibold">Título</th>
-					<th scope="col" class="py-2 pr-3 font-semibold">Prioridad</th>
-					<th scope="col" class="py-2 pr-3 font-semibold">Estado</th>
-					<th scope="col" class="py-2 pr-3 font-semibold">Story Points</th>
-					<th scope="col" class="py-2 pr-3 font-semibold">Criterios</th>
-					<th scope="col" class="py-2 font-semibold">Acciones</th>
-				</tr>
-			</thead>
-			<tbody>
-				for _, i := range v.Items {
-					<tr class="border-b border-slate-200 align-top">
-						<td class="py-2 pr-3">{ strconv.Itoa(i.Numero) }</td>
-						<td class="py-2 pr-3">{ i.Titulo }</td>
-						<td class="py-2 pr-3">{ i.Prioridad }</td>
-						<td class="py-2 pr-3">{ i.Estado }</td>
-						<td class="py-2 pr-3">{ i.Puntos }</td>
-						<td class="py-2 pr-3">{ strconv.Itoa(i.Criterios) }</td>
-						<td class="py-2">
-							<form hx-post={ i.Estimar } class="flex items-center gap-2">
-								<select name="estimacion" aria-label={ "Estimación de " + i.Titulo } class="rounded border border-slate-300 bg-white px-2 py-1 text-xs">
-									for _, o := range i.Escala {
-										<option value={ o.Valor } selected?={ o.Elegida }>{ o.Texto }</option>
-									}
-								</select>
-								<button type="submit" aria-label={ "Estimar " + i.Titulo } class={ claseBotonChico }>Estimar</button>
-								<a href={ templ.URL(i.Editar) } aria-label={ "Editar " + i.Titulo } class={ claseEnlace }>Editar</a>
-							</form>
-							if i.SesionAbierta != "" {
-								<a href={ templ.URL(i.SesionAbierta) } aria-label={ "Planning Poker de " + i.Titulo } class={ "mt-2 inline-block " + claseEnlace }>Planning Poker</a>
-							} else if i.IniciarPoker != "" {
-								<button type="button" hx-post={ i.IniciarPoker } aria-label={ "Iniciar Planning Poker de " + i.Titulo } class={ "mt-2 " + claseBotonChico }>Planning Poker</button>
-							}
-						</td>
+		<div class={ claseTablaContenedor }>
+			<table class={ claseTabla }>
+				<caption class="sr-only">Historias del Product Backlog, ordenadas por prioridad</caption>
+				<thead>
+					<tr>
+						<th scope="col" class={ claseEncabezado }>#</th>
+						<th scope="col" class={ claseEncabezado }>Título</th>
+						<th scope="col" class={ claseEncabezado }>Prioridad</th>
+						<th scope="col" class={ claseEncabezado }>Estado</th>
+						<th scope="col" class={ claseEncabezado }>Story Points</th>
+						<th scope="col" class={ claseEncabezado }>Criterios</th>
+						<th scope="col" class={ claseEncabezado }>Acciones</th>
 					</tr>
-				}
-			</tbody>
-		</table>
+				</thead>
+				<tbody>
+					for _, i := range v.Items {
+						<tr class={ claseFila }>
+							<td class={ claseCelda + " text-slate-600" }>{ strconv.Itoa(i.Numero) }</td>
+							<td class={ claseCelda + " font-medium text-slate-900" }>{ i.Titulo }</td>
+							<td class={ claseCelda }>@insignia(i.Prioridad, tonoDePrioridad(i.Prioridad))</td>
+							<td class={ claseCelda }>@insignia(i.Estado, tonoDeEstado(i.Estado))</td>
+							<td class={ claseCelda + " tabular-nums" }>{ i.Puntos }</td>
+							<td class={ claseCelda + " tabular-nums" }>{ strconv.Itoa(i.Criterios) }</td>
+							<td class={ claseCelda }>
+								<form hx-post={ i.Estimar } class="flex items-center gap-2">
+									<select name="estimacion" aria-label={ "Estimación de " + i.Titulo } class="rounded-md border border-slate-500 bg-white px-2 py-1 text-xs">
+										for _, o := range i.Escala {
+											<option value={ o.Valor } selected?={ o.Elegida }>{ o.Texto }</option>
+										}
+									</select>
+									<button type="submit" aria-label={ "Estimar " + i.Titulo } class={ claseBotonChico }>Estimar</button>
+									<a href={ templ.URL(i.Editar) } aria-label={ "Editar " + i.Titulo } class={ claseEnlace }>Editar</a>
+								</form>
+								if i.SesionAbierta != "" {
+									<a href={ templ.URL(i.SesionAbierta) } aria-label={ "Planning Poker de " + i.Titulo } class={ "mt-2 " + claseBotonSecundarioChico }>Planning Poker</a>
+								} else if i.IniciarPoker != "" {
+									<button type="button" hx-post={ i.IniciarPoker } aria-label={ "Iniciar Planning Poker de " + i.Titulo } class={ "mt-2 " + claseBotonSecundarioChico }>Planning Poker</button>
+								}
+							</td>
+						</tr>
+					}
+				</tbody>
+			</table>
+		</div>
 	}
-	<h2 class="mt-10 text-lg font-semibold text-slate-900">{ v.Alta.Encabezado }</h2>
+	<h2 class={ "mt-10 " + claseSubtitulo }>{ v.Alta.Encabezado }</h2>
 	@camposDeHistoria(v.Alta)
 }
 
@@ -63,7 +65,7 @@ templ FormularioDeItem(f FormItem) {
 }
 
 templ camposDeHistoria(f FormItem) {
-	<form hx-post={ f.Accion } class="mt-4 max-w-xl space-y-4">
+	<form hx-post={ f.Accion } class={ "mt-4 max-w-xl space-y-4 " + claseTarjeta }>
 		<div>
 			<label for="titulo" class={ claseEtiqueta }>Título</label>
 			<input type="text" id="titulo" name="titulo" value={ f.Titulo } class={ claseCampo }/>
