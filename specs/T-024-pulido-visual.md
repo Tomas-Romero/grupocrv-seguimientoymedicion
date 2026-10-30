@@ -54,8 +54,8 @@ Lo que se ve, por parte:
 | Encabezado | Marca con identidad (nombre y un ícono simple dibujado en el propio HTML/SVG), menú global y menú del proyecto con la sección activa marcada; en pantalla chica el menú se acomoda en filas o se desplaza horizontalmente, sin romper la página |
 | Contenido | Ancho máximo cómodo para leer, aire entre bloques, título de página con jerarquía clara |
 | Tarjetas | Un componente común (borde suave, relleno y sombra liviana) para los bloques de información |
-| Cifras destacadas | En el Resumen y el Dashboard, las cifras principales van en tarjetas con el **número grande** y un rótulo corto debajo |
-| Insignias | Prioridad (must, should, could, wont), estado (pendiente, en progreso, completado) y severidad: un componente con **color y texto** a la vez |
+| Cifras destacadas | En el Resumen y el Dashboard, cada cifra va en su propio recuadro dentro de una tarjeta, y las que llegan como una línea sola (el estado del proyecto, la velocidad y el total de defectos) se dibujan con **tipografía grande** |
+| Insignias | Prioridad (must, should, could, wont) y estado (pendiente, en progreso, completado) de las historias: un componente con **color y texto** a la vez. La severidad de los defectos se muestra en la pantalla Defectos, que queda fuera del alcance |
 | Botones | Primario y secundario con el mismo estilo en todas las pantallas; las acciones de una fila del backlog agrupadas |
 | Tablas | Encabezado diferenciado, filas con separación y resaltado al pasar el mouse, y desplazamiento horizontal **dentro de su contenedor** si no entran |
 | Gráficos del dashboard | Tamaño acotado (alto máximo) y proporción estable; los valores siguen visibles como texto, no solo como barra |
@@ -70,8 +70,10 @@ No hay reglas de dominio. Son reglas de la vista.
 
 - **RN-T024-1** — **Nada de lo que hace la aplicación cambia.** No se tocan rutas, controladores, casos de
   uso, dominio ni persistencia; ni los textos visibles que existen hoy, ni los `id`, `name`, `data-campo`,
-  `role` y `aria-*` de las plantillas. Se puede **agregar** texto, ícono o estructura, no quitar ni
-  renombrar.
+  `role` y `aria-*` de las plantillas, ni los landmarks `header`, `nav` y `main`, el `aria-current="page"`
+  del ítem activo del menú y el contenedor `#mensajes` (RN-T004-4, RN-T004-9 y RN-T004-10). Se puede
+  **agregar** texto, ícono o estructura, no quitar ni renombrar. El texto de una cifra («Horas reales: 11,5 h»)
+  tampoco se parte en etiqueta y número: los tests lo buscan corrido.
 - **RN-T024-2** — **Estilos compartidos, definidos una vez.** Tarjeta, insignia, botón primario y
   secundario, tabla y alerta son constantes (`clase…` en `vistas.go`) o plantillas reutilizables. Las
   pantallas las usan; no repiten cadenas largas de clases.
@@ -136,7 +138,7 @@ lugar.
 
 | Situación | Resultado |
 |---|---|
-| Un formulario con un dato inválido (por ejemplo, una historia sin título) | El mismo error, con estilo de alerta (RN-T024-4 de contraste), arriba y anunciado; el campo señalado conserva lo escrito |
+| Un formulario con un dato inválido (por ejemplo, una historia sin título) | El mismo error, con estilo de alerta y el contraste de RN-T024-4, arriba y anunciado; el campo señalado conserva lo escrito |
 | Una página que da 404 o 500 | Con el mismo layout y estilo que el resto |
 
 ## 8. Criterios de aceptación
@@ -144,9 +146,9 @@ lugar.
 - **CA-T024-1** (normal) — Las cuatro pantallas (Proyectos, Resumen del proyecto, Backlog y Dashboard) se
   ven con el diseño nuevo, con los mismos datos y los mismos textos que antes, y todos los tests
   existentes pasan sin debilitar ninguna aserción (`make check` en verde).
-- **CA-T024-2** (alternativo) — Tarjeta, insignia (prioridad, estado y severidad), botón primario y
-  secundario, tabla y alerta están definidos una sola vez y las pantallas los usan; el Resumen y el
-  Dashboard muestran sus cifras principales en tarjetas con número destacado, y los gráficos tienen un
+- **CA-T024-2** (alternativo) — Tarjeta, insignia (prioridad y estado), botón primario y secundario,
+  tabla y alerta están definidos una sola vez y las pantallas los usan; el Resumen y el Dashboard muestran
+  cada cifra en su recuadro (con tipografía grande la que llega como línea sola), y los gráficos tienen un
   tamaño acotado con sus valores como texto.
 - **CA-T024-3** (alternativo) — En el Backlog la prioridad y el estado se leen como insignias con texto y
   las acciones de cada fila están agrupadas; estimar, editar y abrir Planning Poker funcionan igual que
@@ -189,6 +191,27 @@ lugar.
 - **Las pruebas siguen siendo las de siempre.** Lo visual no se puede comprobar con tests de HTML más allá de
   que estén las clases y los textos; por eso los criterios de aspecto se verifican con capturas a dos
   anchos y con Lighthouse, y se guardan como evidencia.
+
+## Descubierto al implementar
+
+- **Las cifras no se parten.** Cada línea de una tarjeta («Story Points: 5 completados de 12») llega como un
+  solo texto y los tests de las pantallas lo buscan corrido, así que no se puede poner el número en grande
+  y la etiqueta chica sin debilitar esos tests, lo que la spec prohíbe (RN-T024-1). La jerarquía sale de los
+  recuadros, de la tipografía de las líneas que ya llegan solas y de las insignias.
+- **El ícono de la marca son tres `<span>` y no un SVG.** Un test de US-030 comprueba que un proyecto sin
+  datos no dibuja ningún gráfico buscando `<svg`, y un ícono en la cabecera lo rompería en todas las páginas.
+- **Los bordes de los campos y de los botones secundarios pasan de `slate-300` a `slate-500`:** el primero
+  tiene cerca de 1,5:1 con el blanco y RN-T024-4 pide 3:1. El resto de las pantallas lo hereda porque usan las
+  mismas constantes.
+- **La paleta usada** es índigo (principal y «must»), celeste («should» y «en progreso»), verde (completado), ámbar
+  (pendiente), gris (neutro y «wont») y rojo (alertas). El contraste de cada par se calcula con
+  `scripts/contraste.py` sobre el CSS compilado y está en `docs/diseno.md`.
+- **Lighthouse no se pudo correr desde la herramienta** (descargaba código externo). Se comprobó por script, en
+  las cuatro pantallas, lo que suele marcar primero: idioma, un solo `h1`, encabezados sin saltos, landmarks,
+  `aria-current`, campos con etiqueta y enlaces o botones con nombre. La medición de Lighthouse queda como paso
+  manual en Chrome (`docs/diseno.md`).
+- **La impresión no cambió:** el reporte del proyecto da 5 hojas A4 con el texto idéntico, hoja por hoja, antes
+  y después del diseño.
 
 ## Huecos para decidir con el equipo
 
