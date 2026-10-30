@@ -19,7 +19,7 @@ name: CD (Azure)
 #   CONTAINER_APP_NAME    grupo03-grupocrv-seguimientoymedicion   (nombre del grupo de contenedores; 63 caracteres como maximo)
 #   ACI_DNS_LABEL         igual al nombre  (da la URL http://<etiqueta>.<region>.azurecontainer.io:8080)
 #   ACI_REGION            vacia: la region del grupo de recursos. Si la politica de la suscripcion no permite ACI ahi
-#                         (error RequestDisallowedByAzure), la region donde si, por ejemplo brazilsouth
+#                         (error RequestDisallowedByAzure), la region donde si (en este grupo, chilecentral)
 #   ACI_CPU / ACI_MEMORIA 1 / 1            (ACI cobra el vCPU redondeado hacia arriba: menos de 1 no ahorra)
 #   CARGAR_DATOS_EJEMPLO  true: carga el proyecto de ejemplo al arrancar (para la demo)
 #   MANTENER_ENCENDIDO    false: despues de desplegar y comprobar /health, el contenedor SE APAGA (ACI cobra mientras
@@ -273,9 +273,9 @@ jobs:
             echo "::error::ACI_CPU (1 a 4) o ACI_MEMORIA (en GB, por ejemplo 1 o 1.5) no son validos: $CPU / $MEMORIA."
             exit 1
           fi
-          # La region es opcional: sin ella ACI usa la del grupo de recursos. El nombre es el de Azure, sin espacios (brazilsouth).
+          # La region es opcional: sin ella ACI usa la del grupo de recursos. El nombre es el de Azure, sin espacios (chilecentral).
           if [ -n "$ACI_REGION" ] && ! [[ "$ACI_REGION" =~ ^[a-z0-9]+$ ]]; then
-            echo "::error::ACI_REGION ($ACI_REGION) no es valida: va el nombre de Azure en minusculas y sin espacios, por ejemplo brazilsouth."
+            echo "::error::ACI_REGION ($ACI_REGION) no es valida: va el nombre de Azure en minusculas y sin espacios, por ejemplo chilecentral."
             exit 1
           fi
 
@@ -299,7 +299,7 @@ jobs:
             ${ubicacion[@]+"${ubicacion[@]}"} --only-show-errors 2>&1); then
             echo "$salida"
             if [[ "$salida" == *RequestDisallowedByAzure* ]]; then
-              echo "::error::La politica de la suscripcion no permite crear ACI en la region ${ACI_REGION:-del grupo de recursos}. Defini la variable ACI_REGION del Environment azure con una region permitida (por ejemplo brazilsouth); Verificar Azure lista las regiones de ACI y las que permite la politica."
+              echo "::error::La politica de la suscripcion no permite crear ACI en la region ${ACI_REGION:-del grupo de recursos}. Defini la variable ACI_REGION del Environment azure con una region permitida (en este grupo funciona chilecentral; Azure no lista las permitidas, se prueba una por una: ver docs/ci-cd.md)."
             fi
             exit 1
           fi
