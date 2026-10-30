@@ -223,13 +223,14 @@ local (`make up`), sin tocar la base de Neon.
 
 ### Qué se comprobó con la cuenta real (29 y 30/10/2026)
 
-Cada fila es una ejecución real contra la suscripción de la cátedra (las ejecuciones están en *Actions*; entre paréntesis, su número):
+Cada fila es una ejecución real contra la suscripción de la cátedra (están en *Actions*; entre paréntesis, su número). La primera se
+borró a propósito, porque su log había impreso una credencial, y por eso no tiene número:
 
 | Intento | Resultado | Qué se aprendió |
 |---|---|---|
 | *Verificar Azure* con las credenciales recién cargadas | Falló el login | El `tenantId` tenía el JSON entero y Azure lo devolvió completo en el error, visible en el log. De ahí salió la validación del formato en `configurar-azure.sh` y en *Verificar Azure*, y la regla de borrar la ejecución si una credencial queda impresa |
-| *Verificar Azure* con las credenciales corregidas | Todo en verde | Login, base de Neon, login al registro y proveedor de ACI registrado. El *service principal* no puede listar sus roles ni leer la política de regiones |
-| *CD (Azure)* sin `ACI_REGION` | `RequestDisallowedByAzure` | ACI usa la región del grupo de recursos (`southcentralus`) y la política de la suscripción no la permite. La imagen sí se había publicado |
+| *Verificar Azure* con las credenciales corregidas (40807387056) | Todo en verde | Login, base de Neon, login al registro y proveedor de ACI registrado. El *service principal* no puede listar sus roles ni leer la política de regiones |
+| *CD (Azure)* sin `ACI_REGION` (40807691795) | `RequestDisallowedByAzure` | ACI usa la región del grupo de recursos (`southcentralus`) y la política de la suscripción no la permite. La imagen sí se había publicado |
 | *CD (Azure)* con `brazilsouth` (40965565868) | `RequestDisallowedByAzure` a los 3 segundos | Tampoco está permitida. El rechazo ocurre antes de crear nada: no consume créditos |
 | *CD (Azure)* con `chilecentral` (40977815362) | **Éxito** | Imagen construida en 37 s, contenedor creado en 72 s, `/health` 200 al primer intento y apagado automático. Toda la ejecución, 2 min 13 s |
 | *ACI: encender* (40991269589) | Éxito | 40 s hasta que `/health` respondió 200. La IP cambió |
