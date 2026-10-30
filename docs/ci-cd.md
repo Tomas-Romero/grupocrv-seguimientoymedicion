@@ -201,7 +201,7 @@ local (`make up`), sin tocar la base de Neon.
   tarda de unos cientos de milisegundos a unos segundos ([documentación de Neon](https://neon.com/docs/introduction/plans)).
   Por eso, **10 minutos antes de presentar** se abre `/health` de la app (que consulta la base) y se recorre una pantalla.
 - **Plan B si Azure falla el día de la presentación:** la aplicación en local (`make up` y `make run`, o el `docker compose`
-  completo) con los mismos datos, y las capturas de cada pantalla guardadas de antemano. Se ensaya el domingo.
+  completo) con los mismos datos (se cargan con `go run ./cmd/demo`, ver [`datos-de-demostracion.md`](datos-de-demostracion.md)), y las capturas de cada pantalla guardadas de antemano. Se ensaya el domingo.
 - **Apagar todo después de la presentación:** `az container delete --name grupo03-grupocrv-seguimientoymedicion --resource-group frsrutn`
   (no borrar nada que no empiece con `grupo03-`).
 
