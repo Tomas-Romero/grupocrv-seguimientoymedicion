@@ -63,7 +63,15 @@ python scripts/contraste.py
 En Chrome: abrir la pantalla, `F12` → pestaña **Lighthouse** → categoría **Accesibilidad** → *Analyze page load*. Repetir en el Resumen, el
 Backlog, el Dashboard y la lista de Proyectos, con los datos de la demostración (`go run ./cmd/demo`), y anotar el resultado en el PR.
 
+**Resultado** (Lighthouse 13.6.0, móvil 375 × 812, medido por Juan Vergara el 30/10/2026 sobre el diseño de T-024): **Proyectos 100, Resumen 100,
+Backlog 100 y Dashboard 100**, sin problemas marcados.
+
 ## Evidencia
 
 En [`docs/evidencias/T-024/`](evidencias/T-024/) están las capturas de las cuatro pantallas antes y después del diseño, a 1280 px y a 375 px de
 ancho, con los datos de la demostración: `antes-<pantalla>-<ancho>.png` y `despues-<pantalla>-<ancho>.png`.
+
+**Cómo se sacan las de 375 px.** Chrome sin ventana (`--headless`) no baja de 500 px de ancho: con `--window-size=375,…` la página se dibuja a 500 px y
+la imagen sale **recortada**, no a 375 px. Las capturas de esta carpeta se sacan mostrando la página dentro de un `<iframe>` de exactamente 375 px
+(así se aplican las reglas de pantalla chica de verdad, como en un celular) y recortando después el sobrante de la ventana. La alternativa es la
+emulación de dispositivo móvil de las herramientas de desarrollo de Chrome.
