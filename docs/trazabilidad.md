@@ -4,7 +4,7 @@
 > No se edita a mano: se regenera. Enlaza Historia → Spec → Criterios de aceptación →
 > Escenarios BDD → Tests → Código (la guía de la cátedra la pide como evidencia).
 
-Total: 40 especificaciones, 273 criterios de aceptación, 213 con escenario BDD y 247 con test.
+Total: 40 especificaciones, 273 criterios de aceptación, 216 con escenario BDD y 252 con test.
 
 Un criterio sin escenario BDD o sin test se muestra con `—`: o falta la evidencia, o el criterio
 se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no llevan `.feature`).
@@ -18,14 +18,14 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | US-003 | [specs/US-003-registrar-integrantes.md](../specs/US-003-registrar-integrantes.md) | borrador | 9 | 9 | 9 | `internal/domain/integrante/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`, `migraciones/00005_integrantes_id_por_defecto.sql` |
 | US-004 | [specs/US-004-estado-proyecto.md](../specs/US-004-estado-proyecto.md) | borrador | 6 | 6 | 6 | `internal/domain/proyecto/`, `internal/app/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
 | US-005 | [specs/US-005-crear-item-backlog.md](../specs/US-005-crear-item-backlog.md) | borrador | 8 | 8 | 8 | `internal/domain/backlog/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/` |
-| US-006 | [specs/US-006-editar-item-backlog.md](../specs/US-006-editar-item-backlog.md) | borrador | 7 | 5 | 6 | `internal/domain/backlog/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/` |
+| US-006 | [specs/US-006-editar-item-backlog.md](../specs/US-006-editar-item-backlog.md) | borrador | 7 | 7 | 7 | `internal/domain/backlog/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/` |
 | US-007 | [specs/US-007-listar-backlog.md](../specs/US-007-listar-backlog.md) | borrador | 6 | 6 | 6 | `internal/app/`, `internal/domain/backlog/`, `internal/adapters/http/catalogo.go` |
 | US-008 | [specs/US-008-crear-sprint.md](../specs/US-008-crear-sprint.md) | borrador | 11 | 11 | 11 | `internal/domain/sprint/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/` |
 | US-009 | [specs/US-009-asignar-historias-sprint.md](../specs/US-009-asignar-historias-sprint.md) | borrador | 8 | 8 | 8 | `internal/domain/sprint/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/` |
 | US-010 | [specs/US-010-marcar-historias-completadas.md](../specs/US-010-marcar-historias-completadas.md) | borrador | 6 | 6 | 6 | `internal/domain/sprint/`, `internal/domain/backlog/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`, `migraciones/00008_items_completado_en.sql` |
-| US-011 | [specs/US-011-cerrar-sprint.md](../specs/US-011-cerrar-sprint.md) | borrador | 6 | 6 | 5 | `internal/domain/sprint/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/` |
+| US-011 | [specs/US-011-cerrar-sprint.md](../specs/US-011-cerrar-sprint.md) | borrador | 6 | 6 | 6 | `internal/domain/sprint/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/` |
 | US-012 | [specs/US-012-sprints-anteriores.md](../specs/US-012-sprints-anteriores.md) | borrador | 6 | 6 | 6 | `internal/app/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
-| US-013 | [specs/US-013-estimar-historia-fibonacci.md](../specs/US-013-estimar-historia-fibonacci.md) | borrador | 6 | 5 | 5 | `internal/domain/backlog/`, `internal/app/`, `internal/adapters/postgres/` |
+| US-013 | [specs/US-013-estimar-historia-fibonacci.md](../specs/US-013-estimar-historia-fibonacci.md) | borrador | 6 | 6 | 5 | `internal/domain/backlog/`, `internal/app/`, `internal/adapters/postgres/` |
 | US-014 | [specs/US-014-iniciar-sesion-planning-poker.md](../specs/US-014-iniciar-sesion-planning-poker.md) | borrador | 7 | 7 | 7 | `internal/domain/planningpoker/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/00009_sesiones_planning_poker.sql` |
 | US-015 | [specs/US-015-voto-individual-oculto.md](../specs/US-015-voto-individual-oculto.md) | borrador | 7 | 7 | 7 | `internal/domain/planningpoker/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/00010_votos_planning_poker.sql` |
 | US-016 | [specs/US-016-revelar-estimaciones.md](../specs/US-016-revelar-estimaciones.md) | borrador | 8 | 8 | 8 | `internal/domain/planningpoker/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/` |
@@ -44,7 +44,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | US-029 | [specs/US-029-defectos-por-sprint.md](../specs/US-029-defectos-por-sprint.md) | borrador | 6 | 6 | 6 | `internal/domain/metricas/` |
 | US-030 | [specs/US-030-dashboard.md](../specs/US-030-dashboard.md) | borrador | 7 | 7 | 7 | `internal/app/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
 | US-033 | [specs/US-033-reporte-pantalla.md](../specs/US-033-reporte-pantalla.md) | borrador | 5 | 4 | 5 | `internal/app/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
-| US-034 | [specs/US-034-vista-imprimible.md](../specs/US-034-vista-imprimible.md) | borrador | 4 | 0 | 0 | `web/static/css/input.css`, `web/static/js/`, `web/templates/`, `internal/adapters/http/` |
+| US-034 | [specs/US-034-vista-imprimible.md](../specs/US-034-vista-imprimible.md) | borrador | 4 | 0 | 3 | `web/static/css/input.css`, `web/static/js/`, `web/templates/`, `internal/adapters/http/` |
 | T-004 | [specs/T-004-layout-base.md](../specs/T-004-layout-base.md) | revision | 5 | 0 | 4 | `web/templates/`, `internal/adapters/http/`, `cmd/server/` |
 | T-005 | [specs/T-005-validaciones-errores-uniformes.md](../specs/T-005-validaciones-errores-uniformes.md) | borrador | 8 | 0 | 7 | `internal/platform/errores/`, `internal/adapters/http/` |
 | T-011 | [specs/T-011-pantallas-proyectos-backlog.md](../specs/T-011-pantallas-proyectos-backlog.md) | borrador | 5 | 0 | 4 | `internal/app/`, `internal/adapters/memoria/`, `internal/adapters/postgres/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
@@ -144,16 +144,16 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 - **Spec:** [specs/US-006-editar-item-backlog.md](../specs/US-006-editar-item-backlog.md) · **Issue:** #8
 - **Escenarios BDD:** [features/US-006-editar-item-backlog.feature](../features/US-006-editar-item-backlog.feature)
 - **Código:** `internal/domain/backlog/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`
-- **Tests que la citan:** 25
+- **Tests que la citan:** 27
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
 | CA-006-1 | normal | Una historia editada queda con los datos nuevos y conserva número, estado y estimación | TestBase_GuardarEdicion, TestGuardarEdicion, TestEditarItem_Edita, TestEditar |
 | CA-006-2 | alternativo | Repriorizar cambia solo la prioridad | TestEditar_Repriorizar |
-| CA-006-3 | alternativo | — | — |
+| CA-006-3 | alternativo | Una historia asignada a un sprint abierto se edita y sigue en ese sprint | TestBase_GuardarEdicion_ItemEnSprintAbierto, TestGuardarEdicion_ItemEnSprintAbierto |
 | CA-006-4 | límite | El título editado tiene como máximo 120 caracteres | TestBase_GuardarEdicion_CriteriosVacios, TestGuardarEdicion_CriteriosVacios, TestEditar_CriteriosVacios, TestEditar_DatosInvalidos, +1 más |
 | CA-006-5 | error | Con datos inválidos se rechaza y la historia queda como estaba | TestEditarItem_Rechazos, TestEditar_DatosInvalidos |
-| CA-006-6 | error | — | TestGuardarEdicion_ItemCompletado, TestEditarItem_Rechazos, TestEditar_ItemCompletado |
+| CA-006-6 | error | Una historia completada no se edita y queda como estaba | TestGuardarEdicion_ItemCompletado, TestEditarItem_Rechazos, TestEditar_ItemCompletado |
 | CA-006-7 | error | Editar una historia que no existe se rechaza y no cambia nada | TestBase_GuardarEdicion_ItemInexistente, TestGuardarEdicion_ItemInexistente, TestEditarItem_ItemInexistente |
 
 ### US-007 — Listar y filtrar el backlog de un proyecto por estado y prioridad
@@ -232,13 +232,13 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 - **Spec:** [specs/US-011-cerrar-sprint.md](../specs/US-011-cerrar-sprint.md) · **Issue:** #19
 - **Escenarios BDD:** [features/US-011-cerrar-sprint.feature](../features/US-011-cerrar-sprint.feature)
 - **Código:** `internal/domain/sprint/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`
-- **Tests que la citan:** 27
+- **Tests que la citan:** 29
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
 | CA-011-1 | normal | Al cerrar, las completadas quedan completadas y las demás vuelven al backlog | TestBase_GuardarCierre, TestGuardarCierre, TestCerrarSprint_Cierra, TestCerrar |
 | CA-011-2 | alternativo | Después de cerrar se crea el sprint siguiente y una historia devuelta se asigna a él | TestBase_GuardarCierre_HistoriaDevueltaSeAsignaAlSiguiente, TestGuardarCierre_HistoriaDevueltaSeAsignaAlSiguiente |
-| CA-011-3 | alternativo | Los planificados de un sprint cerrado incluyen las historias no completadas, La velocidad se calcula con lo completado en cada sprint cerrado | — |
+| CA-011-3 | alternativo | Los planificados de un sprint cerrado incluyen las historias no completadas, La velocidad se calcula con lo completado en cada sprint cerrado | TestBase_GuardarCierre_ConservaLoPlanificado, TestGuardarCierre_ConservaLoPlanificado |
 | CA-011-4 | límite | Un sprint sin historias se cierra | TestBase_GuardarCierre_SinHistorias, TestGuardarCierre_SinHistorias, TestCerrarSprint_SinHistorias, TestCerrar_SinHistorias |
 | CA-011-5 | error | Un sprint ya cerrado no se vuelve a cerrar | TestBase_GuardarCierre_Rechazos, TestGuardarCierre_Rechazos, TestCerrarSprint_SprintCerrado, TestCerrar_SprintCerrado |
 | CA-011-6 | error | Cerrar un sprint que no existe se rechaza | TestBase_GuardarCierre_Rechazos, TestGuardarCierre_Rechazos, TestCerrarSprint_SprintInexistente |
@@ -272,7 +272,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | CA-013-2 | alternativo | Se puede volver a estimar y la última estimación reemplaza a la anterior | TestEstimarItem_ReEstima |
 | CA-013-3 | límite | La escala va de 1 a 13 y no incluye el 0 ni el 21 | — |
 | CA-013-4 | error | Un valor fuera de la escala se rechaza y la historia conserva su estimación, Un valor fuera de la escala no deja la historia estimada | TestEstimarItem_Rechazos, TestNuevosStoryPoints_FueraDeLaEscala, TestEstimar_FueraDeEscala |
-| CA-013-5 | error | — | TestEstimar_ItemCompletado |
+| CA-013-5 | error | Una historia completada no se puede estimar | TestEstimar_ItemCompletado |
 | CA-013-6 | error | Estimar una historia que no existe se rechaza | TestBase_GuardarEstimacion_ItemInexistente, TestObtenerItem_Inexistente, TestGuardarEstimacion_ItemInexistente, TestEstimarItem_ItemInexistente |
 
 ### US-014 — Iniciar una sesión de Planning Poker sobre una historia
@@ -593,13 +593,13 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 - **Spec:** [specs/US-034-vista-imprimible.md](../specs/US-034-vista-imprimible.md) · **Issue:** #40
 - **Escenarios BDD:** ninguno
 - **Código:** `web/static/css/input.css`, `web/static/js/`, `web/templates/`, `internal/adapters/http/`
-- **Tests que la citan:** 0
+- **Tests que la citan:** 6
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
-| CA-034-1 | normal | — | — |
-| CA-034-2 | alternativo | — | — |
-| CA-034-3 | límite | — | — |
+| CA-034-1 | normal | — | TestReporte_BotonDeImprimir |
+| CA-034-2 | alternativo | — | TestReporte_LoQueNoSeImprime, TestEstilosDeImpresion |
+| CA-034-3 | límite | — | TestEstilosDeImpresion |
 | CA-034-4 | plataforma | — | — |
 
 ### T-004 — Layout base, navegación y sistema visual con Tailwind
