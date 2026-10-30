@@ -51,8 +51,7 @@ sobre una base recién creada.
 **Salida estándar** (código de salida `0`): un resumen de lo cargado, sin la cadena de conexión:
 
 ```
-Proyecto "Tienda online" cargado: 4 integrantes, 16 historias, 4 sprints (3 cerrados y 1 abierto),
-3 sesiones de Planning Poker, 27 registros de horas y 10 defectos.
+Proyecto "Tienda online" cargado: 4 integrantes, 16 historias, 4 sprints (3 cerrados y 1 abierto), 3 sesiones de Planning Poker, 27 registros de horas y 10 defectos.
 ```
 
 **Código de salida `1`** y un mensaje en español en el error estándar cuando algo falla (sección 7).
@@ -132,8 +131,8 @@ No hay reglas de dominio nuevas. Son reglas de la herramienta.
   después, sprint por sprint: crear, asignar, completar, registrar horas y defectos, y cerrar, hasta dejar
   el cuarto abierto. Un sprint se crea recién cuando el anterior está cerrado (US-008).
 - **RN-T023-4** — **No pisa nada.** Si ya existe un proyecto llamado «Tienda online», el comando se niega
-  antes de escribir cualquier cosa y explica cómo seguir (`--borrar`). Otros proyectos de la base no se
-  tocan.
+  antes de cargar ningún dato y explica cómo seguir (`--borrar`). Lo único que hace antes es aplicar las
+  migraciones pendientes (sección 2). Otros proyectos de la base no se tocan.
 - **RN-T023-5** — `--borrar` borra **solo** el proyecto con el nombre exacto «Tienda online», y con él todo
   lo suyo (las claves foráneas borran en cascada). Si no existe, lo informa y termina con `0`.
 - **RN-T023-6** — Si un paso de la carga falla, el comando se detiene, informa **qué paso** y el error, y
@@ -164,7 +163,7 @@ No hay reglas de dominio nuevas. Son reglas de la herramienta.
 - **CL-T023-1** — Base recién migrada y sin proyectos: carga todo y termina con `0`.
 - **CL-T023-2** — La base ya tiene otro proyecto distinto (por ejemplo, uno de prueba): se carga «Tienda
   online» al lado y el otro no cambia.
-- **CL-T023-3** — Ya existe «Tienda online»: se niega y no escribe nada (RN-T023-4).
+- **CL-T023-3** — Ya existe «Tienda online»: se niega y no carga ningún dato (RN-T023-4).
 - **CL-T023-4** — `--borrar` sin que exista el proyecto: informa que no había nada y termina con `0`.
 - **CL-T023-5** — `--borrar` y después cargar: la base queda con los mismos datos que en una carga limpia
   (el borrado en cascada no deja filas huérfanas).
@@ -182,7 +181,7 @@ No hay reglas de dominio nuevas. Son reglas de la herramienta.
 |---|---|---|
 | Falta `DATABASE_URL` | Sale con `1` sin tocar nada | «Falta la variable DATABASE_URL.» |
 | No se puede conectar o migrar | Sale con `1` | «No se pudo conectar a la base: …» (sin la cadena de conexión) |
-| Ya existe el proyecto «Tienda online» | Sale con `1` sin escribir nada | «Ya existe el proyecto "Tienda online". Para cargarlo de nuevo, primero: go run ./cmd/demo --borrar» |
+| Ya existe el proyecto «Tienda online» | Sale con `1` sin cargar ningún dato | «Ya existe el proyecto "Tienda online". Para cargarlo de nuevo, primero: go run ./cmd/demo --borrar» |
 | Un caso de uso rechaza un dato (un error de la propia carga) | Sale con `1` y deja lo ya cargado | «Falló el paso "<paso>": <error>. Podés volver a empezar con --borrar.» |
 | Argumento desconocido | Sale con `1` | «Uso: go run ./cmd/demo [--borrar]» |
 
@@ -197,7 +196,7 @@ No hay reglas de dominio nuevas. Son reglas de la herramienta.
   y la 16 votando.
 - **CA-T023-3** (alternativo) — Ninguna sección de los reportes del proyecto y del Sprint 4 dice «Sin
   datos», y el dashboard muestra los cuatro sprints, la velocidad, las horas y los defectos.
-- **CA-T023-4** (límite) — Con el proyecto ya cargado, una segunda carga se niega sin escribir nada;
+- **CA-T023-4** (límite) — Con el proyecto ya cargado, una segunda carga se niega sin cargar ningún dato;
   `--borrar` lo borra solo a él (otro proyecto de la base queda igual) y una carga nueva deja los mismos
   datos.
 - **CA-T023-5** (error) — Sin `DATABASE_URL`, con una conexión que falla o con un argumento desconocido,
