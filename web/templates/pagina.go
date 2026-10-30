@@ -108,9 +108,9 @@ func (p Pagina) EnlacesProyecto() []Enlace {
 // Clases son las clases de Tailwind del enlace: el activo se distingue por mas
 // que el color (negrita y subrayado), para no depender solo de la vista del color.
 func (e Enlace) Clases() string {
-	const base = "inline-block border-b-2 px-1 py-1 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+	const base = "inline-block rounded-md border-b-2 px-3 py-1.5 text-sm " + claseFoco
 	if e.Activo {
-		return base + " border-indigo-700 font-semibold text-indigo-700"
+		return base + " border-indigo-700 bg-indigo-50 font-semibold text-indigo-800"
 	}
-	return base + " border-transparent text-slate-700 hover:text-indigo-700"
+	return base + " border-transparent font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900"
 }

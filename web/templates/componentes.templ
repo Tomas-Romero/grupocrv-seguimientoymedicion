@@ -1,0 +1,17 @@
+package plantillas
+
+// insignia es una etiqueta de color con su texto (spec T-024, RN-T024-3): el tono va en data-tono, y el texto siempre se ve, asi que el
+// color nunca es el unico medio. Se usa para la prioridad y el estado de las historias.
+templ insignia(texto string, tono string) {
+	<span class={ claseDeInsignia(tono) } data-tono={ tono }>{ texto }</span>
+}
+
+// marcaDelSitio es el icono de la cabecera: tres barras que suben, dibujadas con tres <span> y no con un SVG, porque los graficos del
+// dashboard son los unicos SVG de la aplicacion (un proyecto sin datos no dibuja ninguno) y asi se pueden distinguir.
+templ marcaDelSitio() {
+	<span aria-hidden="true" class="flex h-6 w-6 shrink-0 items-end gap-0.5">
+		<span class="h-2 w-1.5 rounded-sm bg-indigo-700"></span>
+		<span class="h-4 w-1.5 rounded-sm bg-indigo-700"></span>
+		<span class="h-6 w-1.5 rounded-sm bg-indigo-700"></span>
+	</span>
+}
