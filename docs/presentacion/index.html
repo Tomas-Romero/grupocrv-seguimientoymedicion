@@ -262,7 +262,7 @@ body.ayuda-on #ayuda{display:flex}
     <div class="eslabon"><b>4 · Escenarios BDD</b><span>10 escenarios, con casos límite y error</span><small>@CA-017-1 … 5</small></div>
     <div class="eslabon"><b>5 · Commits</b><span>5 RED · 6 GREEN · 1 refactor</span><small>git log --grep US-017</small></div>
     <div class="eslabon"><b>6 · Pull request</b><span>#209, revisado y aprobado por otro integrante</span><small>spec en el #202</small></div>
-    <div class="eslabon"><b>7 · CI</b><span>5 chequeos en verde antes de mergear</span><small>Lint · Tests · BDD · Traza · Full</small></div>
+    <div class="eslabon"><b>7 · CI</b><span>6 chequeos en verde antes de mergear</span><small>Título · Lint · Tests · BDD · Traza · Full</small></div>
     <div class="eslabon"><b>8 · Despliegue</b><span>Imagen publicada en Azure y funcionando</span><small>la que van a ver en la demo</small></div>
   </div>
   <p style="margin-top:22px;font-size:19px;color:var(--sl-600)">La matriz completa se genera sola con <code>make trace</code>: <b>42 especificaciones · 285 criterios · 261 con test</b>.</p>
@@ -274,7 +274,7 @@ body.ayuda-on #ayuda{display:flex}
 <section class="slide" data-orador="Juan" data-tiempo="1:00">
   <p class="kicker">En vivo</p>
   <h2>De la spec al test en verde</h2>
-  <p class="sub">Cinco minutos de trabajo, tres segundos de ejecución.</p>
+  <p class="sub">Cinco minutos de trabajo, medio segundo de ejecución.</p>
   <div class="fila" style="gap:34px;align-items:flex-start">
     <div class="col" style="flex:1">
       <div class="paso"><div class="n">1</div><p>La spec: criterio <b>CA-017-1</b><small>specs/US-017-nueva-ronda.md · sección 8</small></p></div>
@@ -286,16 +286,17 @@ body.ayuda-on #ayuda{display:flex}
     <div class="col" style="flex:1.05">
       <div class="terminal">
         <span class="p">$</span> go test ./features/ -godog.tags=@CA-017-1 -v<br>
-        <span class="v">--- PASS:</span> Con_divergencia,_la_nueva_ronda_deja_la_sesión_votando_en_la_ronda_siguiente_sin_votos<br>
-        <span class="v">--- PASS:</span> Valores_contiguos_de_la_escala_también_abren_una_nueva_ronda<br>
+        <span class="v">--- PASS:</span> TestEscenarios (0.03s)<br>
+        &nbsp;&nbsp;<span class="v">--- PASS:</span> TestEscenarios/Con_divergencia,_la_nueva_ronda_deja_la_sesión_votando_en_la_ronda_siguiente_sin_votos<br>
+        &nbsp;&nbsp;<span class="v">--- PASS:</span> TestEscenarios/Valores_contiguos_de_la_escala_también_abren_una_nueva_ronda<br>
         <span class="v">PASS</span><br>
-        <span class="v">ok</span>  …/features  0.457s
+        <span class="v">ok</span>  …/features  0.460s
       </div>
       <div class="aviso" style="margin-top:16px;background:var(--ind-50);color:var(--ind-900)">Cada criterio de la spec tiene un escenario con su nombre, y cada escenario corre en cada pull request.</div>
     </div>
   </div>
   <div class="orador"><b>Juan</b> · 1:00</div><div class="pie">7 / 12</div>
-  <aside class="notas"><b>Juan (1:00 — EN VIVO).</b> Abrir en este orden: (1) specs/US-017, sección 8, CA-017-1. (2) El .feature, escenario con @CA-017-1. (3) Terminal: <code>git log --oneline --reverse --grep='\[US-017\]'</code> — se ve RED antes de GREEN. (4) nueva_ronda.go. (5) Terminal: <code>go test ./features/ -godog.tags=@CA-017-1 -v</code> (tarda unos 3 s). (6) PR #209 en GitHub: los checks verdes. <b>Si falla algo:</b> esta diapositiva ya muestra la salida real. Pasar a Angelo.</aside>
+  <aside class="notas"><b>Juan (1:00 — EN VIVO).</b> Abrir en este orden: (1) specs/US-017, sección 8, CA-017-1. (2) El .feature, escenario con @CA-017-1. (3) Terminal: <code>git log --oneline --reverse --grep='\[US-017\]'</code> — se ve RED antes de GREEN. (4) nueva_ronda.go. (5) Terminal: <code>go test ./features/ -godog.tags=@CA-017-1 -v</code> (el test tarda medio segundo; la primera vez compilar puede llevar unos 20 s: correrlo antes). (6) PR #209 en GitHub: los checks verdes. <b>Si falla algo:</b> esta diapositiva ya muestra la salida real. Pasar a Angelo.</aside>
 </section>
 
 <!-- 8 · ARQUITECTURA Y CALIDAD -->
@@ -316,7 +317,7 @@ body.ayuda-on #ayuda{display:flex}
     <div class="col" style="flex:.9">
       <div class="tarjeta" style="margin-bottom:12px"><div class="num">99,8<small> %</small></div><div class="etq">cobertura del <b>dominio</b> (mínimo exigido: 85 %)</div></div>
       <div class="tarjeta" style="margin-bottom:12px"><div class="num">91,9<small> %</small></div><div class="etq">cobertura de <b>internal/</b> (mínimo: 70 %)</div></div>
-      <div class="tarjeta"><p><b>5 chequeos en cada PR</b>, en Ubuntu: Lint, Tests con cobertura, BDD, Trazabilidad y el camino del evaluador.</p></div>
+      <div class="tarjeta"><p><b>6 chequeos en cada PR</b>, en Ubuntu: título y rama, Lint, Tests con cobertura, BDD, Trazabilidad y el camino del evaluador.</p></div>
     </div>
   </div>
   <div class="orador"><b>Angelo</b> · 0:50</div><div class="pie">8 / 12</div>
@@ -368,7 +369,7 @@ body.ayuda-on #ayuda{display:flex}
     <div class="tarjeta col"><h3>Comprobado</h3><ul><li>Despliegue de punta a punta con la cuenta real</li><li><code>/health</code> antes de dar todo por bueno</li></ul></div>
   </div>
   <div class="orador"><b>Tomás</b> · 1:00</div><div class="pie">10 / 12</div>
-  <aside class="notas"><b>Tomás (1:00).</b> La demo corrió sobre esto. Cada pull request pasa cinco chequeos; al mergear a main, el CD construye la imagen en Ubuntu, la publica en el registro de la cátedra y la despliega en Azure Container Instances. Las credenciales son secretos de un entorno limitado a main, y las acciones de terceros están fijadas por hash. Como la cuenta es compartida y tiene créditos, el contenedor está apagado por defecto y lo encendimos para hoy. Lo probamos con la cuenta real: la primera vez nos rechazó la región por política de la suscripción y lo resolvimos; está documentado en docs/ci-cd.md.</aside>
+  <aside class="notas"><b>Tomás (1:00).</b> La demo corrió sobre esto. Cada pull request pasa seis chequeos; al mergear a main, el CD construye la imagen en Ubuntu, la publica en el registro de la cátedra y la despliega en Azure Container Instances. Las credenciales son secretos de un entorno limitado a main, y las acciones de terceros están fijadas por hash. Como la cuenta es compartida y tiene créditos, el contenedor está apagado por defecto y lo encendimos para hoy. Lo probamos con la cuenta real: la primera vez nos rechazó la región por política de la suscripción y lo resolvimos; está documentado en docs/ci-cd.md.</aside>
 </section>
 
 <!-- 11 · DECISIONES HONESTAS -->

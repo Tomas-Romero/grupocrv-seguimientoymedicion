@@ -88,10 +88,26 @@ Preparar tres pestañas/ventanas antes de empezar.
 2. `features/US-017-nueva-ronda.feature`, escenario con `@CA-017-1`.
 3. Terminal: `git log --oneline --reverse --grep='\[US-017\]'` (se ve RED antes de GREEN).
 4. `internal/domain/planningpoker/nueva_ronda.go`.
-5. Terminal: `go test ./features/ -godog.tags=@CA-017-1 -v` (≈ 3 s; **correrlo una vez antes** para que esté compilado).
+5. Terminal: `go test ./features/ -godog.tags=@CA-017-1 -v` (el test tarda ~0,5 s; la primera vez compilar lleva ~20 s: **correrlo una vez antes**).
 6. Pull request **#209** en GitHub: los chequeos en verde.
 
 La diapositiva ya trae la salida real de ese comando: si algo falla, se lee de ahí y se sigue.
+
+### Resultado del repaso de la cadena (30/10, sobre `main`)
+
+Recorrí la cadena de la diapositiva 6 contra el repositorio y los números coinciden. Es un repaso de datos; falta decirlo en voz alta (ensayo del domingo).
+
+| Eslabón | Comprobado |
+|---|---|
+| Spec | `specs/US-017-nueva-ronda.md`: 5 criterios (CA-017-1 a CA-017-5), mergeada en el #202 |
+| Escenarios | `features/US-017-nueva-ronda.feature`: 10 escenarios |
+| Commits | `git log --grep='\[US-017\]'`: 5 RED, 6 GREEN y 1 refactor; el primer RED (`665ef62`) va antes de todo GREEN |
+| Pull request | #209 de Juan, aprobado por Tomás, mergeado el 28/10; chequeos en verde |
+| Test en vivo | `go test ./features/ -godog.tags=@CA-017-1 -v`: PASS, 0,46 s (21 s la primera vez, compilando) |
+| CI | 6 chequeos en verde: título y rama, Lint, Tests y cobertura, BDD, Trazabilidad, Perfil full |
+
+Dos correcciones que salieron de este repaso: la salida de `go test -v` real lleva el prefijo `TestEscenarios/` (la diapositiva 7 ya lo muestra
+así) y los chequeos son seis, no cinco.
 
 ## Plan B
 
