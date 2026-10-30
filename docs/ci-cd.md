@@ -55,9 +55,11 @@ para tocar solo lo del grupo 03:
 **Lo que hay que saber de ACI (y por qué cambia el control de costos).** Según la documentación de Microsoft, ACI cobra por segundo
 **mientras el contenedor está encendido**, desde que empieza a bajar la imagen hasta que se detiene, y **no escala a cero**:
 un contenedor encendido cobra aunque nadie lo visite. Detenido, deja de cobrar cómputo. El vCPU se cobra redondeado hacia arriba
-(por eso se usa 1 vCPU y 1 GB: pedir menos no ahorra). No hay HTTPS: la app se ve por `http` en el puerto `8080`. La IP puede
-cambiar cuando se recrea el contenedor; la URL no, porque se fija con una etiqueta DNS
-(`http://<etiqueta>.<región>.azurecontainer.io:8080`). Cambiar la imagen es volver a crear el contenedor.
+(por eso se usa 1 vCPU y 1 GB: pedir menos no ahorra). No hay HTTPS: la app se ve por `http` en el puerto `8080`. La IP cambia cada vez que
+el contenedor se recrea **o se vuelve a encender**; la URL no, porque se fija con una etiqueta DNS
+(`http://<etiqueta>.<región>.azurecontainer.io:8080`). Eso sí: la caché de DNS de la computadora o del navegador puede guardar la
+IP vieja unos minutos y el enlace "no carga" aunque la app esté bien (pasó en la prueba, ver abajo). Cambiar la imagen es volver a
+crear el contenedor.
 
 En cada merge a `main` que cambie algo de lo que entra en la imagen (los cambios solo de `*.md`,
 `docs/`, `specs/` y `features/` no disparan nada):
@@ -123,9 +125,9 @@ Variables (si no existen se usan los datos del grupo 03; entre paréntesis, el n
 | `RESOURCE_GROUP` (`AZURE_RESOURCE_GROUP`) | `frsrutn` | Grupo de recursos |
 | `CONTAINER_APP_NAME` | `grupo03-grupocrv-seguimientoymedicion` | Nombre del contenedor (`container_app_name`). Tiene que empezar con `grupo03-`; en ACI el límite es de **63 caracteres**, así que sirve el nombre completo que asignó la cátedra |
 | `ACI_DNS_LABEL` | igual al nombre | Etiqueta DNS de la URL (5 a 63 caracteres; única dentro de la región) |
-| `ACI_REGION` | la región del grupo de recursos | Región donde se crea el contenedor (el nombre de Azure en minúsculas y sin espacios, por ejemplo `brazilsouth`). Hace falta si la política de la suscripción no permite ACI en la región del grupo de recursos: el despliegue falla con `RequestDisallowedByAzure`. *Verificar Azure* lista las regiones donde ACI funciona y las que permite la política |
+| `ACI_REGION` | la región del grupo de recursos | Región donde se crea el contenedor (el nombre de Azure en minúsculas y sin espacios). **En esta suscripción hace falta**: la política de "Azure for Students" rechaza ACI en `southcentralus` (la región del grupo de recursos) y en `brazilsouth` con `RequestDisallowedByAzure`, y **`chilecentral` funciona**, que es la que usa el grupo. El mensaje de Azure no dice qué regiones permite y el *service principal* no puede leer la política, así que si hay que cambiarla se prueba una por una (ver el paso 4); un intento rechazado no crea nada. *Verificar Azure* lista las regiones donde ACI funciona |
 | `ACI_CPU` / `ACI_MEMORIA` | `1` / `1` | vCPU y GB del contenedor |
-| `CARGAR_DATOS_EJEMPLO` | `true` | Carga el proyecto de ejemplo al arrancar, para la demo (es idempotente) |
+| `CARGAR_DATOS_EJEMPLO` | `true` | Carga el proyecto de ejemplo al arrancar (es idempotente). Para la presentación está en `false`: la base de Neon se llena aparte con los datos de la demo, y así el contenedor no los mezcla con el ejemplo |
 | `MANTENER_ENCENDIDO` | `false` | Con `false`, el contenedor se apaga después de desplegar y cada noche. `true` solo mientras se necesite la app encendida |
 | `CD_ACTIVO` | `false` | Interruptor general de costos: **solo con `true`** se publica y se despliega. Sin la variable, o con cualquier otro valor, el workflow solo valida el Dockerfile aunque estén todos los secretos |
 
@@ -140,13 +142,22 @@ Con las credenciales reales comprueba que estén los secretos, que el nombre y l
 acepte la conexión, que el *service principal* vea el grupo de recursos y el proveedor de ACI (y con qué roles cuenta) y que
 la clave del registro funcione. El resumen de la ejecución deja una tabla con cada comprobación. No crea, cambia ni borra nada.
 
-**4. Primer despliegue.** Con la verificación en verde: `gh variable set CD_ACTIVO --env azure --body true` y
-*Actions → CD (Azure) → Run workflow*. Desde ahí, cada merge a `main` que cambie la imagen despliega solo (y el contenedor
-queda apagado al terminar).
+**4. Primer despliegue.** Con la verificación en verde, una sola orden hace todo y deja el despliegue apagado al terminar:
 
-**5. Ver la app funcionando.** *Actions → ACI: encender o apagar → Run workflow → `encender`* (tarda un par de minutos y deja la
-URL en el resumen). **Al terminar, `apagar`**: si queda encendido, el control de las 03:00 de Argentina lo apaga, pero no hay que
-depender de eso. `estado` informa si está encendido y la URL, sin cambiar nada.
+```bash
+bash scripts/probar-despliegue-azure.sh <región>
+```
+
+El script carga `ACI_REGION`, enciende `CD_ACTIVO`, corre *CD (Azure)* en `main`, espera el resultado y **vuelve a apagar
+`CD_ACTIVO` siempre**, aunque falle o se corte con Ctrl+C. Si el error es `RequestDisallowedByAzure`, la región no está permitida:
+se corre de nuevo con otra. Mientras `CD_ACTIVO` está encendido no hay que mergear nada a `main`, porque cada merge dispararía
+otro despliegue. Desde ahí, con `CD_ACTIVO=true`, cada merge que cambie la imagen despliega solo (y el contenedor queda apagado al
+terminar); el grupo lo deja en `false` y lo enciende solo para demostrar el CD.
+
+**5. Ver la app funcionando.** *Actions → ACI: encender o apagar → Run workflow → `encender`* (tarda menos de un minuto y deja la
+URL en el resumen). Si el enlace no carga, es la caché de DNS (ver arriba): ventana privada, `ipconfig /flushdns` o esperar unos
+minutos. **Al terminar, `apagar`**: si queda encendido, el control de las 03:00 de Argentina lo apaga, pero no hay que depender de
+eso. `estado` informa si está encendido y la URL, sin cambiar nada.
 
 ### La base de datos
 
@@ -183,8 +194,9 @@ local (`make up`), sin tocar la base de Neon.
 - **Base de datos:** Neon en su plan gratuito, fuera de Azure.
 - **Interruptores:** el despliegue está **apagado por defecto** (`CD_ACTIVO`). `gh variable set CD_ACTIVO --env azure --body true`
   lo enciende y `false` lo frena otra vez, sin tocar código.
-- **El día de la presentación:** encender con *ACI: encender o apagar* unos 15 minutos antes (tarda un par de minutos) y apagar al
-  terminar; si se necesita que un despliegue lo deje encendido, `MANTENER_ENCENDIDO=true` hasta que pase.
+- **El día de la presentación:** encender con *ACI: encender o apagar* unos 15 minutos antes (tarda menos de un minuto) y **abrir el enlace una vez desde la computadora de la presentación**, para que
+  no quede una IP vieja en la caché de DNS; apagar al terminar. Si se necesita que un despliegue lo deje encendido,
+  `MANTENER_ENCENDIDO=true` hasta que pase.
 - **Neon también se duerme:** en el plan gratuito, la base se suspende a los 5 minutos sin uso y no se puede cambiar; despertarla
   tarda de unos cientos de milisegundos a unos segundos ([documentación de Neon](https://neon.com/docs/introduction/plans)).
   Por eso, **10 minutos antes de presentar** se abre `/health` de la app (que consulta la base) y se recorre una pantalla.
@@ -209,11 +221,25 @@ local (`make up`), sin tocar la base de Neon.
   reciben los secretos.
 - `actionlint` revisa todos los workflows en cada PR, con `shellcheck` sobre los scripts de cada paso.
 
-### Qué falta comprobar con la cuenta real
+### Qué se comprobó con la cuenta real (29 y 30/10/2026)
 
-El login, el push y el despliegue solo se pueden probar contra Azure con las credenciales reales. Lo que sí se verificó
-sin ellas: la sintaxis de los workflows (`actionlint`), la lógica de cada script con un `az`, un `docker` y un `curl`
-simulados (qué se actualiza o se crea, con qué credenciales del registro, qué etiquetas se borran y cuáles nunca, el
-interruptor `CD_ACTIVO`, el límite de 32 caracteres del nombre, la espera de `/health`), la comprobación de la base contra
-un Postgres real y que la cadena de conexión de Neon necesita quitarle `channel_binding`. Lo primero que se corre con
-la cuenta real es *Verificar Azure (solo lectura)*, y recién después el primer despliegue.
+Cada fila es una ejecución real contra la suscripción de la cátedra (las ejecuciones están en *Actions*; entre paréntesis, su número):
+
+| Intento | Resultado | Qué se aprendió |
+|---|---|---|
+| *Verificar Azure* con las credenciales recién cargadas | Falló el login | El `tenantId` tenía el JSON entero y Azure lo devolvió completo en el error, visible en el log. De ahí salió la validación del formato en `configurar-azure.sh` y en *Verificar Azure*, y la regla de borrar la ejecución si una credencial queda impresa |
+| *Verificar Azure* con las credenciales corregidas | Todo en verde | Login, base de Neon, login al registro y proveedor de ACI registrado. El *service principal* no puede listar sus roles ni leer la política de regiones |
+| *CD (Azure)* sin `ACI_REGION` | `RequestDisallowedByAzure` | ACI usa la región del grupo de recursos (`southcentralus`) y la política de la suscripción no la permite. La imagen sí se había publicado |
+| *CD (Azure)* con `brazilsouth` (40965565868) | `RequestDisallowedByAzure` a los 3 segundos | Tampoco está permitida. El rechazo ocurre antes de crear nada: no consume créditos |
+| *CD (Azure)* con `chilecentral` (40977815362) | **Éxito** | Imagen construida en 37 s, contenedor creado en 72 s, `/health` 200 al primer intento y apagado automático. Toda la ejecución, 2 min 13 s |
+| *ACI: encender* (40991269589) | Éxito | 40 s hasta que `/health` respondió 200. La IP cambió |
+| Abrir el enlace desde el navegador | No cargaba | Caché de DNS con la IP anterior. Con la IP nueva, `/`, `/proyectos` y `/health` respondían 200; unos minutos después el enlace anduvo sin tocar nada |
+| *ACI: apagar* (40992231220) | Éxito | 5 s; el workflow comprueba que el contenedor quedó detenido y, si no, falla |
+
+En total, el contenedor estuvo encendido unos **11 minutos** (cerca de 1 en el despliegue y cerca de 10 en el encendido manual),
+con 1 vCPU y 1 GB.
+
+Lo que **sigue sin comprobarse**: cuánto costó realmente esa prueba (los precios por segundo no están verificados y el grupo no ve la
+facturación de la cuenta compartida), qué roles tiene el *service principal* (no puede listarlos, aunque pudo crear, encender y apagar
+el contenedor en `frsrutn`; borrar no se probó), cuánto tarda en despertar la base de Neon la primera vez que la visita alguien tras un rato sin uso, y
+si la IP pública se sigue facturando con el contenedor detenido.
