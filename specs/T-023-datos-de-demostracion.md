@@ -6,7 +6,7 @@
 | **Autor** | Tomás Romero |
 | **Issue** | #236 |
 | **Escenarios BDD** | ninguno: es una tarea técnica (ver "Decisiones") |
-| **Código** | `internal/demo/`, `cmd/demo/`, `docs/ci-cd.md` |
+| **Código** | `internal/demo/`, `cmd/demo/`, `docs/datos-de-demostracion.md` |
 | **Última actualización** | 2026-10-30 |
 
 > Esta especificación se escribe y se mergea **antes** de abrir la rama de
@@ -143,20 +143,26 @@ No hay reglas de dominio nuevas. Son reglas de la herramienta.
   se corre.
 - **RN-T023-9** — Los datos son ficticios: nombres inventados y correos del dominio reservado `.test`.
   No hay datos de personas reales.
+- **RN-T023-10** — **Comprobación al terminar.** Después de cargar, la herramienta lee lo cargado con los
+  casos de uso de lectura (backlog, sprints, horas, defectos y las tres sesiones de Planning Poker) y lo
+  compara con las cifras de la sección 3. Si algo no coincide, informa todas las diferencias, deja lo
+  cargado y termina con `1`; el resumen solo se imprime si todo coincide.
 
 ## 5. Restricciones
 
 - **Sin cambios en el dominio ni en los casos de uso existentes**, sin migraciones nuevas y sin
   dependencias nuevas.
-- **Dos paquetes:** `internal/demo` tiene la carga (recibe los casos de uso ya armados y un reloj
-  modificable, para probarla sin base) y `cmd/demo` solo lee `DATABASE_URL`, conecta, migra y la llama,
-  con el mismo armado de repositorios y casos de uso que `cmd/server`.
+- **Dos paquetes:** `internal/demo` tiene la carga (`Cargar`, que recibe los casos de uso ya armados y un
+  reloj modificable para probarla sin base), la comprobación (`Verificar`), el armado sobre Postgres
+  (`CasosPostgres`, con los mismos repositorios que `cmd/server`) y el borrado (`BorrarProyecto`). `cmd/demo`
+  solo lee los argumentos y `DATABASE_URL`, conecta, migra y llama.
 - **No corre sola.** El servidor no llama a esta carga al arrancar: es una orden manual. El contenedor
   de la demostración sigue con `CARGAR_DATOS_EJEMPLO=false`.
 - **Se prueba con memoria y con Postgres,** como el resto de los adaptadores: la misma verificación
   sobre `memoria.Base` y, con `DATABASE_URL`, sobre una base real.
-- **Documentación:** `docs/ci-cd.md` explica cómo cargar y borrar los datos en Neon y en local, y el plan
-  B de la presentación (la aplicación local «con los mismos datos») apunta a este comando.
+- **Documentación:** `docs/datos-de-demostracion.md` explica cómo cargar y borrar los datos en Neon (sin que
+  la cadena de conexión pase por el chat ni por el historial de la terminal) y en local, y qué mostrar en
+  cada pantalla; `docs/ci-cd.md` lo enlaza desde el plan B de la presentación.
 
 ## 6. Casos límite
 
@@ -184,12 +190,14 @@ No hay reglas de dominio nuevas. Son reglas de la herramienta.
 | Ya existe el proyecto «Tienda online» | Sale con `1` sin cargar ningún dato | «Ya existe el proyecto "Tienda online". Para cargarlo de nuevo, primero: go run ./cmd/demo --borrar» |
 | Un caso de uso rechaza un dato (un error de la propia carga) | Sale con `1` y deja lo ya cargado | «Falló el paso "<paso>": <error>. Podés volver a empezar con --borrar.» |
 | Argumento desconocido | Sale con `1` | «Uso: go run ./cmd/demo [--borrar]» |
+| Lo cargado no coincide con la sección 3 | Sale con `1` y deja lo ya cargado | «La carga terminó, pero lo cargado no coincide con la spec T-023: …» y las diferencias |
 
 ## 8. Criterios de aceptación
 
 - **CA-T023-1** (normal) — Con una base vacía, el comando carga «Tienda online» con 4 integrantes, 16
   historias, 4 sprints (3 cerrados y el Sprint 4 abierto), 3 sesiones de Planning Poker, 27 registros de
-  horas y 10 defectos, y termina con `0` y el resumen de la sección 3.
+  horas y 10 defectos, y termina con `0` y el resumen de la sección 3, después de comprobar lo cargado
+  (RN-T023-10).
 - **CA-T023-2** (alternativo) — Las lecturas de la aplicación sobre esos datos dan lo que dice la sección
   3: los Story Points planificados y completados de cada sprint, las horas estimadas, reales y su
   desviación, los defectos por severidad y por estado, la historia 9 estimada en 5, la 11 con divergencia
@@ -231,6 +239,13 @@ No hay reglas de dominio nuevas. Son reglas de la herramienta.
 - **Números exactos en la spec.** La spec fija la cantidad de cada cosa para que el test pueda
   comprobarla; los títulos y las descripciones de cada defecto y de cada criterio son de la
   implementación (`internal/demo`), y cualquier cambio de cifras se refleja acá.
+- **La carga se comprueba a sí misma (RN-T023-10).** La base de la presentación es la de Neon y no hay
+  otra oportunidad de ensayarla: que el comando lea lo que cargó y lo compare con la spec evita enterarse
+  el lunes de que faltaba algo. Las cifras esperadas están escritas aparte de las tablas de datos, para que
+  un dato que cambió sin cambiar la spec no se dé por bueno.
+- **Planning Poker en vivo.** Una sesión finalizada no tiene enlace en la pantalla del backlog, así que
+  la de la historia 9 queda como dato de lo ya acordado (la historia estimada y sus dos rondas), y la
+  presentación en vivo se hace con las de las historias 16 (votando) y 11 (revelada con divergencia).
 - **Borrar solo por nombre.** `--borrar` no es un «vaciar la base»: la cuenta y la base de Neon se
   comparten con la presentación, y borrar de más no tiene vuelta.
 
