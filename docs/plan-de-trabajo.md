@@ -16,7 +16,7 @@ Sprint Planning y cualquier cambio se anota en el acta del sprint.
 | 2 | 06/10 – 12/10 | Las cinco historias con spec mergeada, implementadas con TDD y BDD | 16 de 16 | cerrado, ver `docs/retros/sprint-2.md` |
 | 3 | 13/10 – 19/10 | El ciclo proyecto → backlog → sprint funciona en dominio y aplicación; layout base de la UI | 31 de 21 comprometidos (techo 36) | cerrado, ver `docs/retros/sprint-3.md` |
 | 4 | 20/10 – 26/10 | El ciclo completo se usa desde el navegador, base de Planning Poker y métricas de esfuerzo y completitud | 77 de 35 comprometidos (techo 46); 48 en el tablero original | cerrado, ver `docs/retros/sprint-4.md` |
-| 5 | 27/10 – 02/11 | El proyecto se muestra completo desde el navegador y desplegado en Azure; documentación terminada y presentación ensayada | 48 comprometidos | en curso, ver "Compromiso del Sprint 5" |
+| 5 | 27/10 – 02/11 | El proyecto se muestra completo desde el navegador y desplegado en Azure; documentación terminada y presentación ensayada | 48 comprometidos | cerrado el 31/10 con 70 SP; ver `docs/retros/sprint-5.md` y "Compromiso del Sprint 5" |
 | — | 02/11 | **Presentación final** | — | |
 
 Los sprints cierran los **lunes a la noche** con Review y Retrospective, y el
