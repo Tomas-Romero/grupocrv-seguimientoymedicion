@@ -13,7 +13,8 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U metrics -d metrics"]
+      # -h 127.0.0.1: por red, como se conecta la aplicacion (DEF-008); por el socket contesta antes de tiempo en la primera inicializacion.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U metrics -d metrics"]
       interval: 5s
       timeout: 5s
       retries: 10
