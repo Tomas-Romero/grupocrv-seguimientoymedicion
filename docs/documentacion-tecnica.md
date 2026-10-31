@@ -364,7 +364,7 @@ Cada historia con reglas de negocio siguió el mismo camino, descrito en
 3. **TDD (código).** Por capa (dominio, aplicación, memoria, Postgres, HTTP): un commit `test(...): RED`
    con el test que falla por la razón correcta, y después `feat(...): GREEN` con lo mínimo para pasarlo;
    los `refactor` van con los tests en verde. Con *Rebase and merge*, el ciclo queda en el historial de
-   `main`: hoy hay 189 commits RED y 194 GREEN (`git log --oneline | grep -c ' RED '`).
+   `main`: hoy hay 210 commits RED y 217 GREEN (`git log --oneline | grep -c ' RED '`).
 
 ### Trazabilidad
 
