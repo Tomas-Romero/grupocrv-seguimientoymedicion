@@ -24,7 +24,9 @@ tools: ## Instala las herramientas de desarrollo (correr una sola vez)
 up: ## Levanta Postgres, aplica migraciones y carga datos de ejemplo
 	docker compose up -d db
 	@echo "Esperando a que Postgres este listo..."
-	@until docker compose exec -T db pg_isready -U metrics -d metrics >/dev/null 2>&1; do sleep 1; done
+	@# -h 127.0.0.1: sin el host, pg_isready usa el socket, y el servidor temporal de la primera inicializacion ya contesta por ahi
+	@# antes de que el definitivo acepte conexiones por red (DEF-008).
+	@until docker compose exec -T db pg_isready -h 127.0.0.1 -U metrics -d metrics >/dev/null 2>&1; do sleep 1; done
 	$(MAKE) migrate
 	$(MAKE) seed
 
