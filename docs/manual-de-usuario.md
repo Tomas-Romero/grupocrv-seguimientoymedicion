@@ -5,8 +5,9 @@ un equipo: primero el proyecto y sus integrantes, después el backlog, los sprin
 Planning Poker, las horas trabajadas y los defectos, y al final el dashboard y el reporte. Para cada
 pantalla dice para qué sirve, qué se carga y qué errores puede mostrar.
 
-Las capturas son de la aplicación real, en una máquina local con los datos de ejemplo y un proyecto de
-demostración, **Tienda online**, que se cargó desde las mismas pantallas (29/10/2026).
+Las capturas son de la aplicación real, con el diseño actual, en una máquina local con el **proyecto de
+demostración «Tienda online»** que carga `go run ./cmd/demo` (ver [datos de la demostración](datos-de-demostracion.md)).
+Sus integrantes, historias, horas y defectos son **datos de ejemplo**, no de un proyecto real (31/10/2026).
 
 ## Antes de empezar
 
@@ -17,13 +18,18 @@ docker compose --profile full up
 ```
 
 y abrir <http://localhost:8080>. Ya viene cargado un proyecto de ejemplo, *Software Metrics & Estimation*,
-con tres integrantes. Para desarrollar, ver la [documentación técnica](documentacion-tecnica.md#5-cómo-correrlo).
+con tres integrantes. Para ver los mismos datos que las capturas, se carga el proyecto de demostración con
+`go run ./cmd/demo` ([cómo](datos-de-demostracion.md)). Para desarrollar, ver la
+[documentación técnica](documentacion-tecnica.md#5-cómo-correrlo).
 
 **Cómo se navega.** Arriba hay dos barras:
 
 - La **principal**, con *Inicio* y *Proyectos*.
 - La **del proyecto**, que aparece cuando se entra a uno: *Resumen*, *Backlog*, *Sprints*, *Esfuerzo*,
-  *Dashboard*, *Defectos* y *Reporte*. La sección en la que se está queda subrayada.
+  *Dashboard*, *Defectos* y *Reporte*. A la izquierda, un recuadro recuerda en qué proyecto se está.
+
+La sección en la que se está se distingue por más que el color: tiene fondo, letra en negrita y
+subrayado.
 
 **Cómo se ven los errores.** Cuando algo no se puede guardar, la pantalla no cambia y aparece arriba un
 recuadro rojo con **todos** los problemas juntos, para corregirlos de una vez (no uno por uno). Hay tres
@@ -70,8 +76,9 @@ reglas son los mismos.
 
 ## 2. Resumen del proyecto e integrantes
 
-La primera pestaña del proyecto muestra el **estado general**, sus datos, accesos al backlog y a los
-sprints, y la lista de integrantes con un formulario para sumar más.
+La primera pestaña del proyecto muestra el **estado general**, sus datos con los botones **Ver el
+backlog** y **Ver los sprints**, y la lista de integrantes (cada uno con un círculo con sus iniciales, su
+email y su rol) con un formulario para sumar más.
 
 La tarjeta **Estado general** dice si el proyecto está *no iniciado*, *en curso* o *finalizado* según
 sus fechas y la de hoy, y resume el avance: cuántas historias hay pendientes, en progreso y completadas,
@@ -94,9 +101,12 @@ valido" y, si el email ya está en el proyecto:
 
 ## 3. Backlog
 
-El Product Backlog lista las historias del proyecto en orden de número, con su prioridad, estado, Story
-Points y cantidad de criterios de aceptación. Desde cada fila se estima, se edita o se abre Planning
-Poker. Abajo está el formulario para cargar una historia nueva.
+El Product Backlog lista las historias del proyecto **ordenadas por prioridad** (Must primero y Won't al
+final; dentro de cada prioridad, por número), con su número, prioridad, estado, Story Points y cantidad de
+criterios de aceptación. La prioridad y el estado se muestran como etiquetas de color que también dicen su
+nombre (por ejemplo, *Must* o *Completado*), así que no hace falta distinguir colores para leerlas. Desde
+cada fila se estima, se edita o, si la historia está pendiente, se abre **Planning Poker**. Abajo está el
+formulario para cargar una historia nueva.
 
 ![Backlog](manual/06-backlog.png)
 
@@ -193,20 +203,20 @@ Sirve para estimar una historia en equipo sin que nadie se deje influir por los 
 2. **Votar.** Cada participante se elige en *Votás como* y toca una carta (1, 2, 3, 5, 8 o 13). La pantalla
    muestra **quién votó y quién falta, nunca un valor**. Votar de nuevo reemplaza el voto anterior.
 
-   ![Sesión votando](evidencias/T-020/01-sesion-votando.png)
+   ![Sesión votando: votaron dos de cuatro](manual/19-poker-votando.png)
 
 3. **Revelar.** Con al menos un voto, **Revelar los votos** muestra cada voto, quién no votó y, si los
    valores no coinciden, la **divergencia** (de cuánto a cuánto).
 
-   ![Sesión revelada con divergencia](evidencias/T-020/02-sesion-revelada-divergencia.png)
+   ![Sesión revelada con divergencia de 3 a 13](manual/20-poker-revelada.png)
 
 4. **Nueva ronda o acuerdo.**
    - Con divergencia, **Abrir nueva ronda** vuelve a votar desde cero; las rondas anteriores quedan
      visibles con su resultado.
    - **Registrar la estimación acordada** cierra la sesión y deja ese valor como los Story Points de la
-     historia.
+     historia. La sesión finalizada muestra la estimación acordada y, debajo, las rondas anteriores.
 
-   ![Nueva ronda](evidencias/T-020/03-nueva-ronda.png)
+   ![Sesión finalizada en la ronda 2, con la ronda 1 en "Rondas anteriores"](manual/21-poker-finalizada.png)
 
 **Errores posibles:** "se necesitan al menos 2 integrantes en el proyecto para una sesion de planning
 poker", "la historia ya tiene una sesion de planning poker abierta", "el integrante no participa de esta
@@ -272,12 +282,12 @@ Un defecto nuevo empieza **Abierto**.
 
 ### Cambiar el estado
 
-| Desde | Puede pasar a |
-|---|---|
-| Abierto | En corrección, Resuelto o Descartado |
-| En corrección | Abierto, Resuelto o Descartado |
-| Resuelto | Abierto (reabrir) |
-| Descartado | Abierto (reabrir) |
+| Desde | Puede pasar a | Botones de la fila |
+|---|---|---|
+| Abierto | En corrección, Resuelto o Descartado | **En corrección**, **Resolver** (con el sprint elegido al lado) y **Descartar** |
+| En corrección | Abierto, Resuelto o Descartado | **Volver a abierto**, **Resolver** y **Descartar** |
+| Resuelto | Abierto | **Reabrir** |
+| Descartado | Abierto | **Reabrir** |
 
 Para **Resolver** hay que elegir el sprint de resolución, que no puede ser anterior al de detección. Al
 reabrirlo, el defecto pierde el sprint de resolución.
@@ -297,7 +307,7 @@ aplica los dos a la vez y *Todos* / *Todas* los quita. Si ningún defecto cumple
 dice ("Ningún defecto cumple los filtros"), que no es lo mismo que un proyecto sin defectos ("Todavía no
 hay defectos").
 
-![Defectos filtrados por severidad alta](manual/18-defectos-filtrados.png)
+![Defectos filtrados por severidad crítica](manual/18-defectos-filtrados.png)
 
 ## 8. Dashboard
 
