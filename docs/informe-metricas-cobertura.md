@@ -8,8 +8,8 @@ volver a calcular cada número.
 local. `scripts/coverage.sh`, `go test ./...` y los escenarios BDD terminaron en verde; el análisis
 estático (`make lint`) lo corre el CI en cada PR y está en verde en `main`, y no se repitió a mano para esta
 medición. El código de funcionalidades se congela el 31/10 a las 18:00: lo que sigue es documentación y
-ensayo. Las métricas del proceso llegan hasta el Sprint 4 con acta; las del Sprint 5 son **provisorias**
-(salen de los issues cerrados al 31/10) hasta que se escriba su acta, después de la presentación del 02/11.
+ensayo. Las métricas del proceso llegan hasta el Sprint 5, que se cerró el 31/10 (su acta es
+[`retros/sprint-5.md`](retros/sprint-5.md)); la exposición del 02/11 se anota en una addenda de esa acta.
 
 ## 1. Cobertura
 
@@ -173,23 +173,20 @@ Datos de las actas de [`docs/retros/`](retros/) y del [plan de trabajo](plan-de-
 | 2 | 06/10 – 12/10 | 16 | 16 | 100 % | 0 | 0 |
 | 3 | 13/10 – 19/10 | 21 (techo 36) | 31 | 148 % | 1 (DEF-006) | 2 (DEF-005 y DEF-006); DEF-004 quedó resuelto en código |
 | 4 | 20/10 – 26/10 | 35 (techo 46) | 77 (48 del tablero original) | 220 % (137 % sobre el tablero) | 1 (DEF-007) | 1 (DEF-007) |
-| 5 | 27/10 – 02/11 | 48 | 63, **provisorio al 31/10** | 90 % del compromiso (43 de 48) | por informar en el acta | por informar en el acta |
+| 5 | 27/10 – 02/11 (cerrado el 31/10) | 48 | 70 | 146 % (100 % del compromiso) | 1 (DEF-008) | 1 (DEF-008) |
 
-**Sprint 5, provisorio.** Todavía no tiene acta: se escribe después de la presentación del 02/11 (el Sprint
-cierra con su Review y su Retrospective). Los 63 SP salen de los issues cerrados con etiqueta `sprint:5` al
-31/10 y del compromiso del [plan de trabajo](plan-de-trabajo.md):
+**Sprint 5.** Cerró el 31/10, un día antes de lo previsto por decisión del equipo; el detalle está en su
+[acta](retros/sprint-5.md). Los 70 SP son:
 
 | Concepto | SP |
 |---|---:|
-| Compromiso entregado: T-019 (5), US-004 (2), US-030 (5), US-033 (5), US-017 (3), T-020 (8), US-034 (2), US-023 (3), T-021 (5) y T-008 (5) | 43 |
+| Compromiso entregado (48 SP): T-019, US-004, US-030, US-033, US-017, T-020, US-034, US-023, T-021, T-008 y T-009 | 48 |
 | Objetivo estirado de Conforti: US-024 | 3 |
-| Trabajo no previsto: T-022 (2), T-023 (5), T-024 (8) y T-025 (2) | 17 |
-| **Total entregado** | **63** |
-| Falta del compromiso: T-009 (la presentación, 5 SP), que cierra con la presentación | 5 |
+| Trabajo no previsto: T-022 (2), T-023 (5), T-024 (8), T-025 (2), T-026 (1) y T-027 (1) | 19 |
+| **Total entregado** | **70** |
 
-T-018 (despliegue en Azure, 5 SP) lleva la etiqueta `sprint:5` pero ya se contó dentro de los 77 SP del
-Sprint 4 (era trabajo adelantado), así que no se vuelve a sumar. T-026 (capturas del manual, 1 SP) sigue
-abierta. Estas cifras pueden cambiar hasta el acta.
+T-018 (despliegue en Azure, 5 SP) lleva la etiqueta `sprint:5` pero ya se contó dentro de los 77 SP del Sprint 4 (era
+trabajo adelantado), así que no se vuelve a sumar. T-009 (la presentación) se da por entregada con su PR; la exposición es el 02/11.
 
 **Velocidad.** El Sprint 0 fue de puesta en marcha (repositorio, CI, tablero), así que la velocidad se
 calcula sobre los sprints 1 a 4:
@@ -197,25 +194,25 @@ calcula sobre los sprints 1 a 4:
 | Cálculo | Velocidad |
 |---|---:|
 | Promedio de SP completados, sprints 1 a 4 (5, 16, 31 y 77) | 32,25 SP por sprint |
-| Con el Sprint 5 provisorio, sprints 1 a 5 (5, 16, 31, 77 y 63) | 38,4 SP por sprint |
+| Con el Sprint 5, sprints 1 a 5 (5, 16, 31, 77 y 70) | 39,8 SP por sprint |
 | Igual, pero con los 48 SP del tablero original del Sprint 4 (sin el trabajo adelantado del Sprint 5) | 25 SP por sprint |
-| Sprints 1 a 5 con los 48 SP del tablero original del Sprint 4 (5, 16, 31, 48 y 63) | 32,6 SP por sprint |
+| Sprints 1 a 5 con los 48 SP del tablero original del Sprint 4 (5, 16, 31, 48 y 70) | 34 SP por sprint |
 
 El acta del Sprint 4 advierte que 29 de sus 77 SP fueron trabajo adelantado o no previsto, y que la
 velocidad del Sprint 3 incluyó trabajo de rescate (riesgos R11 y R5): por eso el Planning del Sprint 5
 comprometió 48 SP y no 77.
 
-**Defectos.** Se registraron 7 defectos (DEF-001 a DEF-007), todos resueltos al 26/10. Cinco fueron de
+**Defectos.** Se registraron 8 defectos (DEF-001 a DEF-008), todos resueltos. Cinco fueron de
 puesta en marcha y de entorno (DEF-001 a DEF-005: Docker, Windows, `make`), cuatro de ellos detectados en
 la prueba en máquina limpia del 30/09; uno de documentación (DEF-006) y uno de lógica de negocio (DEF-007: un sprint cerrado contaba como completada una
-historia completada después en otro sprint), corregido el mismo día con su test.
+historia completada después en otro sprint), corregido el mismo día con su test. DEF-008 (del Sprint 5) fue de puesta en marcha: `make up` se cortaba si Postgres todavía arrancaba; se corrigió el 31/10 (#251).
 
 **Horas estimadas y reales.** Las horas estimadas salen de los Story Points a 1,5 horas por SP: 24 h en
 los sprints 0 y 2, 31,5 h en el 3 y 52,5 h en el 4. **Las horas reales no se registraron en ningún
 sprint cerrado**, así que la desviación de esfuerzo no se puede calcular con datos del equipo (las cinco
 actas lo anotan como pendiente). La pantalla para cargar horas (T-019) llegó a `main` el 28/10, y la
 acción de la retro del Sprint 4 es que desde ese día cada integrante cargue las suyas; las horas del
-Sprint 5 se informan en su acta.
+Sprint 5 no se registraron en el repositorio (ver su acta).
 
 ## 5. Cómo regenerar cada número
 
