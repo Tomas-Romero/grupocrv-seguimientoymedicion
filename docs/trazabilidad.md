@@ -4,7 +4,7 @@
 > No se edita a mano: se regenera. Enlaza Historia → Spec → Criterios de aceptación →
 > Escenarios BDD → Tests → Código (la guía de la cátedra la pide como evidencia).
 
-Total: 40 especificaciones, 273 criterios de aceptación, 216 con escenario BDD y 252 con test.
+Total: 42 especificaciones, 285 criterios de aceptación, 216 con escenario BDD y 261 con test.
 
 Un criterio sin escenario BDD o sin test se muestra con `—`: o falta la evidencia, o el criterio
 se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no llevan `.feature`).
@@ -53,6 +53,8 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | T-019 | [specs/T-019-pantallas-esfuerzo.md](../specs/T-019-pantallas-esfuerzo.md) | borrador | 6 | 0 | 6 | `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
 | T-020 | [specs/T-020-pantallas-planning-poker.md](../specs/T-020-pantallas-planning-poker.md) | borrador | 7 | 0 | 7 | `internal/adapters/http/`, `web/templates/`, `internal/app/`, `cmd/server/` |
 | T-021 | [specs/T-021-pantallas-defectos.md](../specs/T-021-pantallas-defectos.md) | borrador | 6 | 0 | 6 | `internal/app/`, `internal/adapters/memoria/`, `internal/adapters/postgres/`, `internal/adapters/http/`, `web/templates/`, `cmd/server/` |
+| T-023 | [specs/T-023-datos-de-demostracion.md](../specs/T-023-datos-de-demostracion.md) | borrador | 6 | 0 | 6 | `internal/demo/`, `cmd/demo/`, `docs/datos-de-demostracion.md` |
+| T-024 | [specs/T-024-pulido-visual.md](../specs/T-024-pulido-visual.md) | borrador | 6 | 0 | 3 | `web/templates/`, `web/static/css/input.css` |
 
 ## Detalle
 
@@ -177,7 +179,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 - **Spec:** [specs/US-008-crear-sprint.md](../specs/US-008-crear-sprint.md) · **Issue:** #9
 - **Escenarios BDD:** [features/US-008-crear-sprint.feature](../features/US-008-crear-sprint.feature)
 - **Código:** `internal/domain/sprint/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/`
-- **Tests que la citan:** 39
+- **Tests que la citan:** 40
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
@@ -198,7 +200,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 - **Spec:** [specs/US-009-asignar-historias-sprint.md](../specs/US-009-asignar-historias-sprint.md) · **Issue:** #10
 - **Escenarios BDD:** [features/US-009-asignar-historias-sprint.feature](../features/US-009-asignar-historias-sprint.feature)
 - **Código:** `internal/domain/sprint/`, `internal/app/`, `internal/adapters/postgres/`, `migraciones/`
-- **Tests que la citan:** 38
+- **Tests que la citan:** 40
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
@@ -446,7 +448,7 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 - **Spec:** [specs/US-023-cambiar-estado-defecto.md](../specs/US-023-cambiar-estado-defecto.md) · **Issue:** #31
 - **Escenarios BDD:** [features/US-023-cambiar-estado-defecto.feature](../features/US-023-cambiar-estado-defecto.feature)
 - **Código:** `internal/domain/defecto/`, `internal/app/`, `internal/adapters/postgres/`, `internal/adapters/memoria/`, `migraciones/00013_defectos_estado.sql`
-- **Tests que la citan:** 27
+- **Tests que la citan:** 28
 
 | Criterio | Tipo | Escenarios BDD | Tests |
 |---|---|---|---|
@@ -728,3 +730,35 @@ se cubre de otra forma y la spec lo dice (por ejemplo, las tareas técnicas no l
 | CA-T021-4 | límite | — | TestPantallasDefectos_ListasDelFormulario, TestPantallasDefectos_SinHistoriasOSinSprints, TestPantallasDefectos_SprintCerradoYRepetidos |
 | CA-T021-5 | error | — | TestPantallasDefectos_ErroresAlRegistrar, TestPantallasDefectos_ResolverEnUnSprintAnterior, TestPantallasDefectos_PaginaDesactualizada, TestPantallasDefectos_EstadoMandadoAMano |
 | CA-T021-6 | plataforma | — | TestPantallasDefectos_NavegacionYFragmento, TestBase_ListarDefectosDelProyecto, TestBase_ListarDefectosDelProyecto_CreadoEnCreciente, TestRepositorioDefectos_ListarDefectosDelProyecto, +1 más |
+
+### T-023 — Datos de demostración: cargar un proyecto completo con un comando
+
+- **Spec:** [specs/T-023-datos-de-demostracion.md](../specs/T-023-datos-de-demostracion.md) · **Issue:** #236
+- **Escenarios BDD:** ninguno
+- **Código:** `internal/demo/`, `cmd/demo/`, `docs/datos-de-demostracion.md`
+- **Tests que la citan:** 10
+
+| Criterio | Tipo | Escenarios BDD | Tests |
+|---|---|---|---|
+| CA-T023-1 | normal | — | TestCargar_ProyectoCompleto |
+| CA-T023-2 | alternativo | — | TestCargar_LasLecturasDanLasCifrasDeLaSpec |
+| CA-T023-3 | alternativo | — | TestCargar_LosReportesNoTienenSeccionesVacias |
+| CA-T023-4 | límite | — | TestCargar_SegundaVezSeNiegaSinEscribir |
+| CA-T023-5 | error | — | TestEjecutar_Errores |
+| CA-T023-6 | plataforma | — | TestPostgres_CargarBorrarYCargarDeNuevo |
+
+### T-024 — Pulido visual: layout y pantallas principales
+
+- **Spec:** [specs/T-024-pulido-visual.md](../specs/T-024-pulido-visual.md) · **Issue:** #238
+- **Escenarios BDD:** ninguno
+- **Código:** `web/templates/`, `web/static/css/input.css`
+- **Tests que la citan:** 4
+
+| Criterio | Tipo | Escenarios BDD | Tests |
+|---|---|---|---|
+| CA-T024-1 | normal | — | — |
+| CA-T024-2 | alternativo | — | TestBacklog_UnValorDesconocidoSeDibujaNeutro, TestResumen_IntegrantesConSusIniciales |
+| CA-T024-3 | alternativo | — | TestBacklog_PrioridadYEstadoSonInsigniasConTexto |
+| CA-T024-4 | límite | — | TestBacklog_LaTablaSeDesplazaDentroDeSuContenedor |
+| CA-T024-5 | error | — | — |
+| CA-T024-6 | plataforma | — | — |

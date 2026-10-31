@@ -324,6 +324,8 @@ Todo corre en **GitHub Actions**, en Ubuntu. El detalle, con cómo se protege `m
 | [`docs/trazabilidad.md`](docs/trazabilidad.md) | Historia → Spec → Criterios → BDD → Tests |
 | [`docs/datos-de-demostracion.md`](docs/datos-de-demostracion.md) | Los datos de la demo, cómo cargarlos y qué mostrar |
 | [`docs/diseno.md`](docs/diseno.md) | Guía de estilos de la interfaz y contrastes medidos |
+| [`docs/rendimiento.md`](docs/rendimiento.md) | Tiempos de CI/CD y de arranque, peso de la imagen y de los archivos, latencias y qué no está optimizado, con cómo medirlo |
+| [`docs/presentacion/`](docs/presentacion/) | La presentación final (diapositivas y PDF) y su guion con la demo, los comandos y las preguntas probables |
 | [`docs/ci-cd.md`](docs/ci-cd.md) | CI, protección de `main`, despliegue en Azure, costos y qué se comprobó con la cuenta real |
 | [`docs/plan-de-trabajo.md`](docs/plan-de-trabajo.md) | Sprint Goals, responsables por historia y calendario hasta la entrega |
 | [`docs/retros/`](docs/retros/) | Actas de retrospectiva |
